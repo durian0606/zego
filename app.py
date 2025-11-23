@@ -141,10 +141,18 @@ if __name__ == '__main__':
     os.makedirs('static/css', exist_ok=True)
     os.makedirs('static/js', exist_ok=True)
 
-    print("=" * 50)
+    # 로컬 IP 주소 가져오기
+    import socket
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+
+    print("=" * 60)
     print("바코드 재고관리 시스템 시작!")
-    print("=" * 50)
-    print("서버 주소: http://localhost:5000")
-    print("=" * 50)
+    print("=" * 60)
+    print(f"PC에서 접속:      http://localhost:5000")
+    print(f"모바일에서 접속:  http://{local_ip}:5000")
+    print("=" * 60)
+    print("모바일은 같은 Wi-Fi에 연결되어 있어야 합니다!")
+    print("=" * 60)
 
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
