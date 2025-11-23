@@ -1,14 +1,13 @@
 // Firebase 설정
-// 여기에 Firebase 프로젝트 설정값을 입력하세요
-
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAL2BYo6ZuFOt3ALsW4Pj3ALEKH5omaT0c",
+    authDomain: "zego-87d69.firebaseapp.com",
+    databaseURL: "https://zego-87d69-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "zego-87d69",
+    storageBucket: "zego-87d69.firebasestorage.app",
+    messagingSenderId: "435158117338",
+    appId: "1:435158117338:web:3a175572508ea634da6ee3",
+    measurementId: "G-RVPE4CS927"
 };
 
 // Firebase 초기화
