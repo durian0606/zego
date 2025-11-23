@@ -18,8 +18,9 @@ const productForm = document.getElementById('product-form');
 let productsData = {};
 let historyData = [];
 
-// 수량 전용 바코드용 임시 수량 저장
-let tempQuantity = null;
+// 입고/출고 바코드용 임시 저장
+let tempQuantity = null;  // 수량
+let tempType = null;      // 'IN' 또는 'OUT'
 
 // 연결 상태 모니터링
 const connectedRef = database.ref('.info/connected');
@@ -205,10 +206,48 @@ btnStockOut.addEventListener('click', () => {
     updateStock(barcode, quantity, 'OUT');
 });
 
-// 엔터키로 입고 처리
+// 바코드 입력 처리 (엔터키)
 barcodeInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        btnStockIn.click();
+        const barcode = barcodeInput.value.trim().toUpperCase();
+
+        // IN/OUT 바코드 패턴 감지
+        const inPattern = /^IN(\d+)$/;   // IN80, IN10, IN1
+        const outPattern = /^OUT(\d+)$/; // OUT80, OUT10, OUT1
+
+        const inMatch = barcode.match(inPattern);
+        const outMatch = barcode.match(outPattern);
+
+        if (inMatch) {
+            // 입고 바코드 스캔
+            tempQuantity = parseInt(inMatch[1]);
+            tempType = 'IN';
+            quantityInput.value = tempQuantity;
+            showScanResult(`입고 모드: ${tempQuantity}개`, 'success');
+            barcodeInput.value = '';
+            barcodeInput.focus();
+        } else if (outMatch) {
+            // 출고 바코드 스캔
+            tempQuantity = parseInt(outMatch[1]);
+            tempType = 'OUT';
+            quantityInput.value = tempQuantity;
+            showScanResult(`출고 모드: ${tempQuantity}개`, 'success');
+            barcodeInput.value = '';
+            barcodeInput.focus();
+        } else {
+            // 일반 제품 바코드
+            if (tempType && tempQuantity) {
+                // 입고/출고 모드가 설정되어 있으면 자동 처리
+                updateStock(barcode, tempQuantity, tempType);
+                // 초기화
+                tempQuantity = null;
+                tempType = null;
+                quantityInput.value = '1';
+            } else {
+                // 기본: 입고 버튼 클릭
+                btnStockIn.click();
+            }
+        }
     }
 });
 
