@@ -18,6 +18,9 @@ const productForm = document.getElementById('product-form');
 let productsData = {};
 let historyData = [];
 
+// 수량 전용 바코드용 임시 수량 저장
+let tempQuantity = null;
+
 // 연결 상태 모니터링
 const connectedRef = database.ref('.info/connected');
 connectedRef.on('value', (snapshot) => {
