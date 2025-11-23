@@ -10,7 +10,8 @@
     <div class="container">
         <header>
             <h1>📦 바코드 재고관리 시스템</h1>
-            <div class="status">
+            <div class="header-actions">
+                <button id="btn-toggle-register" class="btn btn-register">+ 제품 등록</button>
                 <span id="connection-status" class="status-badge disconnected">연결 중...</span>
             </div>
         </header>
@@ -31,30 +32,6 @@
                     <input type="number" id="quantity" value="1" min="1">
                 </div>
                 <div id="scan-result" class="scan-result"></div>
-            </section>
-
-            <!-- 제품 등록 섹션 -->
-            <section class="product-register">
-                <h2>제품 등록</h2>
-                <form id="product-form">
-                    <div class="form-group">
-                        <label for="new-barcode">바코드:</label>
-                        <input type="text" id="new-barcode" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="new-name">제품명:</label>
-                        <input type="text" id="new-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="new-description">설명:</label>
-                        <input type="text" id="new-description">
-                    </div>
-                    <div class="form-group">
-                        <label for="new-min-stock">최소 재고:</label>
-                        <input type="number" id="new-min-stock" value="0" min="0">
-                    </div>
-                    <button type="submit" class="btn btn-primary">제품 등록</button>
-                </form>
             </section>
 
             <!-- 재고 현황 테이블 -->
@@ -104,6 +81,33 @@
                         </tbody>
                     </table>
                 </div>
+            </section>
+
+            <!-- 제품 등록 섹션 (토글) -->
+            <section class="product-register" id="product-register-section" style="display: none;">
+                <div class="section-header">
+                    <h2>제품 등록</h2>
+                    <button id="btn-close-register" class="btn-close">✕</button>
+                </div>
+                <form id="product-form">
+                    <div class="form-group">
+                        <label for="new-barcode">바코드:</label>
+                        <input type="text" id="new-barcode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-name">제품명:</label>
+                        <input type="text" id="new-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-description">설명:</label>
+                        <input type="text" id="new-description">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-min-stock">최소 재고:</label>
+                        <input type="number" id="new-min-stock" value="0" min="0">
+                    </div>
+                    <button type="submit" class="btn btn-primary">제품 등록</button>
+                </form>
             </section>
         </div>
     </div>

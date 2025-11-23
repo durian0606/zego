@@ -34,6 +34,27 @@ header h1 {
     font-weight: 600;
 }
 
+.header-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.btn-register {
+    background: white;
+    color: #667eea;
+    padding: 10px 20px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-register:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+}
+
 .status-badge {
     padding: 8px 16px;
     border-radius: 20px;
@@ -181,6 +202,54 @@ section h2 {
 }
 
 /* 제품 등록 폼 */
+.product-register {
+    position: relative;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.btn-close {
+    background: #ef4444;
+    color: white;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    background: #dc2626;
+    transform: rotate(90deg);
+}
+
 .form-group {
     margin-bottom: 15px;
 }

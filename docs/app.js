@@ -209,6 +209,25 @@ barcodeInput.addEventListener('keypress', (e) => {
     }
 });
 
+// 제품 등록 섹션 토글
+const btnToggleRegister = document.getElementById('btn-toggle-register');
+const btnCloseRegister = document.getElementById('btn-close-register');
+const productRegisterSection = document.getElementById('product-register-section');
+
+btnToggleRegister.addEventListener('click', () => {
+    if (productRegisterSection.style.display === 'none') {
+        productRegisterSection.style.display = 'block';
+        productRegisterSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        productRegisterSection.style.display = 'none';
+    }
+});
+
+btnCloseRegister.addEventListener('click', () => {
+    productRegisterSection.style.display = 'none';
+    barcodeInput.focus();
+});
+
 // 제품 등록
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -243,6 +262,10 @@ productForm.addEventListener('submit', async (e) => {
         alert('제품이 등록되었습니다!');
         productForm.reset();
         document.getElementById('new-min-stock').value = '0';
+
+        // 등록 후 섹션 닫고 바코드 입력으로 포커스
+        productRegisterSection.style.display = 'none';
+        barcodeInput.focus();
     } catch (error) {
         console.error('제품 등록 오류:', error);
         alert('제품 등록 중 오류가 발생했습니다.');
