@@ -1,6 +1,7 @@
 // Firebase 데이터베이스 참조
 const database = firebase.database();
 const productsRef = database.ref('products');
+const barcodesRef = database.ref('barcodes');
 const historyRef = database.ref('history');
 
 // DOM 요소
@@ -11,13 +12,10 @@ const historyTbody = document.getElementById('history-tbody');
 const connectionStatus = document.getElementById('connection-status');
 const productForm = document.getElementById('product-form');
 
-// 제품 데이터 캐시
+// 데이터 캐시
 let productsData = {};
+let barcodesData = {};
 let historyData = [];
-
-// 입고/출고 바코드용 임시 저장
-let tempQuantity = null;  // 수량
-let tempType = null;      // 'IN' 또는 'OUT'
 
 // 연결 상태 모니터링
 const connectedRef = database.ref('.info/connected');
@@ -35,6 +33,11 @@ connectedRef.on('value', (snapshot) => {
 productsRef.on('value', (snapshot) => {
     productsData = snapshot.val() || {};
     updateInventoryTable();
+});
+
+// 바코드 목록 실시간 감지
+barcodesRef.on('value', (snapshot) => {
+    barcodesData = snapshot.val() || {};
 });
 
 // 히스토리 실시간 감지 (최근 50개만)
@@ -59,11 +62,15 @@ function updateInventoryTable() {
         const stockStatus = product.currentStock <= product.minStock ? 'stock-low' : 'stock-ok';
         const stockText = product.currentStock <= product.minStock ? '부족' : '정상';
 
+        // 해당 제품의 바코드 수 계산
+        const productBarcodes = Object.values(barcodesData).filter(b => b.productName === product.name);
+        const barcodeCount = productBarcodes.length;
+
         return `
             <tr>
-                <td>${product.barcode}</td>
+                <td>${barcodeCount}개</td>
                 <td><strong>${product.name}</strong></td>
-                <td>${product.description || '-'}</td>
+                <td>-</td>
                 <td><strong>${product.currentStock}</strong></td>
                 <td>${product.minStock}</td>
                 <td><span class="stock-status ${stockStatus}">${stockText}</span></td>
@@ -110,17 +117,23 @@ function showScanResult(message, type) {
     }, 5000);
 }
 
-// 제품 찾기 (바코드로)
-function findProductByBarcode(barcode) {
-    return Object.values(productsData).find(p => p.barcode === barcode);
+// 제품 찾기 (제품명으로)
+function findProductByName(productName) {
+    return productsData[productName];
+}
+
+// 바코드 찾기
+function findBarcodeInfo(barcode) {
+    return barcodesData[barcode];
 }
 
 // 재고 업데이트 함수
-async function updateStock(barcode, quantity, type) {
-    const product = findProductByBarcode(barcode);
+async function updateStock(barcodeInfo) {
+    const { productName, type, quantity } = barcodeInfo;
+    const product = findProductByName(productName);
 
     if (!product) {
-        showScanResult('제품을 찾을 수 없습니다. 먼저 제품을 등록하세요.', 'error');
+        showScanResult('제품을 찾을 수 없습니다. 먼저 바코드를 등록하세요.', 'error');
         return;
     }
 
@@ -135,19 +148,23 @@ async function updateStock(barcode, quantity, type) {
             showScanResult('재고가 부족합니다!', 'error');
             return;
         }
+    } else {
+        // VIEW 타입 - 조회만
+        showScanResult(`${productName} - 현재 재고: ${beforeStock}개`, 'success');
+        return;
     }
 
     try {
         // 제품 재고 업데이트
-        await productsRef.child(product.barcode).update({
+        await productsRef.child(productName).update({
             currentStock: afterStock,
             updatedAt: Date.now()
         });
 
         // 히스토리 추가
         await historyRef.push({
-            productName: product.name,
-            barcode: product.barcode,
+            productName: productName,
+            barcode: barcodeInfo.barcode,
             type: type,
             quantity: quantity,
             beforeStock: beforeStock,
@@ -156,11 +173,7 @@ async function updateStock(barcode, quantity, type) {
         });
 
         const typeText = type === 'IN' ? '입고' : '출고';
-        showScanResult(`${product.name} ${typeText} 완료! (${beforeStock} → ${afterStock})`, 'success');
-
-        // 입력 초기화
-        barcodeInput.value = '';
-        barcodeInput.focus();
+        showScanResult(`${productName} ${typeText} 완료! (${beforeStock} → ${afterStock})`, 'success');
 
     } catch (error) {
         console.error('재고 업데이트 오류:', error);
@@ -169,51 +182,23 @@ async function updateStock(barcode, quantity, type) {
 }
 
 // 바코드 입력 처리 (엔터키)
-barcodeInput.addEventListener('keypress', (e) => {
+barcodeInput.addEventListener('keypress', async (e) => {
     if (e.key === 'Enter') {
-        const barcode = barcodeInput.value.trim().toUpperCase();
+        const barcode = barcodeInput.value.trim();
+        barcodeInput.value = '';
 
-        // IN/OUT 바코드 패턴 감지
-        const inPattern = /^IN(\d+)$/;   // IN80, IN10, IN1
-        const outPattern = /^OUT(\d+)$/; // OUT80, OUT10, OUT1
+        if (!barcode) return;
 
-        const inMatch = barcode.match(inPattern);
-        const outMatch = barcode.match(outPattern);
+        // 바코드 정보 조회
+        const barcodeInfo = findBarcodeInfo(barcode);
 
-        if (inMatch) {
-            // 입고 바코드 스캔
-            tempQuantity = parseInt(inMatch[1]);
-            tempType = 'IN';
-            showScanResult(`입고 모드: ${tempQuantity}개`, 'success');
-            barcodeInput.value = '';
-            barcodeInput.focus();
-        } else if (outMatch) {
-            // 출고 바코드 스캔
-            tempQuantity = parseInt(outMatch[1]);
-            tempType = 'OUT';
-            showScanResult(`출고 모드: ${tempQuantity}개`, 'success');
-            barcodeInput.value = '';
-            barcodeInput.focus();
-        } else {
-            // 일반 제품 바코드
-            if (tempType && tempQuantity) {
-                // 입고/출고 모드가 설정되어 있으면 자동 처리
-                updateStock(barcode, tempQuantity, tempType);
-                // 초기화
-                tempQuantity = null;
-                tempType = null;
-            } else {
-                // 기본: 제품 정보만 표시
-                const product = findProductByBarcode(barcode);
-                if (product) {
-                    showScanResult(`${product.name} - 현재 재고: ${product.currentStock}개`, 'success');
-                } else {
-                    showScanResult('제품을 찾을 수 없습니다. 먼저 제품을 등록하세요.', 'error');
-                }
-                barcodeInput.value = '';
-                barcodeInput.focus();
-            }
+        if (!barcodeInfo) {
+            showScanResult('등록되지 않은 바코드입니다. 먼저 바코드를 등록하세요.', 'error');
+            return;
         }
+
+        // 바코드 정보에 따라 처리
+        await updateStock(barcodeInfo);
     }
 });
 
@@ -236,47 +221,81 @@ btnCloseRegister.addEventListener('click', () => {
     barcodeInput.focus();
 });
 
-// 제품 등록
+// 타입 선택 시 수량 필드 표시/숨김
+const typeSelect = document.getElementById('new-type');
+const quantityGroup = document.getElementById('quantity-group');
+const quantityInput = document.getElementById('new-quantity');
+
+typeSelect.addEventListener('change', () => {
+    if (typeSelect.value === 'VIEW') {
+        quantityGroup.style.display = 'none';
+        quantityInput.required = false;
+    } else {
+        quantityGroup.style.display = 'block';
+        quantityInput.required = true;
+    }
+});
+
+// 바코드 등록
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const barcode = document.getElementById('new-barcode').value.trim();
-    const name = document.getElementById('new-name').value.trim();
-    const description = document.getElementById('new-description').value.trim();
-    const minStock = parseInt(document.getElementById('new-min-stock').value);
+    const productName = document.getElementById('new-name').value.trim();
+    const type = document.getElementById('new-type').value;
+    const quantity = parseInt(document.getElementById('new-quantity').value) || 0;
+    const minStockInput = document.getElementById('new-min-stock').value;
+    const minStock = minStockInput ? parseInt(minStockInput) : null;
 
-    if (!barcode || !name) {
+    if (!barcode || !productName) {
         alert('바코드와 제품명은 필수입니다.');
         return;
     }
 
-    // 중복 확인
-    if (findProductByBarcode(barcode)) {
+    if ((type === 'IN' || type === 'OUT') && quantity <= 0) {
+        alert('입고/출고 타입은 수량을 1 이상 입력해야 합니다.');
+        return;
+    }
+
+    // 바코드 중복 확인
+    if (findBarcodeInfo(barcode)) {
         alert('이미 등록된 바코드입니다.');
         return;
     }
 
     try {
-        await productsRef.child(barcode).set({
+        // 제품이 없으면 생성
+        const existingProduct = findProductByName(productName);
+        if (!existingProduct) {
+            await productsRef.child(productName).set({
+                name: productName,
+                minStock: minStock !== null ? minStock : 0,
+                currentStock: 0,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            });
+        }
+
+        // 바코드 정보 저장
+        await barcodesRef.child(barcode).set({
             barcode: barcode,
-            name: name,
-            description: description,
-            minStock: minStock,
-            currentStock: 0,
-            createdAt: Date.now(),
-            updatedAt: Date.now()
+            productName: productName,
+            type: type,
+            quantity: type === 'VIEW' ? 0 : quantity,
+            createdAt: Date.now()
         });
 
-        alert('제품이 등록되었습니다!');
+        alert('바코드가 등록되었습니다!');
         productForm.reset();
-        document.getElementById('new-min-stock').value = '0';
+        document.getElementById('new-min-stock').value = '';
+        document.getElementById('new-quantity').value = '1';
 
         // 등록 후 섹션 닫고 바코드 입력으로 포커스
         productRegisterSection.style.display = 'none';
         barcodeInput.focus();
     } catch (error) {
-        console.error('제품 등록 오류:', error);
-        alert('제품 등록 중 오류가 발생했습니다.');
+        console.error('바코드 등록 오류:', error);
+        alert('바코드 등록 중 오류가 발생했습니다.');
     }
 });
 
