@@ -29,3 +29,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+
+# Node modules (if using Firebase CLI)
+node_modules/
