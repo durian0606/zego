@@ -17,11 +17,11 @@
         </header>
 
         <div class="main-content">
-            <!-- 바코드 스캔 -->
-            <section class="scan-section">
-                <input type="text" id="barcode-input" class="barcode-input-large" placeholder="바코드 스캔..." autofocus>
-                <div id="scan-result" class="scan-result"></div>
-            </section>
+            <!-- 숨겨진 바코드 입력 -->
+            <input type="text" id="barcode-input" class="hidden-input" autofocus>
+
+            <!-- 스캔 결과 표시 -->
+            <div id="scan-result" class="scan-result"></div>
 
             <!-- 재고 현황 테이블 -->
             <section class="inventory-section">

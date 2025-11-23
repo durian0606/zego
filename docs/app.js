@@ -102,7 +102,9 @@ function updateHistoryTable() {
 function showScanResult(message, type) {
     scanResult.textContent = message;
     scanResult.className = `scan-result ${type}`;
+    scanResult.style.display = 'block';
     setTimeout(() => {
+        scanResult.style.display = 'none';
         scanResult.textContent = '';
         scanResult.className = 'scan-result';
     }, 5000);
@@ -280,6 +282,18 @@ productForm.addEventListener('submit', async (e) => {
 
 // 페이지 로드 시 바코드 입력에 포커스
 window.addEventListener('load', () => {
+    barcodeInput.focus();
+});
+
+// 포커스 항상 유지 (바코드 스캐너 입력 받기 위해)
+barcodeInput.addEventListener('blur', () => {
+    setTimeout(() => {
+        barcodeInput.focus();
+    }, 100);
+});
+
+// 화면 클릭 시에도 포커스 유지
+document.addEventListener('click', () => {
     barcodeInput.focus();
 });
 

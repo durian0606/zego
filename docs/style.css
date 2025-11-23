@@ -92,37 +92,11 @@ section h2 {
     border-bottom: 3px solid #667eea;
 }
 
-/* 바코드 스캔 섹션 */
-.scan-section {
-    background: white !important;
-    border: none !important;
-    padding: 0 !important;
-    margin-bottom: 30px !important;
-}
-
-.barcode-input-large {
-    width: 100%;
-    padding: 25px;
-    font-size: 1.5em;
-    font-weight: 500;
-    text-align: center;
-    border: 3px solid #667eea;
-    border-radius: 15px;
-    transition: all 0.3s;
-    background: #f9fafb;
-}
-
-.barcode-input-large:focus {
-    outline: none;
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.15);
-    transform: scale(1.02);
-}
-
-.barcode-input-large::placeholder {
-    color: #9ca3af;
-    font-weight: 400;
+/* 숨겨진 바코드 입력 */
+.hidden-input {
+    position: fixed;
+    left: -9999px;
+    opacity: 0;
 }
 
 .btn {
@@ -151,12 +125,20 @@ section h2 {
 }
 
 .scan-result {
-    margin-top: 15px;
-    padding: 15px;
-    border-radius: 10px;
-    font-size: 1.1em;
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: 20px 40px;
+    border-radius: 15px;
+    font-size: 1.3em;
     text-align: center;
-    font-weight: 500;
+    font-weight: 600;
+    min-width: 300px;
+    max-width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: none;
 }
 
 .scan-result.success {
@@ -359,15 +341,12 @@ tbody tr:hover {
         font-size: 1.2em;
     }
 
-    /* 바코드 스캔 섹션 - 모바일 최적화 */
-    .barcode-input-large {
-        font-size: 1.8em;
-        padding: 30px;
-    }
-
+    /* 스캔 결과 - 모바일 최적화 */
     .scan-result {
-        font-size: 1.2em;
-        padding: 20px;
+        top: 80px;
+        font-size: 1.1em;
+        padding: 18px 25px;
+        min-width: 250px;
     }
 
     /* 테이블을 카드 형태로 변경 */
