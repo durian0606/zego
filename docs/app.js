@@ -55,6 +55,7 @@ historyRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
 // 재고 테이블 업데이트
 function updateInventoryTable() {
     const products = Object.values(productsData);
+    console.log('제품 데이터:', products);
 
     if (products.length === 0) {
         inventoryTbody.innerHTML = '<tr><td colspan="4" class="no-data">제품이 없습니다.</td></tr>';
@@ -65,15 +66,41 @@ function updateInventoryTable() {
         const stockStatus = product.currentStock <= product.minStock ? 'stock-low' : 'stock-ok';
         const stockText = product.currentStock <= product.minStock ? '부족' : '정상';
 
+        console.log('제품:', product.name, '현재재고:', product.currentStock, '목표재고:', product.minStock);
+
         return `
             <tr>
                 <td><strong>${product.name}</strong></td>
                 <td class="stock-number"><strong>${product.currentStock}</strong></td>
-                <td class="stock-number">${product.minStock}</td>
+                <td class="stock-number editable-stock" data-product="${product.name}" onclick="editMinStock(this, '${product.name}', ${product.minStock})" title="클릭하여 수정">${product.minStock} 📝</td>
                 <td><span class="stock-status ${stockStatus}">${stockText}</span></td>
             </tr>
         `;
     }).join('');
+}
+
+// 목표 재고 수정 함수
+function editMinStock(element, productName, currentValue) {
+    const newValue = prompt(`"${productName}"의 목표 재고를 입력하세요:`, currentValue);
+
+    if (newValue === null || newValue === '') return;
+
+    const minStock = parseInt(newValue);
+    if (isNaN(minStock) || minStock < 0) {
+        alert('올바른 숫자를 입력해주세요.');
+        return;
+    }
+
+    // Firebase에 업데이트
+    productsRef.child(productName).update({
+        minStock: minStock,
+        updatedAt: Date.now()
+    }).then(() => {
+        showScanResult(`목표 재고가 ${minStock}개로 변경되었습니다.`, 'success');
+    }).catch((error) => {
+        console.error('목표 재고 업데이트 오류:', error);
+        showScanResult('목표 재고 업데이트 중 오류가 발생했습니다.', 'error');
+    });
 }
 
 // 히스토리 테이블 업데이트
@@ -105,6 +132,7 @@ function updateHistoryTable() {
 // 바코드 관리 테이블 업데이트
 function updateBarcodeTable() {
     const barcodes = Object.values(barcodesData);
+    console.log('바코드 데이터:', barcodes);
 
     if (barcodes.length === 0) {
         barcodeTbody.innerHTML = '<tr><td colspan="5" class="no-data">등록된 바코드가 없습니다.</td></tr>';
@@ -126,6 +154,8 @@ function updateBarcodeTable() {
             </tr>
         `;
     }).join('');
+
+    console.log('바코드 테이블 업데이트 완료');
 }
 
 // 바코드 삭제 함수

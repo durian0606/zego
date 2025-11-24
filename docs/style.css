@@ -267,6 +267,18 @@ td {
     font-weight: 700;
 }
 
+/* 목표 재고 수정 가능 표시 */
+.editable-stock {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.editable-stock:hover {
+    background: #f3f4f6;
+    color: #667eea;
+    border-radius: 8px;
+}
+
 tbody tr:hover {
     background: #f3f4f6;
 }
