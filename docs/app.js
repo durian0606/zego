@@ -9,6 +9,7 @@ const barcodeInput = document.getElementById('barcode-input');
 const scanResult = document.getElementById('scan-result');
 const inventoryTbody = document.getElementById('inventory-tbody');
 const historyTbody = document.getElementById('history-tbody');
+const barcodeTbody = document.getElementById('barcode-tbody');
 const connectionStatus = document.getElementById('connection-status');
 const productForm = document.getElementById('product-form');
 
@@ -38,6 +39,8 @@ productsRef.on('value', (snapshot) => {
 // 바코드 목록 실시간 감지
 barcodesRef.on('value', (snapshot) => {
     barcodesData = snapshot.val() || {};
+    updateBarcodeTable();
+    updateInventoryTable(); // 바코드 수 표시를 위해
 });
 
 // 히스토리 실시간 감지 (최근 50개만)
@@ -54,7 +57,7 @@ function updateInventoryTable() {
     const products = Object.values(productsData);
 
     if (products.length === 0) {
-        inventoryTbody.innerHTML = '<tr><td colspan="6" class="no-data">제품이 없습니다.</td></tr>';
+        inventoryTbody.innerHTML = '<tr><td colspan="4" class="no-data">제품이 없습니다.</td></tr>';
         return;
     }
 
@@ -62,17 +65,11 @@ function updateInventoryTable() {
         const stockStatus = product.currentStock <= product.minStock ? 'stock-low' : 'stock-ok';
         const stockText = product.currentStock <= product.minStock ? '부족' : '정상';
 
-        // 해당 제품의 바코드 수 계산
-        const productBarcodes = Object.values(barcodesData).filter(b => b.productName === product.name);
-        const barcodeCount = productBarcodes.length;
-
         return `
             <tr>
-                <td>${barcodeCount}개</td>
                 <td><strong>${product.name}</strong></td>
-                <td>-</td>
-                <td><strong>${product.currentStock}</strong></td>
-                <td>${product.minStock}</td>
+                <td class="stock-number"><strong>${product.currentStock}</strong></td>
+                <td class="stock-number">${product.minStock}</td>
                 <td><span class="stock-status ${stockStatus}">${stockText}</span></td>
             </tr>
         `;
@@ -103,6 +100,47 @@ function updateHistoryTable() {
             </tr>
         `;
     }).join('');
+}
+
+// 바코드 관리 테이블 업데이트
+function updateBarcodeTable() {
+    const barcodes = Object.values(barcodesData);
+
+    if (barcodes.length === 0) {
+        barcodeTbody.innerHTML = '<tr><td colspan="5" class="no-data">등록된 바코드가 없습니다.</td></tr>';
+        return;
+    }
+
+    barcodeTbody.innerHTML = barcodes.map(barcode => {
+        const typeText = barcode.type === 'IN' ? '입고' : barcode.type === 'OUT' ? '출고' : '조회';
+        const typeClass = barcode.type === 'IN' ? 'transaction-in' : barcode.type === 'OUT' ? 'transaction-out' : 'transaction-view';
+        const quantityText = barcode.type === 'VIEW' ? '-' : `${barcode.quantity}개`;
+
+        return `
+            <tr>
+                <td>${barcode.barcode}</td>
+                <td>${barcode.productName}</td>
+                <td><span class="transaction-type ${typeClass}">${typeText}</span></td>
+                <td>${quantityText}</td>
+                <td><button class="btn-delete" onclick="deleteBarcode('${barcode.barcode}')">삭제</button></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 바코드 삭제 함수
+async function deleteBarcode(barcodeId) {
+    if (!confirm(`바코드 "${barcodeId}"를 삭제하시겠습니까?`)) {
+        return;
+    }
+
+    try {
+        await barcodesRef.child(barcodeId).remove();
+        showScanResult('바코드가 삭제되었습니다.', 'success');
+    } catch (error) {
+        console.error('바코드 삭제 오류:', error);
+        showScanResult('바코드 삭제 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 // 스캔 결과 표시

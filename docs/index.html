@@ -30,9 +30,7 @@
                     <table id="inventory-table">
                         <thead>
                             <tr>
-                                <th>바코드 수</th>
                                 <th>제품명</th>
-                                <th>메모</th>
                                 <th>현재 재고</th>
                                 <th>목표 재고</th>
                                 <th>상태</th>
@@ -40,7 +38,7 @@
                         </thead>
                         <tbody id="inventory-tbody">
                             <tr>
-                                <td colspan="6" class="no-data">제품이 없습니다.</td>
+                                <td colspan="4" class="no-data">제품이 없습니다.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -66,6 +64,29 @@
                         <tbody id="history-tbody">
                             <tr>
                                 <td colspan="7" class="no-data">히스토리가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 바코드 관리 섹션 -->
+            <section class="barcode-management-section">
+                <h2>바코드 관리</h2>
+                <div class="table-wrapper">
+                    <table id="barcode-table">
+                        <thead>
+                            <tr>
+                                <th>바코드</th>
+                                <th>제품명</th>
+                                <th>타입</th>
+                                <th>수량</th>
+                                <th>삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody id="barcode-tbody">
+                            <tr>
+                                <td colspan="5" class="no-data">등록된 바코드가 없습니다.</td>
                             </tr>
                         </tbody>
                     </table>

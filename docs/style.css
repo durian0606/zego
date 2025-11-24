@@ -86,10 +86,10 @@ section {
 
 section h2 {
     color: #1f2937;
-    margin-bottom: 20px;
-    font-size: 2em;
-    padding-bottom: 10px;
-    border-bottom: 3px solid #667eea;
+    margin-bottom: 25px;
+    font-size: 3em;
+    padding-bottom: 15px;
+    border-bottom: 4px solid #667eea;
     font-weight: 700;
 }
 
@@ -131,14 +131,14 @@ section h2 {
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    padding: 30px 50px;
-    border-radius: 20px;
-    font-size: 2em;
+    padding: 40px 60px;
+    border-radius: 25px;
+    font-size: 3em;
     text-align: center;
     font-weight: 700;
-    min-width: 400px;
+    min-width: 500px;
     max-width: 90%;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     display: none;
 }
 
@@ -249,16 +249,22 @@ thead {
 }
 
 th {
-    padding: 15px;
+    padding: 20px;
     text-align: left;
-    font-weight: 600;
-    font-size: 1.2em;
+    font-weight: 700;
+    font-size: 2.2em;
 }
 
 td {
-    padding: 15px;
+    padding: 20px;
     border-bottom: 1px solid #e5e7eb;
-    font-size: 1.1em;
+    font-size: 2em;
+}
+
+/* 재고 숫자는 더 크게 */
+.stock-number {
+    font-size: 3.5em !important;
+    font-weight: 700;
 }
 
 tbody tr:hover {
@@ -273,10 +279,10 @@ tbody tr:hover {
 
 /* 상태 표시 */
 .stock-status {
-    padding: 5px 12px;
+    padding: 8px 16px;
     border-radius: 15px;
-    font-size: 0.85em;
-    font-weight: 600;
+    font-size: 1em;
+    font-weight: 700;
 }
 
 .stock-ok {
@@ -290,10 +296,10 @@ tbody tr:hover {
 }
 
 .transaction-type {
-    padding: 5px 12px;
+    padding: 8px 16px;
     border-radius: 15px;
-    font-size: 0.85em;
-    font-weight: 600;
+    font-size: 1em;
+    font-weight: 700;
 }
 
 .transaction-in {
@@ -304,6 +310,29 @@ tbody tr:hover {
 .transaction-out {
     background: #fed7aa;
     color: #92400e;
+}
+
+.transaction-view {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+/* 삭제 버튼 */
+.btn-delete {
+    background: #ef4444;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.8em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
 }
 
 /* 반응형 */
@@ -342,15 +371,27 @@ tbody tr:hover {
     }
 
     section h2 {
-        font-size: 1.5em;
+        font-size: 2em;
     }
 
     /* 스캔 결과 - 모바일 최적화 */
     .scan-result {
         top: 80px;
-        font-size: 1.5em;
-        padding: 25px 30px;
-        min-width: 280px;
+        font-size: 2em;
+        padding: 30px 35px;
+        min-width: 300px;
+    }
+
+    th {
+        font-size: 1.8em;
+    }
+
+    td {
+        font-size: 1.6em;
+    }
+
+    .stock-number {
+        font-size: 2.5em !important;
     }
 
     /* 테이블을 카드 형태로 변경 */
@@ -379,30 +420,33 @@ tbody tr:hover {
     td {
         border: none;
         position: relative;
-        padding: 15px 15px 15px 45%;
+        padding: 20px 20px 20px 45%;
         text-align: right;
-        font-size: 1.2em;
     }
 
     td:before {
         position: absolute;
-        left: 15px;
+        left: 20px;
         width: 40%;
         padding-right: 10px;
         white-space: nowrap;
         text-align: left;
         font-weight: 700;
         color: #4b5563;
-        font-size: 1em;
     }
 
     /* 재고 현황 테이블 라벨 */
-    .inventory-section td:nth-of-type(1):before { content: "바코드 수"; }
-    .inventory-section td:nth-of-type(2):before { content: "제품명"; }
-    .inventory-section td:nth-of-type(3):before { content: "메모"; }
-    .inventory-section td:nth-of-type(4):before { content: "현재 재고"; }
-    .inventory-section td:nth-of-type(5):before { content: "목표 재고"; }
-    .inventory-section td:nth-of-type(6):before { content: "상태"; }
+    .inventory-section td:nth-of-type(1):before { content: "제품명"; }
+    .inventory-section td:nth-of-type(2):before { content: "현재 재고"; }
+    .inventory-section td:nth-of-type(3):before { content: "목표 재고"; }
+    .inventory-section td:nth-of-type(4):before { content: "상태"; }
+
+    /* 바코드 관리 테이블 라벨 */
+    .barcode-management-section td:nth-of-type(1):before { content: "바코드"; }
+    .barcode-management-section td:nth-of-type(2):before { content: "제품명"; }
+    .barcode-management-section td:nth-of-type(3):before { content: "타입"; }
+    .barcode-management-section td:nth-of-type(4):before { content: "수량"; }
+    .barcode-management-section td:nth-of-type(5):before { content: "삭제"; }
 
     /* 히스토리 테이블 라벨 */
     .history-section td:nth-of-type(1):before { content: "시간"; }
@@ -412,11 +456,6 @@ tbody tr:hover {
     .history-section td:nth-of-type(5):before { content: "수량"; }
     .history-section td:nth-of-type(6):before { content: "이전 재고"; }
     .history-section td:nth-of-type(7):before { content: "이후 재고"; }
-
-    /* 모바일에서 설명 숨기기 */
-    .inventory-section td:nth-of-type(3) {
-        display: none;
-    }
 
     /* 모바일에서 바코드 컬럼 작게 */
     .history-section td:nth-of-type(3) {
