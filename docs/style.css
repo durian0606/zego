@@ -87,9 +87,10 @@ section {
 section h2 {
     color: #1f2937;
     margin-bottom: 20px;
-    font-size: 1.5em;
+    font-size: 2em;
     padding-bottom: 10px;
     border-bottom: 3px solid #667eea;
+    font-weight: 700;
 }
 
 /* 숨겨진 바코드 입력 */
@@ -130,14 +131,14 @@ section h2 {
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    padding: 20px 40px;
-    border-radius: 15px;
-    font-size: 1.3em;
+    padding: 30px 50px;
+    border-radius: 20px;
+    font-size: 2em;
     text-align: center;
-    font-weight: 600;
-    min-width: 300px;
+    font-weight: 700;
+    min-width: 400px;
     max-width: 90%;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
     display: none;
 }
 
@@ -251,12 +252,13 @@ th {
     padding: 15px;
     text-align: left;
     font-weight: 600;
-    font-size: 0.95em;
+    font-size: 1.2em;
 }
 
 td {
-    padding: 12px 15px;
+    padding: 15px;
     border-bottom: 1px solid #e5e7eb;
+    font-size: 1.1em;
 }
 
 tbody tr:hover {
@@ -340,15 +342,15 @@ tbody tr:hover {
     }
 
     section h2 {
-        font-size: 1.2em;
+        font-size: 1.5em;
     }
 
     /* 스캔 결과 - 모바일 최적화 */
     .scan-result {
         top: 80px;
-        font-size: 1.1em;
-        padding: 18px 25px;
-        min-width: 250px;
+        font-size: 1.5em;
+        padding: 25px 30px;
+        min-width: 280px;
     }
 
     /* 테이블을 카드 형태로 변경 */
@@ -377,19 +379,21 @@ tbody tr:hover {
     td {
         border: none;
         position: relative;
-        padding: 10px 10px 10px 45%;
+        padding: 15px 15px 15px 45%;
         text-align: right;
+        font-size: 1.2em;
     }
 
     td:before {
         position: absolute;
-        left: 10px;
+        left: 15px;
         width: 40%;
         padding-right: 10px;
         white-space: nowrap;
         text-align: left;
-        font-weight: 600;
+        font-weight: 700;
         color: #4b5563;
+        font-size: 1em;
     }
 
     /* 재고 현황 테이블 라벨 */
@@ -397,7 +401,7 @@ tbody tr:hover {
     .inventory-section td:nth-of-type(2):before { content: "제품명"; }
     .inventory-section td:nth-of-type(3):before { content: "메모"; }
     .inventory-section td:nth-of-type(4):before { content: "현재 재고"; }
-    .inventory-section td:nth-of-type(5):before { content: "최소 재고"; }
+    .inventory-section td:nth-of-type(5):before { content: "목표 재고"; }
     .inventory-section td:nth-of-type(6):before { content: "상태"; }
 
     /* 히스토리 테이블 라벨 */

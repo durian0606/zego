@@ -305,15 +305,20 @@ window.addEventListener('load', () => {
 });
 
 // 포커스 항상 유지 (바코드 스캐너 입력 받기 위해)
+// 단, 제품 등록 섹션이 열려있을 때는 제외
 barcodeInput.addEventListener('blur', () => {
     setTimeout(() => {
-        barcodeInput.focus();
+        if (productRegisterSection.style.display === 'none') {
+            barcodeInput.focus();
+        }
     }, 100);
 });
 
-// 화면 클릭 시에도 포커스 유지
-document.addEventListener('click', () => {
-    barcodeInput.focus();
+// 화면 클릭 시에도 포커스 유지 (제품 등록 섹션이 닫혀있을 때만)
+document.addEventListener('click', (e) => {
+    if (productRegisterSection.style.display === 'none') {
+        barcodeInput.focus();
+    }
 });
 
 console.log('바코드 재고관리 시스템이 시작되었습니다!');
