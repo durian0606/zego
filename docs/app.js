@@ -83,6 +83,8 @@ productsRef.on('value', (snapshot) => {
 // 바코드 목록 실시간 감지
 barcodesRef.on('value', (snapshot) => {
     AppState.barcodesData = snapshot.val() || {};
+    console.log('Firebase에서 바코드 데이터 업데이트:', Object.keys(AppState.barcodesData).length, '개');
+    console.log('바코드 목록:', Object.keys(AppState.barcodesData));
     updateBarcodeTable();
     updateInventoryTable(); // 바코드 수 표시를 위해
 });
@@ -1055,8 +1057,10 @@ productForm.addEventListener('submit', async (e) => {
         let barcodeCount = 0;
 
         // 생산 바코드 생성
+        console.log(`생산 바코드 생성 시작 (제품 인덱스: ${productIndex})`);
         for (const quantity of uniqueQuantitiesIn) {
             const barcodeIn = `P${productIndex}-IN-${quantity}`;
+            console.log(`생성할 바코드: ${barcodeIn}`);
             await barcodesRef.child(barcodeIn).set({
                 barcode: barcodeIn,
                 productName: productName,
@@ -1068,8 +1072,10 @@ productForm.addEventListener('submit', async (e) => {
         }
 
         // 출고 바코드 생성
+        console.log(`출고 바코드 생성 시작`);
         for (const quantity of uniqueQuantitiesOut) {
             const barcodeOut = `P${productIndex}-OUT-${quantity}`;
+            console.log(`생성할 바코드: ${barcodeOut}`);
             await barcodesRef.child(barcodeOut).set({
                 barcode: barcodeOut,
                 productName: productName,
@@ -1082,6 +1088,7 @@ productForm.addEventListener('submit', async (e) => {
 
         // 조회 바코드 생성 (기본)
         const barcodeView = `P${productIndex}-VIEW`;
+        console.log(`조회 바코드 생성: ${barcodeView}`);
         await barcodesRef.child(barcodeView).set({
             barcode: barcodeView,
             productName: productName,
@@ -1090,6 +1097,8 @@ productForm.addEventListener('submit', async (e) => {
             createdAt: Date.now()
         });
         barcodeCount++;
+
+        console.log(`총 ${barcodeCount}개의 바코드 생성 완료`);
 
         alert(`제품 "${productName}"이(가) 등록되었습니다!\n${barcodeCount}개의 바코드가 생성되었습니다.`);
 
