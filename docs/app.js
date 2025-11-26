@@ -755,8 +755,16 @@ barcodeInput.addEventListener('keypress', async (e) => {
 
         if (!barcode) return;
 
+        // 디버깅: 스캔한 바코드와 등록된 바코드 목록 출력
+        console.log('=== 바코드 스캔 디버깅 ===');
+        console.log('스캔한 바코드:', barcode);
+        console.log('바코드 길이:', barcode.length);
+        console.log('등록된 바코드 목록:', Object.keys(AppState.barcodesData));
+
         // 바코드 정보 조회
         const barcodeInfo = findBarcodeInfo(barcode);
+
+        console.log('조회된 바코드 정보:', barcodeInfo);
 
         if (!barcodeInfo) {
             showScanResult('등록되지 않은 바코드입니다. 먼저 바코드를 등록하세요.', 'error');
