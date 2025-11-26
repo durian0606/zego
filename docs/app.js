@@ -529,37 +529,23 @@ function updateBarcodeTable() {
 
     let html = '';
     Object.entries(productGroups).forEach(([productName, types]) => {
-        // 생산 타입 수량 정리 (수량 내림차순 정렬 + 수정 아이콘)
+        // 생산 타입 수량 정리 (수량 내림차순 정렬)
         const inQuantities = types.IN
             .sort((a, b) => b.quantity - a.quantity)
-            .map(b => `
-                <span class="quantity-item">
-                    ${b.quantity}개
-                    <button class="btn-edit-quantity-inline" onclick="editBarcode('${b.barcode}')" title="수정">
-                        <i data-lucide="edit-2" style="width: 12px; height: 12px;"></i>
-                    </button>
-                </span>
-            `)
-            .join('') || '-';
+            .map(b => `${b.quantity}개`)
+            .join(', ') || '-';
 
-        // 출고 타입 수량 정리 (수량 내림차순 정렬 + 수정 아이콘)
+        // 출고 타입 수량 정리 (수량 내림차순 정렬)
         const outQuantities = types.OUT
             .sort((a, b) => b.quantity - a.quantity)
-            .map(b => `
-                <span class="quantity-item">
-                    ${b.quantity}개
-                    <button class="btn-edit-quantity-inline" onclick="editBarcode('${b.barcode}')" title="수정">
-                        <i data-lucide="edit-2" style="width: 12px; height: 12px;"></i>
-                    </button>
-                </span>
-            `)
-            .join('') || '-';
+            .map(b => `${b.quantity}개`)
+            .join(', ') || '-';
 
         html += `
             <tr>
                 <td class="product-name-cell"><strong>${productName}</strong></td>
-                <td class="quantity-list-cell">${inQuantities}</td>
-                <td class="quantity-list-cell">${outQuantities}</td>
+                <td>${inQuantities}</td>
+                <td>${outQuantities}</td>
                 <td>
                     <button class="btn-delete-barcode" onclick="deleteProduct('${productName}')" title="제품 삭제">
                         <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
