@@ -618,6 +618,27 @@ td {
     border-top: 3px solid #667eea;
 }
 
+/* 바코드 수정 버튼 */
+.btn-edit-barcode {
+    background: #667eea;
+    color: white;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 5px;
+}
+
+.btn-edit-barcode:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
 /* 바코드 삭제 버튼 */
 .btn-delete-barcode {
     background: #ef4444;

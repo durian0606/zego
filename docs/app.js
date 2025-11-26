@@ -514,42 +514,47 @@ function updateBarcodeTable() {
         return;
     }
 
-    // 제품별로 그룹화하고 타입별로 정리
-    const productGroups = {};
-    barcodes.forEach(barcode => {
-        if (!productGroups[barcode.productName]) {
-            productGroups[barcode.productName] = {
-                IN: [],   // 생산
-                OUT: [],  // 출고
-                VIEW: []  // 조회
-            };
+    // 바코드를 제품명과 타입별로 정렬
+    barcodes.sort((a, b) => {
+        if (a.productName !== b.productName) {
+            return a.productName.localeCompare(b.productName);
         }
-        productGroups[barcode.productName][barcode.type].push(barcode);
+        // IN, OUT, VIEW 순서로
+        const typeOrder = { 'IN': 1, 'OUT': 2, 'VIEW': 3 };
+        return typeOrder[a.type] - typeOrder[b.type];
     });
 
     let html = '';
-    Object.entries(productGroups).forEach(([productName, types]) => {
-        // 생산 타입 수량 정리
-        const inQuantities = types.IN
-            .map(b => `${b.quantity}개`)
-            .join(', ') || '-';
+    barcodes.forEach(barcode => {
+        // 타입 표시
+        let typeText, typeClass;
+        if (barcode.type === 'IN') {
+            typeText = '생산';
+            typeClass = 'transaction-in';
+        } else if (barcode.type === 'OUT') {
+            typeText = '출고';
+            typeClass = 'transaction-out';
+        } else {
+            typeText = '조회';
+            typeClass = 'transaction-view';
+        }
 
-        // 출고 타입 수량 정리
-        const outQuantities = types.OUT
-            .map(b => `${b.quantity}개`)
-            .join(', ') || '-';
-
-        // 조회 타입
-        const viewCount = types.VIEW.length > 0 ? '조회' : '-';
+        // 수량 표시 (조회 타입은 수량 없음)
+        const quantityText = barcode.type === 'VIEW' ? '-' : `${barcode.quantity}개`;
 
         html += `
             <tr>
-                <td class="product-name-cell"><strong>${productName}</strong></td>
-                <td>${inQuantities}</td>
-                <td>${outQuantities}</td>
-                <td>${viewCount}</td>
+                <td><strong>${barcode.productName}</strong></td>
+                <td style="font-family: monospace; font-size: 0.9em;">${barcode.barcode}</td>
+                <td><span class="transaction-type ${typeClass}">${typeText}</span></td>
+                <td>${quantityText}</td>
                 <td>
-                    <button class="btn-delete-barcode" onclick="deleteProduct('${productName}')" title="제품 삭제">
+                    ${barcode.type !== 'VIEW' ? `
+                    <button class="btn-edit-barcode" onclick="editBarcode('${barcode.barcode}')" title="수량 수정">
+                        <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    ` : ''}
+                    <button class="btn-delete-barcode" onclick="deleteBarcode('${barcode.barcode}')" title="바코드 삭제">
                         <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                     </button>
                 </td>
@@ -654,6 +659,62 @@ async function deleteProduct(productName) {
     } catch (error) {
         console.error('제품 삭제 오류:', error);
         showScanResult('제품 삭제 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 바코드 수정 함수 (수량 변경)
+async function editBarcode(barcodeId) {
+    const barcodeInfo = AppState.barcodesData[barcodeId];
+
+    if (!barcodeInfo) {
+        showScanResult('바코드를 찾을 수 없습니다.', 'error');
+        return;
+    }
+
+    if (barcodeInfo.type === 'VIEW') {
+        showScanResult('조회 바코드는 수량을 변경할 수 없습니다.', 'error');
+        return;
+    }
+
+    const currentQuantity = barcodeInfo.quantity;
+    const newQuantityStr = prompt(
+        `바코드: ${barcodeId}\n제품: ${barcodeInfo.productName}\n타입: ${barcodeInfo.type === 'IN' ? '생산' : '출고'}\n\n새로운 수량을 입력하세요:`,
+        currentQuantity
+    );
+
+    // 취소 또는 빈 입력
+    if (newQuantityStr === null || newQuantityStr.trim() === '') {
+        return;
+    }
+
+    const newQuantity = parseInt(newQuantityStr.trim());
+
+    // 유효성 검사
+    if (isNaN(newQuantity) || newQuantity <= 0) {
+        showScanResult('올바른 수량을 입력해주세요. (1 이상의 숫자)', 'error');
+        return;
+    }
+
+    // 값이 변경되지 않은 경우
+    if (newQuantity === currentQuantity) {
+        return;
+    }
+
+    const confirmed = await showConfirmDialog(
+        `바코드 수량을 ${currentQuantity}개에서 ${newQuantity}개로 변경하시겠습니까?`
+    );
+    if (!confirmed) return;
+
+    try {
+        // Firebase에 업데이트
+        await barcodesRef.child(barcodeId).update({
+            quantity: newQuantity
+        });
+
+        showScanResult(`바코드 수량이 ${newQuantity}개로 변경되었습니다.`, 'success');
+    } catch (error) {
+        console.error('바코드 수정 오류:', error);
+        showScanResult('바코드 수정 중 오류가 발생했습니다.', 'error');
     }
 }
 
