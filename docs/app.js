@@ -132,7 +132,7 @@ function updateInventoryTable() {
             stockText = `${shortage} 부족`;
         } else {
             stockStatus = 'stock-ok';
-            stockText = '정상';
+            stockText = `${-shortage} 여유`;
         }
 
         console.log('제품:', product.name, '현재재고:', product.currentStock, '목표재고:', minStock, '부족수량:', shortage);

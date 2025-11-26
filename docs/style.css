@@ -885,7 +885,7 @@ tbody tr:hover {
 
     /* 재고 현황 섹션만 크게 (모바일) */
     .inventory-section h2 {
-        font-size: 2em;
+        font-size: 1.5em;
     }
 
     /* 스캔 결과 - 모바일 최적화 */
@@ -906,15 +906,15 @@ tbody tr:hover {
 
     /* 재고 현황 테이블만 크게 (모바일) */
     .inventory-section th {
-        font-size: 1.8em;
+        font-size: 1.1em;
     }
 
     .inventory-section td {
-        font-size: 1.6em;
+        font-size: 1em;
     }
 
     .inventory-section .stock-number {
-        font-size: 2.8em !important;
+        font-size: 1.5em !important;
     }
 
     /* 테이블을 카드 형태로 변경 */
