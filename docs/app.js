@@ -510,51 +510,58 @@ function updateBarcodeTable() {
     console.log('바코드 데이터:', barcodes);
 
     if (barcodes.length === 0) {
-        barcodeTbody.innerHTML = '<tr><td colspan="5" class="no-data">등록된 바코드가 없습니다.</td></tr>';
+        barcodeTbody.innerHTML = '<tr><td colspan="4" class="no-data">등록된 바코드가 없습니다.</td></tr>';
         return;
     }
 
-    // 바코드를 제품명과 타입별로 정렬
-    barcodes.sort((a, b) => {
-        if (a.productName !== b.productName) {
-            return a.productName.localeCompare(b.productName);
+    // 제품별로 그룹화하고 타입별로 정리
+    const productGroups = {};
+    barcodes.forEach(barcode => {
+        if (!productGroups[barcode.productName]) {
+            productGroups[barcode.productName] = {
+                IN: [],   // 생산
+                OUT: [],  // 출고
+                VIEW: []  // 조회
+            };
         }
-        // IN, OUT, VIEW 순서로
-        const typeOrder = { 'IN': 1, 'OUT': 2, 'VIEW': 3 };
-        return typeOrder[a.type] - typeOrder[b.type];
+        productGroups[barcode.productName][barcode.type].push(barcode);
     });
 
     let html = '';
-    barcodes.forEach(barcode => {
-        // 타입 표시
-        let typeText, typeClass;
-        if (barcode.type === 'IN') {
-            typeText = '생산';
-            typeClass = 'transaction-in';
-        } else if (barcode.type === 'OUT') {
-            typeText = '출고';
-            typeClass = 'transaction-out';
-        } else {
-            typeText = '조회';
-            typeClass = 'transaction-view';
-        }
+    Object.entries(productGroups).forEach(([productName, types]) => {
+        // 생산 타입 수량 정리 (수량 내림차순 정렬 + 수정 아이콘)
+        const inQuantities = types.IN
+            .sort((a, b) => b.quantity - a.quantity)
+            .map(b => `
+                <span class="quantity-item">
+                    ${b.quantity}개
+                    <button class="btn-edit-quantity-inline" onclick="editBarcode('${b.barcode}')" title="수정">
+                        <i data-lucide="edit-2" style="width: 12px; height: 12px;"></i>
+                    </button>
+                </span>
+            `)
+            .join('') || '-';
 
-        // 수량 표시 (조회 타입은 수량 없음)
-        const quantityText = barcode.type === 'VIEW' ? '-' : `${barcode.quantity}개`;
+        // 출고 타입 수량 정리 (수량 내림차순 정렬 + 수정 아이콘)
+        const outQuantities = types.OUT
+            .sort((a, b) => b.quantity - a.quantity)
+            .map(b => `
+                <span class="quantity-item">
+                    ${b.quantity}개
+                    <button class="btn-edit-quantity-inline" onclick="editBarcode('${b.barcode}')" title="수정">
+                        <i data-lucide="edit-2" style="width: 12px; height: 12px;"></i>
+                    </button>
+                </span>
+            `)
+            .join('') || '-';
 
         html += `
             <tr>
-                <td><strong>${barcode.productName}</strong></td>
-                <td style="font-family: monospace; font-size: 0.9em;">${barcode.barcode}</td>
-                <td><span class="transaction-type ${typeClass}">${typeText}</span></td>
-                <td>${quantityText}</td>
+                <td class="product-name-cell"><strong>${productName}</strong></td>
+                <td class="quantity-list-cell">${inQuantities}</td>
+                <td class="quantity-list-cell">${outQuantities}</td>
                 <td>
-                    ${barcode.type !== 'VIEW' ? `
-                    <button class="btn-edit-barcode" onclick="editBarcode('${barcode.barcode}')" title="수량 수정">
-                        <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
-                    </button>
-                    ` : ''}
-                    <button class="btn-delete-barcode" onclick="deleteBarcode('${barcode.barcode}')" title="바코드 삭제">
+                    <button class="btn-delete-barcode" onclick="deleteProduct('${productName}')" title="제품 삭제">
                         <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                     </button>
                 </td>

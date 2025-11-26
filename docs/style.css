@@ -618,7 +618,52 @@ td {
     border-top: 3px solid #667eea;
 }
 
-/* 바코드 수정 버튼 */
+/* 수량 항목 컨테이너 */
+.quantity-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 8px;
+    padding: 4px 8px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.quantity-item:hover {
+    background: #e5e7eb;
+}
+
+/* 수량 목록 셀 */
+.quantity-list-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+/* 인라인 수정 버튼 (작은 아이콘) */
+.btn-edit-quantity-inline {
+    background: transparent;
+    color: #667eea;
+    padding: 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+}
+
+.btn-edit-quantity-inline:hover {
+    opacity: 1;
+    background: #667eea;
+    color: white;
+}
+
+/* 바코드 수정 버튼 (사용 안 함, 제거 가능) */
 .btn-edit-barcode {
     background: #667eea;
     color: white;
