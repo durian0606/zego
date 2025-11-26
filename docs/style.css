@@ -1,0 +1,999 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 2em;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.btn-register {
+    background: white;
+    color: #667eea;
+    padding: 10px 20px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-register:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+}
+
+.btn-print {
+    background: white;
+    color: #667eea;
+    padding: 10px 20px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-print:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+}
+
+.btn-barcode-mgmt {
+    background: white;
+    color: #667eea;
+    padding: 10px 20px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-barcode-mgmt:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+}
+
+.btn-settings {
+    background: white;
+    color: #667eea;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-settings:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px) rotate(90deg);
+}
+
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.status-badge.connected {
+    background: #10b981;
+    color: white;
+}
+
+.status-badge.disconnected {
+    background: #ef4444;
+    color: white;
+}
+
+.main-content {
+    padding: 30px;
+}
+
+section {
+    margin-bottom: 40px;
+    background: #f9fafb;
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid #e5e7eb;
+}
+
+section h2 {
+    color: #1f2937;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #667eea;
+    font-weight: 700;
+}
+
+/* 재고 현황 섹션만 크게 */
+.inventory-section h2 {
+    font-size: 3em;
+    padding-bottom: 15px;
+    border-bottom: 4px solid #667eea;
+}
+
+/* 숨겨진 바코드 입력 */
+.hidden-input {
+    position: fixed;
+    left: -9999px;
+    opacity: 0;
+}
+
+.btn {
+    padding: 15px 30px;
+    font-size: 1em;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background: #5568d3;
+}
+
+.scan-result {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: 15px 25px;
+    border-radius: 12px;
+    font-size: 1.2em;
+    text-align: center;
+    font-weight: 600;
+    min-width: 300px;
+    max-width: 90%;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    display: none;
+    animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.scan-result.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 2px solid #10b981;
+}
+
+.scan-result.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 2px solid #ef4444;
+}
+
+/* 설정 섹션 */
+.settings-section {
+    position: relative;
+    animation: slideDown 0.3s ease-out;
+}
+
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.setting-item {
+    padding: 20px;
+    border-radius: 12px;
+    background: white;
+}
+
+.setting-item h3 {
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    color: #1f2937;
+}
+
+.danger-zone {
+    border: 2px solid #fecaca;
+    background: #fef2f2;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    font-size: 1em;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* 제품 등록 폼 */
+.product-register {
+    position: relative;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.btn-close {
+    background: #ef4444;
+    color: white;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    background: #dc2626;
+    transform: rotate(90deg);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    font-size: 1em;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* 수량 추가/삭제 버튼 */
+.btn-add-quantity,
+.btn-remove-quantity {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.3em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-add-quantity:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
+.btn-remove-quantity {
+    background: #ef4444;
+}
+
+.btn-remove-quantity:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+.custom-quantity-input,
+.custom-quantity-input-in,
+.custom-quantity-input-out {
+    flex: 1;
+}
+
+/* 수량 체크박스 라벨 */
+.quantity-checkbox-in,
+.quantity-checkbox-out {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+/* 생산 체크박스 체크 시 */
+input[type="checkbox"].quantity-checkbox-in:checked + span {
+    color: #10b981;
+    font-weight: 700;
+}
+
+/* 출고 체크박스 체크 시 */
+input[type="checkbox"].quantity-checkbox-out:checked + span {
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+/* 테이블 */
+.table-wrapper {
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    table-layout: auto;
+}
+
+thead {
+    background: #667eea;
+    color: white;
+}
+
+th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.95em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 재고 현황 테이블만 크게 */
+.inventory-section th {
+    padding: 20px;
+    font-size: 2.2em;
+}
+
+.inventory-section td {
+    padding: 20px;
+    font-size: 2em;
+}
+
+/* 재고 현황 테이블 컬럼 너비 설정 */
+.inventory-section table th:nth-child(1),
+.inventory-section table td:nth-child(1) {
+    /* 제품명 - 남은 공간 모두 사용 */
+    width: auto;
+    min-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+.inventory-section table th:nth-child(2),
+.inventory-section table td:nth-child(2) {
+    /* 현재 재고 */
+    width: 250px;
+    text-align: right;
+    padding-right: 30px;
+}
+
+.inventory-section table th:nth-child(3),
+.inventory-section table td:nth-child(3) {
+    /* 목표 재고 */
+    width: 250px;
+    text-align: right;
+    padding-right: 30px;
+}
+
+.inventory-section table th:nth-child(4),
+.inventory-section table td:nth-child(4) {
+    /* 상태 */
+    width: 200px;
+    text-align: center;
+}
+
+/* 금일 생산/출고 현황 테이블 */
+.daily-summary-section table th:nth-child(1),
+.daily-summary-section table td:nth-child(1) {
+    /* 제품명 */
+    width: auto;
+    min-width: 150px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+.daily-summary-section table th:nth-child(2),
+.daily-summary-section table td:nth-child(2),
+.daily-summary-section table th:nth-child(3),
+.daily-summary-section table td:nth-child(3) {
+    /* 금일 생산, 금일 출고 */
+    width: 150px;
+    text-align: center;
+}
+
+/* 히스토리 테이블 - 제품명 완전 표시 */
+.history-section table th:nth-child(1),
+.history-section table td:nth-child(1) {
+    /* 시간 */
+    width: 140px;
+    white-space: nowrap;
+}
+
+.history-section table th:nth-child(2),
+.history-section table td:nth-child(2) {
+    /* 제품명 */
+    width: auto;
+    min-width: 120px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+.history-section table th:nth-child(3),
+.history-section table td:nth-child(3) {
+    /* 생산 */
+    width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.history-section table th:nth-child(4),
+.history-section table td:nth-child(4) {
+    /* 출고 */
+    width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 히스토리 섹션 폰트 크기 줄이기 */
+.history-section h2 {
+    font-size: 1.3em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-section th {
+    font-size: 0.85em;
+    padding: 10px 12px;
+    white-space: nowrap;
+}
+
+.history-section td {
+    font-size: 0.8em;
+    padding: 8px 12px;
+}
+
+/* 바코드 관리 테이블 - 컬럼 순서: 제품명, 생산, 출고, 조회, 작업 */
+.barcode-management-section table th:nth-child(1),
+.barcode-management-section table td:nth-child(1) {
+    /* 제품명 */
+    width: 200px;
+    max-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+.barcode-management-section table th:nth-child(2),
+.barcode-management-section table td:nth-child(2) {
+    /* 생산 */
+    width: 180px;
+    text-align: center;
+}
+
+.barcode-management-section table th:nth-child(3),
+.barcode-management-section table td:nth-child(3) {
+    /* 출고 */
+    width: 180px;
+    text-align: center;
+}
+
+.barcode-management-section table th:nth-child(4),
+.barcode-management-section table td:nth-child(4) {
+    /* 조회 */
+    width: 80px;
+    text-align: center;
+}
+
+.barcode-management-section table th:nth-child(5),
+.barcode-management-section table td:nth-child(5) {
+    /* 작업 */
+    width: 80px;
+    text-align: center;
+}
+
+/* 바코드 관리 테이블 - 제품명 셀 배경색 */
+.barcode-management-section .product-name-cell {
+    background-color: #f3f4f6;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+/* 바코드 관리 테이블 - 제품 구분선 */
+.barcode-management-section tr.product-separator {
+    border-top: 3px solid #667eea;
+}
+
+/* 바코드 삭제 버튼 */
+.btn-delete-barcode {
+    background: #ef4444;
+    color: white;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-delete-barcode:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+/* 재고 숫자는 더 크게 (재고 현황용) */
+.inventory-section .stock-number {
+    font-size: 4em !important;
+    font-weight: 700;
+}
+
+/* 목표 재고 수정 가능 표시 */
+.editable-stock {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.editable-stock:hover {
+    background: #f3f4f6;
+    color: #667eea;
+    border-radius: 8px;
+}
+
+tbody tr:hover {
+    background: #f3f4f6;
+}
+
+.no-data {
+    text-align: center;
+    color: #9ca3af;
+    padding: 20px !important;
+    font-size: 1em !important;
+}
+
+/* 재고 현황 섹션의 no-data는 크게 */
+.inventory-section .no-data {
+    padding: 30px !important;
+    font-size: 2em !important;
+}
+
+/* 상태 표시 (기본) */
+.stock-status {
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+/* 재고 현황의 상태 표시는 크게 */
+.inventory-section .stock-status {
+    padding: 8px 16px;
+    border-radius: 15px;
+    font-size: 1em;
+    font-weight: 700;
+}
+
+.stock-ok {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.stock-low {
+    background: #fee2e2;
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.transaction-type {
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.transaction-in {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.transaction-out {
+    background: #fed7aa;
+    color: #92400e;
+}
+
+.transaction-view {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.transaction-adjust {
+    background: #ddd6fe;
+    color: #5b21b6;
+}
+
+
+/* 수정 버튼 (기본) */
+.btn-edit {
+    background: #3b82f6;
+    color: white;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-edit:hover {
+    background: #2563eb;
+    transform: translateY(-2px) scale(1.05);
+}
+
+/* 재고 현황 섹션의 수정 버튼은 크게 */
+.inventory-section .btn-edit {
+    padding: 10px 16px;
+    font-size: 1.5em;
+}
+
+.inventory-section .btn-edit:hover {
+    transform: translateY(-2px) scale(1.1);
+}
+
+/* 삭제 버튼 (기본) */
+.btn-delete {
+    background: #ef4444;
+    color: white;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background: #dc2626;
+    transform: translateY(-2px) scale(1.05);
+}
+
+/* 재고 현황 섹션의 삭제 버튼은 크게 */
+.inventory-section .btn-delete {
+    padding: 10px 16px;
+    font-size: 1.5em;
+}
+
+.inventory-section .btn-delete:hover {
+    transform: translateY(-2px) scale(1.1);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    body {
+        padding: 0;
+    }
+
+    .container {
+        border-radius: 0;
+    }
+
+    header {
+        padding: 20px 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    header h1 {
+        font-size: 1.3em;
+        width: 100%;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    section {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    section h2 {
+        font-size: 1.3em;
+    }
+
+    /* 재고 현황 섹션만 크게 (모바일) */
+    .inventory-section h2 {
+        font-size: 2em;
+    }
+
+    /* 스캔 결과 - 모바일 최적화 */
+    .scan-result {
+        top: 70px;
+        font-size: 1em;
+        padding: 12px 20px;
+        min-width: 250px;
+    }
+
+    th {
+        font-size: 0.95em;
+    }
+
+    td {
+        font-size: 0.9em;
+    }
+
+    /* 재고 현황 테이블만 크게 (모바일) */
+    .inventory-section th {
+        font-size: 1.8em;
+    }
+
+    .inventory-section td {
+        font-size: 1.6em;
+    }
+
+    .inventory-section .stock-number {
+        font-size: 2.8em !important;
+    }
+
+    /* 테이블을 카드 형태로 변경 */
+    .table-wrapper {
+        border: none;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    tr {
+        margin-bottom: 15px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        background: white;
+        padding: 15px;
+    }
+
+    td {
+        border: none;
+        position: relative;
+        padding: 20px 20px 20px 45%;
+        text-align: right;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow: visible;
+        text-overflow: unset;
+    }
+
+    td:before {
+        position: absolute;
+        left: 20px;
+        width: 40%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    /* 재고 현황 테이블 라벨 */
+    .inventory-section td:nth-of-type(1):before { content: "제품명"; }
+    .inventory-section td:nth-of-type(2):before { content: "현재 재고"; }
+    .inventory-section td:nth-of-type(3):before { content: "목표 재고"; }
+    .inventory-section td:nth-of-type(4):before { content: "상태"; }
+
+    /* 바코드 관리 테이블 라벨 */
+    .barcode-management-section td:nth-of-type(1):before { content: "제품명"; }
+    .barcode-management-section td:nth-of-type(2):before { content: "생산"; }
+    .barcode-management-section td:nth-of-type(3):before { content: "출고"; }
+    .barcode-management-section td:nth-of-type(4):before { content: "조회"; }
+    .barcode-management-section td:nth-of-type(5):before { content: "작업"; }
+
+    /* 금일 생산/출고 현황 테이블 라벨 */
+    .daily-summary-section td:nth-of-type(1):before { content: "제품명"; }
+    .daily-summary-section td:nth-of-type(2):before { content: "금일 생산"; }
+    .daily-summary-section td:nth-of-type(3):before { content: "금일 출고"; }
+
+    /* 히스토리 테이블 라벨 */
+    .history-section td:nth-of-type(1):before { content: "시간"; }
+    .history-section td:nth-of-type(2):before { content: "제품명"; }
+    .history-section td:nth-of-type(3):before { content: "생산"; }
+    .history-section td:nth-of-type(4):before { content: "출고"; }
+
+    .no-data {
+        padding: 15px !important;
+        font-size: 0.9em !important;
+    }
+
+    /* 재고 현황의 no-data는 크게 (모바일) */
+    .inventory-section .no-data {
+        padding: 20px !important;
+        font-size: 1.5em !important;
+    }
+
+    /* 제품 등록 폼 */
+    .form-group input {
+        padding: 14px;
+        font-size: 1em;
+    }
+
+    .btn-primary {
+        padding: 18px;
+        font-size: 1.1em;
+    }
+
+    .btn-register {
+        padding: 12px 16px;
+        font-size: 0.9em;
+    }
+
+    .btn-settings {
+        padding: 10px;
+    }
+
+    .status-badge {
+        padding: 8px 12px;
+        font-size: 0.85em;
+    }
+
+    .setting-item h3 {
+        font-size: 1.1em;
+    }
+
+    .btn-danger {
+        font-size: 0.95em;
+        padding: 10px 20px;
+    }
+
+    /* 버튼 크기 조정 (모바일) */
+    .btn-edit {
+        font-size: 0.8em;
+        padding: 5px 8px;
+    }
+
+    .btn-delete {
+        font-size: 0.8em;
+        padding: 5px 8px;
+    }
+
+    /* 재고 현황의 버튼은 크게 (모바일) */
+    .inventory-section .btn-edit {
+        font-size: 1.2em;
+        padding: 8px 12px;
+    }
+
+    .inventory-section .btn-delete {
+        font-size: 1.2em;
+        padding: 8px 12px;
+    }
+
+    /* 바코드 삭제 버튼 (모바일) */
+    .btn-delete-barcode {
+        font-size: 0.8em;
+        padding: 5px 8px;
+    }
+}

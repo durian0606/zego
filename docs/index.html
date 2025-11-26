@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리곡간식품 재고관리 시스템</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i data-lucide="package" style="display: inline-block; vertical-align: middle; margin-right: 10px;"></i>우리곡간식품 재고관리 시스템</h1>
+            <div class="header-actions">
+                <button id="btn-toggle-register" class="btn btn-register"><i data-lucide="plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>제품 등록</button>
+                <button id="btn-print-barcode" class="btn btn-print" title="바코드 인쇄"><i data-lucide="printer" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 인쇄</button>
+                <button id="btn-toggle-barcode-management" class="btn btn-barcode-mgmt" title="바코드 관리"><i data-lucide="list" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 관리</button>
+                <button id="btn-settings" class="btn btn-settings" title="설정"><i data-lucide="settings" style="width: 18px; height: 18px;"></i></button>
+                <span id="connection-status" class="status-badge disconnected">연결 중...</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- 숨겨진 바코드 입력 -->
+            <input type="text" id="barcode-input" class="hidden-input" autofocus>
+
+            <!-- 스캔 결과 표시 -->
+            <div id="scan-result" class="scan-result"></div>
+
+            <!-- 재고 현황 테이블 -->
+            <section class="inventory-section">
+                <h2>재고 현황</h2>
+                <div class="table-wrapper">
+                    <table id="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>제품명</th>
+                                <th>현재 재고</th>
+                                <th>목표 재고</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-tbody">
+                            <tr>
+                                <td colspan="4" class="no-data">제품이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 금일 생산/출고 현황 -->
+            <section class="daily-summary-section">
+                <h2>금일 생산/출고 현황</h2>
+                <div class="table-wrapper">
+                    <table id="daily-summary-table">
+                        <thead>
+                            <tr>
+                                <th>제품명</th>
+                                <th>금일 생산</th>
+                                <th>금일 출고</th>
+                            </tr>
+                        </thead>
+                        <tbody id="daily-summary-tbody">
+                            <tr>
+                                <td colspan="3" class="no-data">오늘 생산/출고 내역이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 재고 변동 내역 -->
+            <section class="history-section">
+                <h2>재고 변동 내역 (어제/오늘)</h2>
+                <div class="table-wrapper">
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th>시간</th>
+                                <th>제품명</th>
+                                <th>생산</th>
+                                <th>출고</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <tr>
+                                <td colspan="4" class="no-data">내역이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 바코드 관리 섹션 -->
+            <section class="barcode-management-section" id="barcode-management-section" style="display: none;">
+                <h2>바코드 관리</h2>
+                <div class="table-wrapper">
+                    <table id="barcode-table">
+                        <thead>
+                            <tr>
+                                <th>제품명</th>
+                                <th>생산</th>
+                                <th>출고</th>
+                                <th>조회</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="barcode-tbody">
+                            <tr>
+                                <td colspan="5" class="no-data">등록된 바코드가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 설정 섹션 (토글) -->
+            <section class="settings-section" id="settings-section" style="display: none;">
+                <div class="section-header">
+                    <h2>설정</h2>
+                    <button id="btn-close-settings" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+                </div>
+                <div class="settings-content">
+                    <div class="setting-item danger-zone">
+                        <h3><i data-lucide="alert-triangle" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px; color: #ef4444;"></i>위험 구역</h3>
+                        <p style="color: #6b7280; margin-bottom: 15px;">모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+                        <button id="btn-reset-database" class="btn-danger">
+                            <i data-lucide="trash-2" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            데이터베이스 초기화
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 제품 등록 섹션 (토글) -->
+            <section class="product-register" id="product-register-section" style="display: none;">
+                <div class="section-header">
+                    <h2>제품 등록</h2>
+                    <button id="btn-close-register" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+                </div>
+                <form id="product-form">
+                    <div class="form-group">
+                        <label for="new-name">제품명:</label>
+                        <input type="text" id="new-name" required placeholder="제품명 입력">
+                    </div>
+
+                    <!-- 생산 수량 섹션 -->
+                    <div class="form-group">
+                        <label style="color: #10b981; font-size: 1.1em; margin-bottom: 10px; display: block;">생산 수량 단위:</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #d1fae5; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" class="quantity-checkbox-in" value="80" checked>
+                                <span>80개</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #d1fae5; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" class="quantity-checkbox-in" value="40" checked>
+                                <span>40개</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #d1fae5; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" class="quantity-checkbox-in" value="10" checked>
+                                <span>10개</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #d1fae5; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" class="quantity-checkbox-in" value="1" checked>
+                                <span>1개</span>
+                            </label>
+                        </div>
+                        <label>추가 생산 수량 (선택):</label>
+                        <div id="custom-quantities-in">
+                            <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                                <input type="number" class="custom-quantity-input-in" min="1" placeholder="예: 20">
+                                <button type="button" class="btn-add-quantity" onclick="addCustomQuantityInputIn()">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 출고 수량 섹션 -->
+                    <div class="form-group">
+                        <label style="color: #f59e0b; font-size: 1.1em; margin-bottom: 10px; display: block;">출고 수량 단위:</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #fed7aa; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" class="quantity-checkbox-out" value="80" checked>
+                                <span>80개</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #fed7aa; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" class="quantity-checkbox-out" value="40" checked>
+                                <span>40개</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #fed7aa; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" class="quantity-checkbox-out" value="10" checked>
+                                <span>10개</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #fed7aa; border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" class="quantity-checkbox-out" value="1" checked>
+                                <span>1개</span>
+                            </label>
+                        </div>
+                        <label>추가 출고 수량 (선택):</label>
+                        <div id="custom-quantities-out">
+                            <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                                <input type="number" class="custom-quantity-input-out" min="1" placeholder="예: 20">
+                                <button type="button" class="btn-add-quantity" onclick="addCustomQuantityInputOut()">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">제품 등록 및 바코드 생성</button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <!-- Firebase 설정 -->
+    <script src="firebase-config.js"></script>
+
+    <!-- Lucide 아이콘 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- JsBarcode 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <!-- 앱 로직 -->
+    <script src="app.js"></script>
+
+    <!-- Lucide 아이콘 초기화 -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
