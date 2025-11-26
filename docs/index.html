@@ -145,29 +145,10 @@
 
                     <!-- 생산 수량 섹션 -->
                     <div class="form-group">
-                        <label style="color: #10b981; font-size: 1.1em; margin-bottom: 10px; display: block;">생산 수량 단위:</label>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #d1fae5; border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" class="quantity-checkbox-in" value="80" checked>
-                                <span>80개</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #d1fae5; border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" class="quantity-checkbox-in" value="40" checked>
-                                <span>40개</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #d1fae5; border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" class="quantity-checkbox-in" value="10" checked>
-                                <span>10개</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #d1fae5; border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" class="quantity-checkbox-in" value="1" checked>
-                                <span>1개</span>
-                            </label>
-                        </div>
-                        <label>추가 생산 수량 (선택):</label>
+                        <label style="color: #10b981; font-size: 1.1em; margin-bottom: 10px; display: block;">생산 수량:</label>
                         <div id="custom-quantities-in">
                             <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-                                <input type="number" class="custom-quantity-input-in" min="1" placeholder="예: 20">
+                                <input type="number" class="custom-quantity-input-in" min="1" placeholder="예: 80">
                                 <button type="button" class="btn-add-quantity" onclick="addCustomQuantityInputIn()">+</button>
                             </div>
                         </div>
@@ -175,29 +156,10 @@
 
                     <!-- 출고 수량 섹션 -->
                     <div class="form-group">
-                        <label style="color: #f59e0b; font-size: 1.1em; margin-bottom: 10px; display: block;">출고 수량 단위:</label>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #fed7aa; border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" class="quantity-checkbox-out" value="80" checked>
-                                <span>80개</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #fed7aa; border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" class="quantity-checkbox-out" value="40" checked>
-                                <span>40개</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #fed7aa; border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" class="quantity-checkbox-out" value="10" checked>
-                                <span>10개</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #fed7aa; border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" class="quantity-checkbox-out" value="1" checked>
-                                <span>1개</span>
-                            </label>
-                        </div>
-                        <label>추가 출고 수량 (선택):</label>
+                        <label style="color: #f59e0b; font-size: 1.1em; margin-bottom: 10px; display: block;">출고 수량:</label>
                         <div id="custom-quantities-out">
                             <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-                                <input type="number" class="custom-quantity-input-out" min="1" placeholder="예: 20">
+                                <input type="number" class="custom-quantity-input-out" min="1" placeholder="예: 40">
                                 <button type="button" class="btn-add-quantity" onclick="addCustomQuantityInputOut()">+</button>
                             </div>
                         </div>

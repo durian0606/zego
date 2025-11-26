@@ -1013,13 +1013,6 @@ productForm.addEventListener('submit', async (e) => {
 
     // 생산 수량 단위 수집
     const quantitiesIn = [];
-
-    // 생산 프리셋 체크박스
-    document.querySelectorAll('.quantity-checkbox-in:checked').forEach(checkbox => {
-        quantitiesIn.push(parseInt(checkbox.value));
-    });
-
-    // 생산 커스텀 입력
     document.querySelectorAll('.custom-quantity-input-in').forEach(input => {
         const val = parseInt(input.value);
         if (val > 0) {
@@ -1029,13 +1022,6 @@ productForm.addEventListener('submit', async (e) => {
 
     // 출고 수량 단위 수집
     const quantitiesOut = [];
-
-    // 출고 프리셋 체크박스
-    document.querySelectorAll('.quantity-checkbox-out:checked').forEach(checkbox => {
-        quantitiesOut.push(parseInt(checkbox.value));
-    });
-
-    // 출고 커스텀 입력
     document.querySelectorAll('.custom-quantity-input-out').forEach(input => {
         const val = parseInt(input.value);
         if (val > 0) {
@@ -1044,7 +1030,7 @@ productForm.addEventListener('submit', async (e) => {
     });
 
     if (quantitiesIn.length === 0 && quantitiesOut.length === 0) {
-        alert('생산 또는 출고 수량 중 최소 1개 이상 선택해주세요.');
+        alert('생산 또는 출고 수량 중 최소 1개 이상 입력해주세요.');
         return;
     }
 
@@ -1118,22 +1104,18 @@ productForm.addEventListener('submit', async (e) => {
         // 폼 초기화
         productForm.reset();
 
-        // 생산 체크박스 모두 체크
-        document.querySelectorAll('.quantity-checkbox-in').forEach(cb => cb.checked = true);
-        // 생산 추가 입력 필드 초기화
+        // 생산 입력 필드 초기화
         document.getElementById('custom-quantities-in').innerHTML = `
             <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-                <input type="number" class="custom-quantity-input-in" min="1" placeholder="예: 20">
+                <input type="number" class="custom-quantity-input-in" min="1" placeholder="예: 80">
                 <button type="button" class="btn-add-quantity" onclick="addCustomQuantityInputIn()">+</button>
             </div>
         `;
 
-        // 출고 체크박스 모두 체크
-        document.querySelectorAll('.quantity-checkbox-out').forEach(cb => cb.checked = true);
-        // 출고 추가 입력 필드 초기화
+        // 출고 입력 필드 초기화
         document.getElementById('custom-quantities-out').innerHTML = `
             <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-                <input type="number" class="custom-quantity-input-out" min="1" placeholder="예: 20">
+                <input type="number" class="custom-quantity-input-out" min="1" placeholder="예: 40">
                 <button type="button" class="btn-add-quantity" onclick="addCustomQuantityInputOut()">+</button>
             </div>
         `;

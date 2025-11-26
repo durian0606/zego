@@ -392,25 +392,6 @@ section h2 {
     flex: 1;
 }
 
-/* 수량 체크박스 라벨 */
-.quantity-checkbox-in,
-.quantity-checkbox-out {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-
-/* 생산 체크박스 체크 시 */
-input[type="checkbox"].quantity-checkbox-in:checked + span {
-    color: #10b981;
-    font-weight: 700;
-}
-
-/* 출고 체크박스 체크 시 */
-input[type="checkbox"].quantity-checkbox-out:checked + span {
-    color: #f59e0b;
-    font-weight: 700;
-}
 
 /* 테이블 */
 .table-wrapper {
