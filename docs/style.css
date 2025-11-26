@@ -23,27 +23,28 @@ body {
 header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 30px;
+    padding: clamp(20px, 3vw, 30px);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 header h1 {
-    font-size: 2em;
+    font-size: clamp(1.2rem, 3.5vw, 2rem);
     font-weight: 600;
 }
 
 .header-actions {
     display: flex;
-    gap: 15px;
+    gap: clamp(8px, 2vw, 15px);
     align-items: center;
 }
 
 .btn-register {
     background: white;
     color: #667eea;
-    padding: 10px 20px;
+    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2.5vw, 20px);
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
     font-weight: 600;
     border: none;
     border-radius: 8px;
@@ -59,7 +60,8 @@ header h1 {
 .btn-print {
     background: white;
     color: #667eea;
-    padding: 10px 20px;
+    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2.5vw, 20px);
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
     font-weight: 600;
     border: none;
     border-radius: 8px;
@@ -75,7 +77,8 @@ header h1 {
 .btn-barcode-mgmt {
     background: white;
     color: #667eea;
-    padding: 10px 20px;
+    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2.5vw, 20px);
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
     font-weight: 600;
     border: none;
     border-radius: 8px;
@@ -91,7 +94,7 @@ header h1 {
 .btn-settings {
     background: white;
     color: #667eea;
-    padding: 10px;
+    padding: clamp(8px, 1.5vw, 10px);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -107,9 +110,9 @@ header h1 {
 }
 
 .status-badge {
-    padding: 8px 16px;
+    padding: clamp(6px, 1.2vw, 8px) clamp(10px, 2vw, 16px);
     border-radius: 20px;
-    font-size: 0.9em;
+    font-size: clamp(0.75rem, 1.5vw, 0.9rem);
     font-weight: 600;
 }
 
@@ -124,13 +127,13 @@ header h1 {
 }
 
 .main-content {
-    padding: 30px;
+    padding: clamp(15px, 3vw, 30px);
 }
 
 section {
-    margin-bottom: 40px;
+    margin-bottom: clamp(20px, 4vw, 40px);
     background: #f9fafb;
-    padding: 25px;
+    padding: clamp(15px, 2.5vw, 25px);
     border-radius: 15px;
     border: 1px solid #e5e7eb;
 }
@@ -138,15 +141,15 @@ section {
 section h2 {
     color: #1f2937;
     margin-bottom: 20px;
-    font-size: 1.5em;
+    font-size: clamp(1.2rem, 2.5vw, 1.5rem);
     padding-bottom: 10px;
     border-bottom: 3px solid #667eea;
     font-weight: 700;
 }
 
-/* 재고 현황 섹션만 크게 */
+/* 재고 현황 섹션만 크게 - 반응형 */
 .inventory-section h2 {
-    font-size: 3em;
+    font-size: clamp(1.8rem, 5vw, 3rem);
     padding-bottom: 15px;
     border-bottom: 4px solid #667eea;
 }
@@ -163,8 +166,8 @@ section h2 {
 }
 
 .btn {
-    padding: 15px 30px;
-    font-size: 1em;
+    padding: clamp(10px, 2vw, 15px) clamp(20px, 3vw, 30px);
+    font-size: clamp(0.9rem, 1.8vw, 1rem);
     font-weight: 600;
     border: none;
     border-radius: 10px;
@@ -189,16 +192,16 @@ section h2 {
 
 .scan-result {
     position: fixed;
-    top: 80px;
+    top: clamp(60px, 10vw, 80px);
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    padding: 15px 25px;
+    padding: clamp(12px, 2vw, 15px) clamp(20px, 3vw, 25px);
     border-radius: 12px;
-    font-size: 1.2em;
+    font-size: clamp(1rem, 2vw, 1.2rem);
     text-align: center;
     font-weight: 600;
-    min-width: 300px;
+    min-width: 250px;
     max-width: 90%;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     display: none;
@@ -247,7 +250,7 @@ section h2 {
 }
 
 .setting-item h3 {
-    font-size: 1.3em;
+    font-size: clamp(1.1rem, 2vw, 1.3rem);
     margin-bottom: 10px;
     color: #1f2937;
 }
@@ -260,7 +263,7 @@ section h2 {
 .btn-danger {
     background: #ef4444;
     color: white;
-    padding: 12px 24px;
+    padding: clamp(10px, 1.5vw, 12px) clamp(20px, 3vw, 24px);
     border: none;
     border-radius: 8px;
     font-weight: 600;
@@ -268,7 +271,7 @@ section h2 {
     transition: all 0.3s;
     display: inline-flex;
     align-items: center;
-    font-size: 1em;
+    font-size: clamp(0.9rem, 1.8vw, 1rem);
 }
 
 .btn-danger:hover {
@@ -310,10 +313,10 @@ section h2 {
     background: #ef4444;
     color: white;
     border: none;
-    width: 35px;
-    height: 35px;
+    width: clamp(30px, 4vw, 35px);
+    height: clamp(30px, 4vw, 35px);
     border-radius: 50%;
-    font-size: 1.2em;
+    font-size: clamp(1rem, 2vw, 1.2rem);
     cursor: pointer;
     transition: all 0.3s;
     display: flex;
@@ -327,7 +330,7 @@ section h2 {
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: clamp(10px, 2vw, 15px);
 }
 
 .form-group label {
@@ -335,13 +338,14 @@ section h2 {
     margin-bottom: 5px;
     font-weight: 600;
     color: #4b5563;
+    font-size: clamp(0.9rem, 1.8vw, 1rem);
 }
 
 .form-group input,
 .form-group select {
     width: 100%;
-    padding: 12px;
-    font-size: 1em;
+    padding: clamp(10px, 1.5vw, 12px);
+    font-size: clamp(0.9rem, 1.8vw, 1rem);
     border: 2px solid #d1d5db;
     border-radius: 8px;
     transition: border-color 0.3s;
@@ -412,51 +416,51 @@ thead {
 }
 
 th {
-    padding: 12px 15px;
+    padding: clamp(10px, 1.5vw, 15px);
     text-align: left;
     font-weight: 700;
-    font-size: 1em;
+    font-size: clamp(0.85rem, 1.8vw, 1rem);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 td {
-    padding: 12px 15px;
+    padding: clamp(10px, 1.5vw, 15px);
     border-bottom: 1px solid #e5e7eb;
-    font-size: 0.95em;
+    font-size: clamp(0.8rem, 1.5vw, 0.95rem);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* 재고 현황 테이블만 크게 */
+/* 재고 현황 테이블만 크게 - 반응형 */
 .inventory-section th {
-    padding: 20px;
-    font-size: 2.2em;
+    padding: clamp(12px, 2vw, 20px);
+    font-size: clamp(1rem, 3vw, 2.2rem);
 }
 
 .inventory-section td {
-    padding: 20px;
-    font-size: 2em;
+    padding: clamp(12px, 2vw, 20px);
+    font-size: clamp(0.95rem, 2.5vw, 2rem);
 }
 
 /* 재고 현황 테이블 컬럼 너비 설정 */
 .inventory-section table th:nth-child(1),
 .inventory-section table td:nth-child(1) {
-    /* 제품명 - 남은 공간 모두 사용 */
-    width: auto;
-    min-width: 200px;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow: visible;
-    text-overflow: unset;
+    /* 제품명 */
+    width: 40%;
+    min-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .inventory-section table th:nth-child(2),
 .inventory-section table td:nth-child(2) {
     /* 현재 재고 */
-    width: 250px;
+    width: 20%;
+    min-width: 100px;
     text-align: right;
     padding-right: 30px;
 }
@@ -464,7 +468,8 @@ td {
 .inventory-section table th:nth-child(3),
 .inventory-section table td:nth-child(3) {
     /* 목표 재고 */
-    width: 250px;
+    width: 20%;
+    min-width: 100px;
     text-align: right;
     padding-right: 30px;
 }
@@ -472,7 +477,8 @@ td {
 .inventory-section table th:nth-child(4),
 .inventory-section table td:nth-child(4) {
     /* 상태 */
-    width: 200px;
+    width: 20%;
+    min-width: 80px;
     text-align: center;
 }
 
@@ -482,10 +488,9 @@ td {
     /* 제품명 */
     width: auto;
     min-width: 150px;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow: visible;
-    text-overflow: unset;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .daily-summary-section table th:nth-child(2),
@@ -495,6 +500,16 @@ td {
     /* 금일 생산, 금일 출고 */
     width: 150px;
     text-align: center;
+}
+
+.daily-summary-section th {
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    padding: clamp(10px, 1.5vw, 15px);
+}
+
+.daily-summary-section td {
+    font-size: clamp(0.8rem, 1.8vw, 0.95rem);
+    padding: clamp(10px, 1.5vw, 15px);
 }
 
 /* 히스토리 테이블 - 제품명 완전 표시 */
@@ -510,10 +525,9 @@ td {
     /* 제품명 */
     width: auto;
     min-width: 120px;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow: visible;
-    text-overflow: unset;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .history-section table th:nth-child(3),
@@ -532,41 +546,41 @@ td {
     white-space: nowrap;
 }
 
-/* 히스토리 섹션 폰트 크기 줄이기 */
+/* 히스토리 섹션 반응형 */
 .history-section h2 {
-    font-size: 1.3em;
+    font-size: clamp(1rem, 2vw, 1.3rem);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .history-section th {
-    font-size: 0.85em;
-    padding: 10px 12px;
+    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
+    padding: clamp(8px, 1.2vw, 12px);
     white-space: nowrap;
 }
 
 .history-section td {
-    font-size: 0.8em;
-    padding: 8px 12px;
+    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
+    padding: clamp(6px, 1vw, 12px);
 }
 
 /* 바코드 관리 테이블 - 컬럼 순서: 제품명, 생산, 출고, 작업 */
 .barcode-management-section table th:nth-child(1),
 .barcode-management-section table td:nth-child(1) {
     /* 제품명 */
-    width: 120px;
-    max-width: 120px;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow: visible;
-    text-overflow: unset;
+    width: 30%;
+    min-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .barcode-management-section table th:nth-child(2),
 .barcode-management-section table td:nth-child(2) {
     /* 생산 */
-    width: auto;
+    width: 30%;
+    min-width: 100px;
     text-align: right;
     padding-right: 20px;
 }
@@ -574,7 +588,8 @@ td {
 .barcode-management-section table th:nth-child(3),
 .barcode-management-section table td:nth-child(3) {
     /* 출고 */
-    width: auto;
+    width: 30%;
+    min-width: 100px;
     text-align: right;
     padding-right: 20px;
 }
@@ -582,7 +597,8 @@ td {
 .barcode-management-section table th:nth-child(4),
 .barcode-management-section table td:nth-child(4) {
     /* 작업 */
-    width: 80px;
+    width: 10%;
+    min-width: 80px;
     text-align: center;
 }
 
@@ -684,9 +700,9 @@ td {
     transform: translateY(-2px);
 }
 
-/* 재고 숫자는 더 크게 (재고 현황용) */
+/* 재고 숫자는 더 크게 (재고 현황용) - 반응형 */
 .inventory-section .stock-number {
-    font-size: 4em !important;
+    font-size: clamp(2rem, 6vw, 4rem) !important;
     font-weight: 700;
 }
 
