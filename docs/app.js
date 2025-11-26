@@ -21,6 +21,19 @@ const barcodeTbody = document.getElementById('barcode-tbody');
 const connectionStatus = document.getElementById('connection-status');
 const productForm = document.getElementById('product-form');
 
+// 바코드 입력 필드 IME 비활성화 강제
+barcodeInput.addEventListener('compositionstart', (e) => {
+    e.preventDefault();
+    console.log('한글 입력 모드 감지됨 - 차단');
+});
+
+// 바코드 입력 필드 포커스 시 영문 모드로 전환 시도
+barcodeInput.addEventListener('focus', () => {
+    // 한글 입력 모드 해제 시도
+    barcodeInput.setAttribute('lang', 'en');
+    barcodeInput.style.imeMode = 'disabled';
+});
+
 // 앱 상태 관리
 const AppState = {
     productsData: {},

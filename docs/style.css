@@ -156,6 +156,10 @@ section h2 {
     position: fixed;
     left: -9999px;
     opacity: 0;
+    ime-mode: disabled;
+    -ms-ime-mode: disabled;
+    -webkit-ime-mode: disabled;
+    -moz-ime-mode: disabled;
 }
 
 .btn {
