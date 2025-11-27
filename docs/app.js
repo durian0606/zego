@@ -1619,19 +1619,18 @@ function openBarcodePrintPage() {
             color: #333;
         }
         .barcode-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: flex-start;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            justify-items: stretch;
         }
         .barcode-item {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: center;
             background: white;
             border-radius: 6px;
-            width: 150px;
-            flex-shrink: 0;
+            width: 100%;
         }
         .barcode-title {
             font-size: 0.7em;
@@ -1715,14 +1714,14 @@ function openBarcodePrintPage() {
                 padding-bottom: 6px;
             }
             .barcode-list {
-                gap: 8px;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
             }
             .barcode-item {
                 border: 1px solid #999;
-                padding: 6px;
+                padding: 8px;
                 border-radius: 3px;
-                width: 130px;
-                flex-shrink: 0;
+                width: 100%;
             }
             .barcode-title {
                 font-size: 0.6em;
