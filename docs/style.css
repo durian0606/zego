@@ -6,9 +6,9 @@
     --color-danger: #ef4444;
     --color-danger-dark: #dc2626;
     --color-warning: #f59e0b;
-    --spacing-sm: clamp(8px, 1.5vw, 10px);
-    --spacing-md: clamp(15px, 2.5vw, 25px);
-    --spacing-lg: clamp(20px, 3vw, 30px);
+    --spacing-sm: clamp(6px, 1.5vw, 10px);
+    --spacing-md: clamp(10px, 2.5vw, 25px);
+    --spacing-lg: clamp(15px, 3vw, 30px);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 20px;
@@ -52,8 +52,11 @@ header {
 }
 
 header h1 {
-    font-size: clamp(1.2rem, 3.5vw, 2rem);
+    font-size: clamp(1rem, 3.5vw, 2rem);
     font-weight: 600;
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 .header-actions {
@@ -68,15 +71,40 @@ header h1 {
 .btn-barcode-mgmt {
     background: white;
     color: var(--color-primary);
-    padding: var(--spacing-sm) clamp(12px, 2.5vw, 20px);
-    font-size: clamp(0.8rem, 1.5vw, 1rem);
+    padding: var(--spacing-sm) clamp(8px, 2.5vw, 20px);
+    font-size: clamp(0.7rem, 1.5vw, 1rem);
     font-weight: 600;
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 44px;
     min-height: 44px;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.btn-register::before,
+.btn-print::before,
+.btn-barcode-mgmt::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-register:hover::before,
+.btn-print:hover::before,
+.btn-barcode-mgmt:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .btn-register:hover,
@@ -84,6 +112,7 @@ header h1 {
 .btn-barcode-mgmt:hover {
     background: #f3f4f6;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-settings {
@@ -93,7 +122,7 @@ header h1 {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -102,23 +131,40 @@ header h1 {
 .btn-settings:hover {
     background: #f3f4f6;
     transform: translateY(-2px) rotate(90deg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .status-badge {
-    padding: clamp(6px, 1.2vw, 8px) clamp(10px, 2vw, 16px);
+    padding: clamp(6px, 1.2vw, 8px) clamp(8px, 2vw, 16px);
     border-radius: 20px;
-    font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+    font-size: clamp(0.65rem, 1.5vw, 0.9rem);
     font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    white-space: nowrap;
 }
 
 .status-badge.connected {
-    background: #10b981;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.connected::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    animation: blink 1.5s ease-in-out infinite;
 }
 
 .status-badge.disconnected {
-    background: #ef4444;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
 .main-content {
@@ -131,20 +177,28 @@ section {
     padding: clamp(15px, 2.5vw, 25px);
     border-radius: 15px;
     border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+section:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
 }
 
 section h2 {
     color: #1f2937;
     margin-bottom: 20px;
-    font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
     padding-bottom: 10px;
     border-bottom: 3px solid #667eea;
     font-weight: 700;
+    white-space: normal;
+    word-break: keep-all;
 }
 
 /* 재고 현황 섹션만 크게 - 반응형 */
 .inventory-section h2 {
-    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-size: clamp(1.3rem, 5vw, 3rem);
     padding-bottom: 15px;
     border-bottom: 4px solid #667eea;
 }
@@ -160,6 +214,92 @@ section h2 {
     -moz-ime-mode: disabled;
 }
 
+/* 바코드 스캔 준비 상태 표시 */
+.scan-indicator {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 999;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 30px rgba(102, 126, 234, 0.7);
+    }
+}
+
+.scan-indicator::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* 로딩 오버레이 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-spinner {
+    text-align: center;
+    color: white;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
 .btn {
     padding: clamp(10px, 2vw, 15px) clamp(20px, 3vw, 30px);
     font-size: clamp(0.9rem, 1.8vw, 1rem);
@@ -167,22 +307,47 @@ section h2 {
     border: none;
     border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
 }
 
 .btn-primary {
-    background: #667eea;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #764ba2 100%);
     color: white;
     width: 100%;
 }
 
 .btn-primary:hover {
-    background: #5568d3;
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, #6441a5 100%);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .scan-result {
@@ -200,30 +365,42 @@ section h2 {
     max-width: 90%;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     display: none;
-    animation: slideInDown 0.3s ease-out;
+    animation: slideInDown 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 @keyframes slideInDown {
     from {
         opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
+        transform: translateX(-50%) translateY(-30px) scale(0.9);
     }
     to {
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        transform: translateX(-50%) translateY(0) scale(1);
     }
 }
 
 .scan-result.success {
-    background: #d1fae5;
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
     color: #065f46;
     border: 2px solid #10b981;
 }
 
+.scan-result.success::before {
+    content: '✓ ';
+    font-size: 1.3em;
+    margin-right: 5px;
+}
+
 .scan-result.error {
-    background: #fee2e2;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
     color: #991b1b;
     border: 2px solid #ef4444;
+}
+
+.scan-result.error::before {
+    content: '✕ ';
+    font-size: 1.3em;
+    margin-right: 5px;
 }
 
 /* 설정 섹션 */
@@ -343,13 +520,21 @@ section h2 {
     font-size: clamp(0.9rem, 1.8vw, 1rem);
     border: 2px solid #d1d5db;
     border-radius: 8px;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-group input:hover,
+.form-group select:hover {
+    border-color: #9ca3af;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
 }
 
 /* 수량 추가/삭제 버튼 */
@@ -411,33 +596,43 @@ thead {
 }
 
 th {
-    padding: clamp(10px, 1.5vw, 15px);
+    padding: clamp(8px, 1.5vw, 15px);
     text-align: left;
     font-weight: 700;
-    font-size: clamp(0.85rem, 1.8vw, 1rem);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: clamp(0.75rem, 1.8vw, 1rem);
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 td {
-    padding: clamp(10px, 1.5vw, 15px);
+    padding: clamp(8px, 1.5vw, 15px);
     border-bottom: 1px solid #e5e7eb;
-    font-size: clamp(0.8rem, 1.5vw, 0.95rem);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: clamp(0.7rem, 1.5vw, 0.95rem);
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    transition: all 0.2s ease;
+}
+
+tbody tr {
+    transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+    transform: translateX(4px);
+    box-shadow: -4px 0 0 0 var(--color-primary);
 }
 
 /* 재고 현황 테이블만 크게 - 반응형 */
 .inventory-section th {
-    padding: clamp(12px, 2vw, 20px);
-    font-size: clamp(1rem, 3vw, 2.2rem);
+    padding: clamp(8px, 2vw, 20px);
+    font-size: clamp(0.85rem, 3vw, 2.2rem);
 }
 
 .inventory-section td {
-    padding: clamp(12px, 2vw, 20px);
-    font-size: clamp(0.95rem, 2.5vw, 2rem);
+    padding: clamp(8px, 2vw, 20px);
+    font-size: clamp(0.75rem, 2.5vw, 2rem);
 }
 
 /* 재고 현황 테이블 컬럼 너비 설정 */
@@ -445,10 +640,7 @@ td {
 .inventory-section table td:nth-child(1) {
     /* 제품명 */
     width: 40%;
-    min-width: 150px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 100px;
 }
 
 .inventory-section table th:nth-child(2),
@@ -482,10 +674,7 @@ td {
 .daily-summary-section table td:nth-child(1) {
     /* 제품명 */
     width: auto;
-    min-width: 150px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 100px;
 }
 
 .daily-summary-section table th:nth-child(2),
@@ -498,18 +687,18 @@ td {
 }
 
 .daily-summary-section th {
-    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-    padding: clamp(12px, 2vw, 18px);
+    font-size: clamp(0.8rem, 2.5vw, 1.5rem);
+    padding: clamp(8px, 2vw, 18px);
 }
 
 .daily-summary-section td {
-    font-size: clamp(1rem, 2.2vw, 1.3rem);
-    padding: clamp(12px, 2vw, 18px);
+    font-size: clamp(0.75rem, 2.2vw, 1.3rem);
+    padding: clamp(8px, 2vw, 18px);
 }
 
 /* 금일 생산/출고 현황 섹션 제목 크기 확대 */
 .daily-summary-section h2 {
-    font-size: clamp(1.5rem, 3.5vw, 2rem);
+    font-size: clamp(1.1rem, 3.5vw, 2rem);
     padding-bottom: 12px;
 }
 
@@ -526,17 +715,13 @@ td {
 .history-section table td:nth-child(1) {
     /* 시간 */
     width: 140px;
-    white-space: nowrap;
 }
 
 .history-section table th:nth-child(2),
 .history-section table td:nth-child(2) {
     /* 제품명 */
     width: auto;
-    min-width: 120px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 100px;
 }
 
 .history-section table th:nth-child(3),
@@ -544,7 +729,6 @@ td {
     /* 생산 */
     width: 80px;
     text-align: center;
-    white-space: nowrap;
 }
 
 .history-section table th:nth-child(4),
@@ -552,26 +736,21 @@ td {
     /* 출고 */
     width: 80px;
     text-align: center;
-    white-space: nowrap;
 }
 
 /* 히스토리 섹션 반응형 */
 .history-section h2 {
-    font-size: clamp(1rem, 2vw, 1.3rem);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: clamp(0.9rem, 2vw, 1.3rem);
 }
 
 .history-section th {
-    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
-    padding: clamp(8px, 1.2vw, 12px);
-    white-space: nowrap;
+    font-size: clamp(0.65rem, 1.8vw, 0.85rem);
+    padding: clamp(6px, 1.2vw, 12px);
 }
 
 .history-section td {
-    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
-    padding: clamp(6px, 1vw, 12px);
+    font-size: clamp(0.6rem, 1.5vw, 0.8rem);
+    padding: clamp(5px, 1vw, 12px);
 }
 
 /* 바코드 관리 테이블 - 컬럼 순서: 제품명, 생산, 출고, 작업 */
@@ -579,10 +758,7 @@ td {
 .barcode-management-section table td:nth-child(1) {
     /* 제품명 */
     width: 30%;
-    min-width: 150px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 100px;
 }
 
 .barcode-management-section table th:nth-child(2),
@@ -712,20 +888,26 @@ td {
 
 /* 재고 숫자는 더 크게 (재고 현황용) - 반응형 */
 .inventory-section .stock-number {
-    font-size: clamp(2rem, 6vw, 4rem) !important;
+    font-size: clamp(1.2rem, 6vw, 4rem) !important;
     font-weight: 700;
 }
 
 /* 목표 재고 수정 가능 표시 */
 .editable-stock {
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .editable-stock:hover {
-    background: #f3f4f6;
-    color: #667eea;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: var(--color-primary);
     border-radius: 8px;
+    transform: scale(1.05);
+}
+
+.editable-stock:active {
+    transform: scale(0.98);
 }
 
 /* 제품별 색상 구분 (모든 섹션 공통) - 선명한 20가지 색상 */
@@ -974,38 +1156,50 @@ td {
         border-radius: 0;
     }
 
+    /* 스캔 인디케이터 - 모바일 */
+    .scan-indicator {
+        bottom: 15px;
+        right: 15px;
+        padding: 12px 20px;
+        font-size: 0.85rem;
+    }
+
     header {
-        padding: 20px 15px;
+        padding: 15px 12px;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
     }
 
     header h1 {
-        font-size: 1.3em;
+        font-size: 1.1rem;
         width: 100%;
+        line-height: 1.3;
     }
 
     .header-actions {
         width: 100%;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
     }
 
     .main-content {
-        padding: 15px;
+        padding: 12px;
     }
 
     section {
-        padding: 15px;
-        margin-bottom: 20px;
+        padding: 12px;
+        margin-bottom: 15px;
     }
 
     section h2 {
-        font-size: 1.3em;
+        font-size: 1.1rem;
+        line-height: 1.3;
     }
 
     /* 재고 현황 섹션만 크게 (모바일) */
     .inventory-section h2 {
-        font-size: 1.5em;
+        font-size: 1.3rem;
     }
 
     /* 스캔 결과 - 모바일 최적화 */
@@ -1017,24 +1211,26 @@ td {
     }
 
     th {
-        font-size: 0.95em;
+        font-size: 0.8rem;
+        padding: 6px;
     }
 
     td {
-        font-size: 0.9em;
+        font-size: 0.75rem;
+        padding: 6px;
     }
 
     /* 재고 현황 테이블만 크게 (모바일) */
     .inventory-section th {
-        font-size: 1.1em;
+        font-size: 0.9rem;
     }
 
     .inventory-section td {
-        font-size: 1em;
+        font-size: 0.85rem;
     }
 
     .inventory-section .stock-number {
-        font-size: 1.5em !important;
+        font-size: 1.3rem !important;
     }
 
     /* 테이블을 카드 형태로 변경 */
@@ -1053,10 +1249,10 @@ td {
     }
 
     tr {
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         border: 2px solid #e5e7eb;
         border-radius: 10px;
-        padding: 15px;
+        padding: 10px;
     }
 
     /* 모바일에서도 제품별 색상 유지 - 선명한 20가지 (모든 섹션) */
@@ -1163,45 +1359,54 @@ td {
     td {
         border: none;
         position: relative;
-        padding: 20px 20px 20px 45%;
+        padding: 8px 8px 8px 42%;
         text-align: right;
         white-space: normal;
         word-wrap: break-word;
+        word-break: keep-all;
+        overflow-wrap: break-word;
         overflow: visible;
         text-overflow: unset;
+        line-height: 1.4;
     }
 
     td:before {
         position: absolute;
-        left: 20px;
-        width: 40%;
-        padding-right: 10px;
-        white-space: nowrap;
+        left: 8px;
+        width: 38%;
+        padding-right: 8px;
+        white-space: normal;
+        word-break: keep-all;
+        overflow-wrap: break-word;
         text-align: left;
         font-weight: 700;
         color: #4b5563;
+        font-size: 0.7rem;
+        line-height: 1.3;
     }
 
     /* 재고 현황 테이블 라벨 */
-    .inventory-section td:nth-of-type(1):before { content: "제품명"; }
-    .inventory-section td:nth-of-type(2):before { content: "현재 재고"; }
-    .inventory-section td:nth-of-type(3):before { content: "목표 재고"; }
+    .inventory-section td:nth-of-type(1):before { content: "제품"; }
+    .inventory-section td:nth-of-type(2):before { content: "현재"; }
+    .inventory-section td:nth-of-type(3):before { content: "목표"; }
     .inventory-section td:nth-of-type(4):before { content: "상태"; }
 
     /* 바코드 관리 테이블 라벨 */
-    .barcode-management-section td:nth-of-type(1):before { content: "제품명"; }
+    .barcode-management-section td:nth-of-type(1):before { content: "제품"; }
     .barcode-management-section td:nth-of-type(2):before { content: "생산"; }
     .barcode-management-section td:nth-of-type(3):before { content: "출고"; }
     .barcode-management-section td:nth-of-type(4):before { content: "작업"; }
 
     /* 금일 생산/출고 현황 테이블 라벨 */
-    .daily-summary-section td:nth-of-type(1):before { content: "제품명"; }
-    .daily-summary-section td:nth-of-type(2):before { content: "금일 생산"; }
-    .daily-summary-section td:nth-of-type(3):before { content: "금일 출고"; }
+    .daily-summary-section td:nth-of-type(1):before { content: "제품"; }
+    .daily-summary-section td:nth-of-type(2):before { content: "어제생산"; }
+    .daily-summary-section td:nth-of-type(3):before { content: "어제출고"; }
+    .daily-summary-section td:nth-of-type(4):before { content: "오늘생산"; }
+    .daily-summary-section td:nth-of-type(5):before { content: "오늘출고"; }
 
     /* 히스토리 테이블 라벨 */
     .history-section td:nth-of-type(1):before { content: "시간"; }
-    .history-section td:nth-of-type(2):before { content: "제품명"; }
+    .history-section td:nth-of-type(2):before { content: "제품"; }
     .history-section td:nth-of-type(3):before { content: "생산"; }
     .history-section td:nth-of-type(4):before { content: "출고"; }
 
@@ -1217,28 +1422,39 @@ td {
     }
 
     /* 제품 등록 폼 */
-    .form-group input {
-        padding: 14px;
-        font-size: 1em;
+    .form-group label {
+        font-size: 0.9rem;
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 12px;
+        font-size: 0.95rem;
     }
 
     .btn-primary {
-        padding: 18px;
-        font-size: 1.1em;
+        padding: 14px;
+        font-size: 1rem;
     }
 
-    .btn-register {
-        padding: 12px 16px;
-        font-size: 0.9em;
+    .btn-register,
+    .btn-print,
+    .btn-barcode-mgmt {
+        padding: 8px 10px;
+        font-size: 0.7rem;
+        min-width: 40px;
+        min-height: 40px;
     }
 
     .btn-settings {
-        padding: 10px;
+        padding: 8px;
+        min-width: 40px;
+        min-height: 40px;
     }
 
     .status-badge {
-        padding: 8px 12px;
-        font-size: 0.85em;
+        padding: 6px 8px;
+        font-size: 0.65rem;
     }
 
     .setting-item h3 {
@@ -1276,5 +1492,47 @@ td {
     .btn-delete-barcode {
         font-size: 0.8em;
         padding: 5px 8px;
+    }
+}
+
+/* 매우 작은 화면 (320px~400px) 추가 최적화 */
+@media (max-width: 400px) {
+    header h1 {
+        font-size: 0.95rem;
+    }
+
+    .btn-register,
+    .btn-print,
+    .btn-barcode-mgmt {
+        font-size: 0.65rem;
+        padding: 6px 8px;
+    }
+
+    .status-badge {
+        font-size: 0.6rem;
+        padding: 5px 6px;
+    }
+
+    section h2 {
+        font-size: 0.95rem;
+    }
+
+    .inventory-section h2 {
+        font-size: 1.15rem;
+    }
+
+    td {
+        padding: 6px 6px 6px 40%;
+        font-size: 0.7rem;
+    }
+
+    td:before {
+        left: 6px;
+        font-size: 0.65rem;
+        width: 36%;
+    }
+
+    .inventory-section .stock-number {
+        font-size: 1.1rem !important;
     }
 }

@@ -23,6 +23,19 @@
             <!-- 숨겨진 바코드 입력 -->
             <input type="text" id="barcode-input" class="hidden-input" autofocus lang="en" autocomplete="off" inputmode="latin">
 
+            <!-- 스캔 준비 상태 표시 -->
+            <div id="scan-indicator" class="scan-indicator">
+                <span>바코드 스캔 준비 완료</span>
+            </div>
+
+            <!-- 로딩 오버레이 -->
+            <div id="loading-overlay" class="loading-overlay">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <div class="loading-text">처리 중...</div>
+                </div>
+            </div>
+
             <!-- 스캔 결과 표시 -->
             <div id="scan-result" class="scan-result"></div>
 

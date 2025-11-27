@@ -14,6 +14,8 @@ productsRef.child('undefined').remove().then(() => {
 // DOM 요소
 const barcodeInput = document.getElementById('barcode-input');
 const scanResult = document.getElementById('scan-result');
+const scanIndicator = document.getElementById('scan-indicator');
+const loadingOverlay = document.getElementById('loading-overlay');
 const inventoryTbody = document.getElementById('inventory-tbody');
 const dailySummaryTbody = document.getElementById('daily-summary-tbody');
 const historyTbody = document.getElementById('history-tbody');
@@ -992,15 +994,38 @@ async function deleteBarcode(barcodeId) {
     }
 }
 
+// 로딩 표시 함수
+function showLoading(text = '처리 중...') {
+    const loadingText = loadingOverlay.querySelector('.loading-text');
+    if (loadingText) {
+        loadingText.textContent = text;
+    }
+    loadingOverlay.classList.add('active');
+}
+
+function hideLoading() {
+    loadingOverlay.classList.remove('active');
+}
+
 // 스캔 결과 표시
 function showScanResult(message, type) {
     scanResult.textContent = message;
     scanResult.className = `scan-result ${type}`;
     scanResult.style.display = 'block';
+
+    // 스캔 인디케이터 잠시 숨김
+    scanIndicator.style.display = 'none';
+
     setTimeout(() => {
         scanResult.style.display = 'none';
         scanResult.textContent = '';
         scanResult.className = 'scan-result';
+
+        // 스캔 인디케이터 다시 표시
+        if (productRegisterSection.style.display === 'none' &&
+            settingsSection.style.display === 'none') {
+            scanIndicator.style.display = 'flex';
+        }
     }, 5000);
 }
 
@@ -1106,17 +1131,20 @@ btnSettings.addEventListener('click', () => {
     if (settingsSection.style.display === 'none') {
         settingsSection.style.display = 'block';
         settingsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        scanIndicator.style.display = 'none';
         // Lucide 아이콘 다시 렌더링
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
     } else {
         settingsSection.style.display = 'none';
+        scanIndicator.style.display = 'flex';
     }
 });
 
 btnCloseSettings.addEventListener('click', () => {
     settingsSection.style.display = 'none';
+    scanIndicator.style.display = 'flex';
     barcodeInput.focus();
 });
 
@@ -1151,8 +1179,10 @@ btnToggleRegister.addEventListener('click', () => {
 
         productRegisterSection.style.display = 'block';
         productRegisterSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        scanIndicator.style.display = 'none';
     } else {
         productRegisterSection.style.display = 'none';
+        scanIndicator.style.display = 'flex';
     }
 });
 
@@ -1163,6 +1193,7 @@ btnCloseRegister.addEventListener('click', () => {
     document.querySelector('#product-form button[type="submit"]').textContent = '제품 등록 및 바코드 생성';
 
     productRegisterSection.style.display = 'none';
+    scanIndicator.style.display = 'flex';
     barcodeInput.focus();
 });
 
@@ -1174,12 +1205,14 @@ btnToggleBarcodeMgmt.addEventListener('click', () => {
     if (barcodeMgmtSection.style.display === 'none') {
         barcodeMgmtSection.style.display = 'block';
         barcodeMgmtSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        scanIndicator.style.display = 'none';
         // Lucide 아이콘 다시 렌더링
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
     } else {
         barcodeMgmtSection.style.display = 'none';
+        scanIndicator.style.display = 'flex';
     }
 });
 
@@ -1286,9 +1319,13 @@ productForm.addEventListener('submit', async (e) => {
         return;
     }
 
+    // 로딩 표시
+    showLoading(isEditMode ? '제품 수정 중...' : '제품 등록 중...');
+
     // 제품 중복 확인 (수정 모드가 아니거나, 제품명이 변경된 경우에만)
     if (!isEditMode || (isEditMode && productName !== oldProductName)) {
         if (findProductByName(productName)) {
+            hideLoading();
             alert('이미 등록된 제품입니다.');
             return;
         }
@@ -1313,6 +1350,7 @@ productForm.addEventListener('submit', async (e) => {
     });
 
     if (quantitiesIn.length === 0 && quantitiesOut.length === 0) {
+        hideLoading();
         alert('생산 또는 출고 수량 중 최소 1개 이상 입력해주세요.');
         return;
     }
@@ -1412,10 +1450,13 @@ productForm.addEventListener('submit', async (e) => {
 
         console.log(`총 ${barcodeCount}개의 바코드 생성 완료`);
 
+        // 로딩 숨김
+        hideLoading();
+
         if (isEditMode) {
-            alert(`제품 "${productName}"이(가) 수정되었습니다!\n${barcodeCount}개의 바코드가 생성되었습니다.`);
+            showScanResult(`제품 "${productName}"이(가) 수정되었습니다! ${barcodeCount}개의 바코드가 생성되었습니다.`, 'success');
         } else {
-            alert(`제품 "${productName}"이(가) 등록되었습니다!\n${barcodeCount}개의 바코드가 생성되었습니다.`);
+            showScanResult(`제품 "${productName}"이(가) 등록되었습니다! ${barcodeCount}개의 바코드가 생성되었습니다.`, 'success');
         }
 
         // 수정 모드 해제
@@ -1448,10 +1489,12 @@ productForm.addEventListener('submit', async (e) => {
 
         // 등록 후 섹션 닫고 바코드 입력으로 포커스
         productRegisterSection.style.display = 'none';
+        scanIndicator.style.display = 'flex';
         barcodeInput.focus();
     } catch (error) {
         console.error('제품 등록 오류:', error);
-        alert('제품 등록 중 오류가 발생했습니다.');
+        hideLoading();
+        showScanResult('제품 등록 중 오류가 발생했습니다.', 'error');
     }
 });
 
