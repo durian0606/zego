@@ -1230,7 +1230,15 @@ tbody tr:hover {
     }
 
     .inventory-section .stock-number {
-        font-size: 1.3rem !important;
+        font-size: 1.5rem !important;
+        font-weight: 800 !important;
+        color: #111827 !important;
+    }
+
+    /* 재고 현황 테이블 행 높이 추가 확보 */
+    .inventory-section td {
+        min-height: 70px;
+        padding: 18px 12px;
     }
 
     /* 테이블을 카드 형태로 변경 */
@@ -1249,10 +1257,11 @@ tbody tr:hover {
     }
 
     tr {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
         border: 2px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 12px 8px;
+        border-radius: 12px;
+        padding: 16px 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     /* 모바일에서도 제품별 색상 유지 - 선명한 20가지 (모든 섹션) */
@@ -1359,63 +1368,124 @@ tbody tr:hover {
     td {
         border: none;
         position: relative;
-        padding: 10px 10px 10px 50%;
-        text-align: right;
+        padding: 15px 12px;
+        text-align: left;
         white-space: normal;
         word-wrap: break-word;
         word-break: keep-all;
         overflow-wrap: break-word;
         overflow: visible;
         text-overflow: unset;
-        line-height: 1.5;
-        font-size: 0.85rem;
-        min-height: 40px;
+        line-height: 1.6;
+        font-size: 1rem;
+        min-height: 60px;
         display: flex;
-        align-items: center;
-        justify-content: flex-end;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+        font-weight: 700;
+        color: #1f2937;
     }
 
-    td:before {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 35%;
-        padding-right: 10px;
-        white-space: normal;
-        word-break: keep-all;
-        overflow-wrap: break-word;
-        text-align: left;
-        font-weight: 700;
-        color: #4b5563;
-        font-size: 0.75rem;
-        line-height: 1.4;
-    }
+    /* td:before는 각 섹션별로 개별 정의 필요 */
 
     /* 재고 현황 테이블 라벨 */
-    .inventory-section td:nth-of-type(1):before { content: "제품"; }
-    .inventory-section td:nth-of-type(2):before { content: "현재"; }
-    .inventory-section td:nth-of-type(3):before { content: "목표"; }
-    .inventory-section td:nth-of-type(4):before { content: "상태"; }
+    .inventory-section td:nth-of-type(1):before {
+        content: "제품";
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .inventory-section td:nth-of-type(2):before {
+        content: "현재 재고";
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .inventory-section td:nth-of-type(3):before {
+        content: "목표 재고";
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .inventory-section td:nth-of-type(4):before {
+        content: "상태";
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
 
     /* 바코드 관리 테이블 라벨 */
-    .barcode-management-section td:nth-of-type(1):before { content: "제품"; }
-    .barcode-management-section td:nth-of-type(2):before { content: "생산"; }
-    .barcode-management-section td:nth-of-type(3):before { content: "출고"; }
+    .barcode-management-section td:nth-of-type(1):before,
+    .barcode-management-section td:nth-of-type(2):before,
+    .barcode-management-section td:nth-of-type(3):before,
+    .barcode-management-section td:nth-of-type(4):before {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .barcode-management-section td:nth-of-type(1):before { content: "제품명"; }
+    .barcode-management-section td:nth-of-type(2):before { content: "생산 바코드"; }
+    .barcode-management-section td:nth-of-type(3):before { content: "출고 바코드"; }
     .barcode-management-section td:nth-of-type(4):before { content: "작업"; }
 
     /* 금일 생산/출고 현황 테이블 라벨 */
-    .daily-summary-section td:nth-of-type(1):before { content: "제품"; }
-    .daily-summary-section td:nth-of-type(2):before { content: "어제생산"; }
-    .daily-summary-section td:nth-of-type(3):before { content: "어제출고"; }
-    .daily-summary-section td:nth-of-type(4):before { content: "오늘생산"; }
-    .daily-summary-section td:nth-of-type(5):before { content: "오늘출고"; }
+    .daily-summary-section td:nth-of-type(1):before,
+    .daily-summary-section td:nth-of-type(2):before,
+    .daily-summary-section td:nth-of-type(3):before,
+    .daily-summary-section td:nth-of-type(4):before,
+    .daily-summary-section td:nth-of-type(5):before {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .daily-summary-section td:nth-of-type(1):before { content: "제품명"; }
+    .daily-summary-section td:nth-of-type(2):before { content: "어제 생산"; }
+    .daily-summary-section td:nth-of-type(3):before { content: "어제 출고"; }
+    .daily-summary-section td:nth-of-type(4):before { content: "오늘 생산"; }
+    .daily-summary-section td:nth-of-type(5):before { content: "오늘 출고"; }
 
     /* 히스토리 테이블 라벨 */
+    .history-section td:nth-of-type(1):before,
+    .history-section td:nth-of-type(2):before,
+    .history-section td:nth-of-type(3):before,
+    .history-section td:nth-of-type(4):before {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
     .history-section td:nth-of-type(1):before { content: "시간"; }
-    .history-section td:nth-of-type(2):before { content: "제품"; }
-    .history-section td:nth-of-type(3):before { content: "생산"; }
-    .history-section td:nth-of-type(4):before { content: "출고"; }
+    .history-section td:nth-of-type(2):before { content: "제품명"; }
+    .history-section td:nth-of-type(3):before { content: "생산량"; }
+    .history-section td:nth-of-type(4):before { content: "출고량"; }
 
     .no-data {
         padding: 15px !important;
@@ -1529,23 +1599,44 @@ tbody tr:hover {
     }
 
     tr {
-        padding: 10px 6px;
-        margin-bottom: 12px;
+        padding: 14px 10px;
+        margin-bottom: 18px;
     }
 
     td {
-        padding: 8px 8px 8px 48%;
-        font-size: 0.75rem;
-        min-height: 36px;
+        padding: 14px 10px;
+        font-size: 0.9rem;
+        min-height: 55px;
     }
 
-    td:before {
-        left: 8px;
-        font-size: 0.7rem;
-        width: 34%;
+    /* 작은 화면에서도 세로 배치 라벨 스타일 유지 */
+    .inventory-section td:nth-of-type(1):before,
+    .inventory-section td:nth-of-type(2):before,
+    .inventory-section td:nth-of-type(3):before,
+    .inventory-section td:nth-of-type(4):before,
+    .barcode-management-section td:nth-of-type(1):before,
+    .barcode-management-section td:nth-of-type(2):before,
+    .barcode-management-section td:nth-of-type(3):before,
+    .barcode-management-section td:nth-of-type(4):before,
+    .daily-summary-section td:nth-of-type(1):before,
+    .daily-summary-section td:nth-of-type(2):before,
+    .daily-summary-section td:nth-of-type(3):before,
+    .daily-summary-section td:nth-of-type(4):before,
+    .daily-summary-section td:nth-of-type(5):before,
+    .history-section td:nth-of-type(1):before,
+    .history-section td:nth-of-type(2):before,
+    .history-section td:nth-of-type(3):before,
+    .history-section td:nth-of-type(4):before {
+        font-size: 0.65rem;
     }
 
     .inventory-section .stock-number {
-        font-size: 1.1rem !important;
+        font-size: 1.3rem !important;
+    }
+
+    /* 재고 현황 테이블 행 높이 (작은 화면) */
+    .inventory-section td {
+        min-height: 65px;
+        padding: 16px 10px;
     }
 }
