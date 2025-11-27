@@ -1249,10 +1249,10 @@ tbody tr:hover {
     }
 
     tr {
-        margin-bottom: 12px;
+        margin-bottom: 15px;
         border: 2px solid #e5e7eb;
         border-radius: 10px;
-        padding: 10px;
+        padding: 12px 8px;
     }
 
     /* 모바일에서도 제품별 색상 유지 - 선명한 20가지 (모든 섹션) */
@@ -1359,7 +1359,7 @@ tbody tr:hover {
     td {
         border: none;
         position: relative;
-        padding: 8px 8px 8px 42%;
+        padding: 10px 10px 10px 50%;
         text-align: right;
         white-space: normal;
         word-wrap: break-word;
@@ -1367,22 +1367,29 @@ tbody tr:hover {
         overflow-wrap: break-word;
         overflow: visible;
         text-overflow: unset;
-        line-height: 1.4;
+        line-height: 1.5;
+        font-size: 0.85rem;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     td:before {
         position: absolute;
-        left: 8px;
-        width: 38%;
-        padding-right: 8px;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 35%;
+        padding-right: 10px;
         white-space: normal;
         word-break: keep-all;
         overflow-wrap: break-word;
         text-align: left;
         font-weight: 700;
         color: #4b5563;
-        font-size: 0.7rem;
-        line-height: 1.3;
+        font-size: 0.75rem;
+        line-height: 1.4;
     }
 
     /* 재고 현황 테이블 라벨 */
@@ -1521,15 +1528,21 @@ tbody tr:hover {
         font-size: 1.15rem;
     }
 
+    tr {
+        padding: 10px 6px;
+        margin-bottom: 12px;
+    }
+
     td {
-        padding: 6px 6px 6px 40%;
-        font-size: 0.7rem;
+        padding: 8px 8px 8px 48%;
+        font-size: 0.75rem;
+        min-height: 36px;
     }
 
     td:before {
-        left: 6px;
-        font-size: 0.65rem;
-        width: 36%;
+        left: 8px;
+        font-size: 0.7rem;
+        width: 34%;
     }
 
     .inventory-section .stock-number {
