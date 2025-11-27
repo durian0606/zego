@@ -1,3 +1,19 @@
+/* CSS 변수 정의 */
+:root {
+    --color-primary: #667eea;
+    --color-primary-dark: #5568d3;
+    --color-success: #10b981;
+    --color-danger: #ef4444;
+    --color-danger-dark: #dc2626;
+    --color-warning: #f59e0b;
+    --spacing-sm: clamp(8px, 1.5vw, 10px);
+    --spacing-md: clamp(15px, 2.5vw, 25px);
+    --spacing-lg: clamp(20px, 3vw, 30px);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -6,9 +22,15 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, #764ba2 100%);
     min-height: 100vh;
     padding: 20px;
+}
+
+/* 포커스 접근성 개선 */
+*:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .container {
@@ -40,52 +62,25 @@ header h1 {
     align-items: center;
 }
 
-.btn-register {
-    background: white;
-    color: #667eea;
-    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2.5vw, 20px);
-    font-size: clamp(0.8rem, 1.5vw, 1rem);
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-register:hover {
-    background: #f3f4f6;
-    transform: translateY(-2px);
-}
-
-.btn-print {
-    background: white;
-    color: #667eea;
-    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2.5vw, 20px);
-    font-size: clamp(0.8rem, 1.5vw, 1rem);
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-print:hover {
-    background: #f3f4f6;
-    transform: translateY(-2px);
-}
-
+/* 중복 제거: 헤더 버튼 공통 스타일 */
+.btn-register,
+.btn-print,
 .btn-barcode-mgmt {
     background: white;
-    color: #667eea;
-    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2.5vw, 20px);
+    color: var(--color-primary);
+    padding: var(--spacing-sm) clamp(12px, 2.5vw, 20px);
     font-size: clamp(0.8rem, 1.5vw, 1rem);
     font-weight: 600;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.3s;
+    min-width: 44px;
+    min-height: 44px;
 }
 
+.btn-register:hover,
+.btn-print:hover,
 .btn-barcode-mgmt:hover {
     background: #f3f4f6;
     transform: translateY(-2px);
@@ -651,11 +646,11 @@ td {
     align-items: center;
 }
 
-/* 인라인 수정 버튼 (작은 아이콘) */
+/* 인라인 수정 버튼 (터치 타겟 크기 개선) */
 .btn-edit-quantity-inline {
     background: transparent;
-    color: #667eea;
-    padding: 2px;
+    color: var(--color-primary);
+    padding: 10px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -664,11 +659,13 @@ td {
     align-items: center;
     justify-content: center;
     opacity: 0.6;
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .btn-edit-quantity-inline:hover {
     opacity: 1;
-    background: #667eea;
+    background: var(--color-primary);
     color: white;
 }
 
@@ -745,12 +742,12 @@ td {
 .inventory-section tr.product-color-3,
 .daily-summary-section tr.product-color-3,
 .history-section tr.product-color-3,
-.barcode-management-section tr.product-color-3 { background: #FFFF99; border-left: 4px solid #FFFF00; } /* 노랑 */
+.barcode-management-section tr.product-color-3 { background: #FFFDE7; border-left: 4px solid #F9A825; color: #333; } /* 노랑 - 접근성 개선 */
 
 .inventory-section tr.product-color-4,
 .daily-summary-section tr.product-color-4,
 .history-section tr.product-color-4,
-.barcode-management-section tr.product-color-4 { background: #D4FF99; border-left: 4px solid #99FF33; } /* 연두 */
+.barcode-management-section tr.product-color-4 { background: #F0F9D7; border-left: 4px solid #99CC00; color: #333; } /* 연두 - 접근성 개선 */
 
 .inventory-section tr.product-color-5,
 .daily-summary-section tr.product-color-5,
@@ -832,9 +829,10 @@ td {
 .history-section tr.product-color-20,
 .barcode-management-section tr.product-color-20 { background: #C2B3FF; border-left: 4px solid #9966FF; } /* 인디고 */
 
-tbody tr:hover {
+/* 호버 효과 제거 - 색상 구분을 방해하지 않음 */
+/* tbody tr:hover {
     filter: brightness(0.95);
-}
+} */
 
 .no-data {
     text-align: center;
@@ -870,10 +868,18 @@ tbody tr:hover {
     color: #065f46;
 }
 
+.stock-low::before {
+    content: "⚠️ ";
+}
+
 .stock-low {
     background: #fee2e2;
-    color: #dc2626;
+    color: var(--color-danger-dark);
     font-weight: 700;
+}
+
+.stock-ok::before {
+    content: "✓ ";
 }
 
 .transaction-type {
@@ -1067,12 +1073,12 @@ tbody tr:hover {
     .inventory-section tr.product-color-3,
     .daily-summary-section tr.product-color-3,
     .history-section tr.product-color-3,
-    .barcode-management-section tr.product-color-3 { background: #FFFF99; border: 3px solid #FFFF00; }
+    .barcode-management-section tr.product-color-3 { background: #FFFDE7; border: 3px solid #F9A825; color: #333; }
 
     .inventory-section tr.product-color-4,
     .daily-summary-section tr.product-color-4,
     .history-section tr.product-color-4,
-    .barcode-management-section tr.product-color-4 { background: #D4FF99; border: 3px solid #99FF33; }
+    .barcode-management-section tr.product-color-4 { background: #F0F9D7; border: 3px solid #99CC00; color: #333; }
 
     .inventory-section tr.product-color-5,
     .daily-summary-section tr.product-color-5,

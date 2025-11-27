@@ -55,7 +55,13 @@ let sortedProductNames = [];
 function getProductColorIndex(productName) {
     if (!productName) return 0;
 
-    // 정렬된 제품 목록에서 인덱스 찾기
+    // 제품 데이터에서 사용자 지정 색상 확인
+    const product = AppState.productsData[productName];
+    if (product && product.colorIndex !== undefined && product.colorIndex !== null) {
+        return product.colorIndex;
+    }
+
+    // 정렬된 제품 목록에서 인덱스 찾기 (기본값)
     let index = sortedProductNames.indexOf(productName);
 
     // 목록에 없으면 추가하고 다시 정렬
@@ -121,6 +127,8 @@ productsRef.on('value', (snapshot) => {
     updateSortedProductNames();
     updateInventoryTable();
     updateDailySummaryTable();
+    updateHistoryTable();
+    updateBarcodeTable();
 });
 
 // 바코드 목록 실시간 감지
@@ -195,7 +203,12 @@ function updateInventoryTable() {
                 <td><strong>${product.name}</strong></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
-                <td><span class="stock-status ${stockStatus}">${stockText}</span></td>
+                <td>
+                    <span class="stock-status ${stockStatus}">${stockText}</span>
+                    <button onclick="changeProductColor('${product.name}')" class="btn-change-color" title="색상 변경" style="margin-left: 8px; padding: 4px 8px; border: none; background: rgba(0,0,0,0.1); border-radius: 4px; cursor: pointer; font-size: 0.85em;">
+                        <i data-lucide="palette" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                    </button>
+                </td>
             </tr>
         `;
     }).join('');
@@ -546,57 +559,85 @@ function updateHistoryTable() {
     }
 }
 
-// 금일 생산/출고 현황 테이블 업데이트
+// 생산/출고 현황 테이블 업데이트 (어제/오늘)
 function updateDailySummaryTable() {
     const validHistory = filterValidHistory(AppState.historyData);
     const validProducts = filterValidProducts(AppState.productsData);
     const validProductNames = new Set(validProducts.map(p => p.name));
 
-    // 오늘 날짜 시작 시간 (00:00:00)
+    // 오늘과 어제 날짜 계산
     const today = new Date();
+    const todayStr = `${today.getMonth() + 1}월 ${today.getDate()}일`;
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = `${yesterday.getMonth() + 1}월 ${yesterday.getDate()}일`;
+
+    // 제목 업데이트
+    document.getElementById('daily-summary-title').textContent =
+        `생산/출고 현황 (어제: ${yesterdayStr} / 오늘: ${todayStr})`;
+
+    // 오늘 00:00:00
     today.setHours(0, 0, 0, 0);
     const todayTimestamp = today.getTime();
 
-    // 오늘 데이터만 필터링 (ADJUST 제외, 삭제된 제품 제외)
-    const todayHistory = validHistory.filter(item => {
-        return item.timestamp >= todayTimestamp &&
+    // 어제 00:00:00
+    yesterday.setHours(0, 0, 0, 0);
+    const yesterdayTimestamp = yesterday.getTime();
+
+    // 어제와 오늘 데이터 필터링
+    const recentHistory = validHistory.filter(item => {
+        return item.timestamp >= yesterdayTimestamp &&
                item.type !== 'ADJUST' &&
                validProductNames.has(item.productName);
     });
 
-    if (todayHistory.length === 0) {
-        dailySummaryTbody.innerHTML = '<tr><td colspan="3" class="no-data">오늘 생산/출고 내역이 없습니다.</td></tr>';
+    if (recentHistory.length === 0) {
+        dailySummaryTbody.innerHTML = '<tr><td colspan="5" class="no-data">생산/출고 내역이 없습니다.</td></tr>';
         return;
     }
 
-    // 제품별로 그룹화하여 생산/출고 합계 계산
+    // 제품별로 그룹화 (어제/오늘 구분)
     const productSummary = {};
-    todayHistory.forEach(item => {
+    recentHistory.forEach(item => {
         if (!productSummary[item.productName]) {
             productSummary[item.productName] = {
-                production: 0,  // 생산 (IN)
-                shipment: 0     // 출고 (OUT)
+                yesterdayProduction: 0,
+                yesterdayShipment: 0,
+                todayProduction: 0,
+                todayShipment: 0
             };
         }
 
+        const isToday = item.timestamp >= todayTimestamp;
+
         if (item.type === 'IN') {
-            productSummary[item.productName].production += item.quantity;
+            if (isToday) {
+                productSummary[item.productName].todayProduction += item.quantity;
+            } else {
+                productSummary[item.productName].yesterdayProduction += item.quantity;
+            }
         } else if (item.type === 'OUT') {
-            productSummary[item.productName].shipment += item.quantity;
+            if (isToday) {
+                productSummary[item.productName].todayShipment += item.quantity;
+            } else {
+                productSummary[item.productName].yesterdayShipment += item.quantity;
+            }
         }
     });
 
     // 테이블 렌더링
     dailySummaryTbody.innerHTML = Object.entries(productSummary).map(([productName, summary]) => {
-        // 제품명 기반 고유 색상 클래스
         const colorIndex = getProductColorIndex(productName) + 1;
         const colorClass = `product-color-${colorIndex}`;
 
         return `
             <tr class="${colorClass}">
                 <td><strong>${productName}</strong></td>
-                <td><span class="transaction-type transaction-in">${summary.production}개</span></td>
-                <td><span class="transaction-type transaction-out">${summary.shipment}개</span></td>
+                <td>${summary.yesterdayProduction > 0 ? `<span class="transaction-type transaction-in">${summary.yesterdayProduction}개</span>` : '-'}</td>
+                <td>${summary.yesterdayShipment > 0 ? `<span class="transaction-type transaction-out">${summary.yesterdayShipment}개</span>` : '-'}</td>
+                <td>${summary.todayProduction > 0 ? `<span class="transaction-type transaction-in">${summary.todayProduction}개</span>` : '-'}</td>
+                <td>${summary.todayShipment > 0 ? `<span class="transaction-type transaction-out">${summary.todayShipment}개</span>` : '-'}</td>
             </tr>
         `;
     }).join('');
@@ -757,6 +798,98 @@ async function editProduct(productName) {
 
     // 제출 버튼 텍스트 변경
     document.querySelector('#product-form button[type="submit"]').textContent = '제품 수정';
+}
+
+// 제품 색상 변경 함수
+async function changeProductColor(productName) {
+    const currentColorIndex = getProductColorIndex(productName);
+
+    // 20가지 색상 정보
+    const colors = [
+        { name: '빨강', bg: '#FFB3BA' },
+        { name: '주황', bg: '#FFCC99' },
+        { name: '노랑', bg: '#FFFF99' },
+        { name: '연두', bg: '#D4FF99' },
+        { name: '초록', bg: '#99FFB3' },
+        { name: '민트', bg: '#99FFE6' },
+        { name: '하늘', bg: '#99F0FF' },
+        { name: '파랑1', bg: '#B3E0FF' },
+        { name: '파랑2', bg: '#99CCFF' },
+        { name: '파랑3', bg: '#B3B3FF' },
+        { name: '보라1', bg: '#D4B3FF' },
+        { name: '분홍1', bg: '#FFB3E6' },
+        { name: '분홍2', bg: '#FFB3D9' },
+        { name: '분홍3', bg: '#FF99CC' },
+        { name: '보라2', bg: '#E6CCFF' },
+        { name: '살구', bg: '#FFD1B3' },
+        { name: '피치', bg: '#FFE0B3' },
+        { name: '라임', bg: '#E0FF99' },
+        { name: '틸', bg: '#99FFFF' },
+        { name: '인디고', bg: '#C2B3FF' }
+    ];
+
+    // 색상 선택 HTML 생성
+    let html = `
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 20px;">
+    `;
+
+    colors.forEach((color, index) => {
+        const selected = index === currentColorIndex ? 'border: 3px solid #000;' : '';
+        html += `
+            <div onclick="selectColor(${index})" style="cursor: pointer; padding: 15px; background: ${color.bg}; border-radius: 8px; text-align: center; font-weight: 600; ${selected}" title="${color.name}">
+                ${color.name}
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+
+    // 색상 선택 함수를 전역으로 등록
+    window.selectColor = async (colorIndex) => {
+        try {
+            await productsRef.child(productName).update({
+                colorIndex: colorIndex,
+                updatedAt: Date.now()
+            });
+
+            showScanResult(`"${productName}" 색상이 변경되었습니다.`, 'success');
+
+            // 다이얼로그와 오버레이 닫기
+            const overlay = document.querySelector('.color-picker-overlay');
+            const dialog = document.querySelector('.color-picker-dialog');
+            if (overlay) overlay.remove();
+            if (dialog) dialog.remove();
+        } catch (error) {
+            console.error('색상 변경 오류:', error);
+            showScanResult('색상 변경 중 오류가 발생했습니다.', 'error');
+        }
+    };
+
+    // 다이얼로그 생성
+    const dialog = document.createElement('div');
+    dialog.className = 'color-picker-dialog';
+    dialog.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; max-width: 600px;';
+    dialog.innerHTML = `
+        <div style="padding: 20px; border-bottom: 1px solid #e0e0e0;">
+            <h3 style="margin: 0;">${productName} - 색상 선택</h3>
+        </div>
+        ${html}
+        <div style="padding: 15px; text-align: right; border-top: 1px solid #e0e0e0;">
+            <button onclick="document.querySelector('.color-picker-overlay').remove(); this.closest('.color-picker-dialog').remove();" style="padding: 8px 16px; background: #e0e0e0; border: none; border-radius: 6px; cursor: pointer; font-size: 1em;">취소</button>
+        </div>
+    `;
+
+    // 오버레이 생성
+    const overlay = document.createElement('div');
+    overlay.className = 'color-picker-overlay';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999;';
+    overlay.onclick = () => {
+        overlay.remove();
+        dialog.remove();
+    };
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(dialog);
 }
 
 // 제품 삭제 함수

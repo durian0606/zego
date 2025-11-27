@@ -48,21 +48,23 @@
                 </div>
             </section>
 
-            <!-- 금일 생산/출고 현황 -->
+            <!-- 생산/출고 현황 -->
             <section class="daily-summary-section">
-                <h2>금일 생산/출고 현황</h2>
+                <h2 id="daily-summary-title">생산/출고 현황</h2>
                 <div class="table-wrapper">
                     <table id="daily-summary-table">
                         <thead>
                             <tr>
                                 <th>제품명</th>
-                                <th>금일 생산</th>
-                                <th>금일 출고</th>
+                                <th>어제 생산</th>
+                                <th>어제 출고</th>
+                                <th>오늘 생산</th>
+                                <th>오늘 출고</th>
                             </tr>
                         </thead>
                         <tbody id="daily-summary-tbody">
                             <tr>
-                                <td colspan="3" class="no-data">오늘 생산/출고 내역이 없습니다.</td>
+                                <td colspan="5" class="no-data">생산/출고 내역이 없습니다.</td>
                             </tr>
                         </tbody>
                     </table>
