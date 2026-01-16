@@ -12,7 +12,9 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(gh:*)",
-      "Bash(start index.html)"
+      "Bash(start index.html)",
+      "Bash(xdg-open:*)",
+      "Bash(firebase projects:list:*)"
     ],
     "deny": [],
     "ask": []

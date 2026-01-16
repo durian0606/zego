@@ -800,6 +800,24 @@ async function editProduct(productName) {
 
     // 제출 버튼 텍스트 변경
     document.querySelector('#product-form button[type="submit"]').textContent = '제품 수정';
+
+    // 동적으로 생성된 입력 필드에 이벤트 리스너 추가 및 제품명 포커스
+    setTimeout(() => {
+        // 생산 수량 입력 필드들에 이벤트 리스너 추가
+        const inInputs = document.querySelectorAll('#custom-quantities-in .custom-quantity-input-in');
+        inInputs.forEach(input => {
+            attachQuantityInputListeners(input, 'in');
+        });
+
+        // 출고 수량 입력 필드들에 이벤트 리스너 추가
+        const outInputs = document.querySelectorAll('#custom-quantities-out .custom-quantity-input-out');
+        outInputs.forEach(input => {
+            attachQuantityInputListeners(input, 'out');
+        });
+
+        // 제품명 입력란으로 자동 포커스
+        document.getElementById('new-name').focus();
+    }, 100);
 }
 
 // 제품 색상 변경 함수
@@ -1180,6 +1198,17 @@ btnToggleRegister.addEventListener('click', () => {
         productRegisterSection.style.display = 'block';
         productRegisterSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         scanIndicator.style.display = 'none';
+
+        // 초기 입력 필드에 이벤트 리스너 추가
+        setTimeout(() => {
+            const inInput = document.querySelector('#custom-quantities-in .custom-quantity-input-in');
+            const outInput = document.querySelector('#custom-quantities-out .custom-quantity-input-out');
+            if (inInput) attachQuantityInputListeners(inInput, 'in');
+            if (outInput) attachQuantityInputListeners(outInput, 'out');
+
+            // 제품명 입력란으로 자동 포커스
+            document.getElementById('new-name').focus();
+        }, 100);
     } else {
         productRegisterSection.style.display = 'none';
         scanIndicator.style.display = 'flex';
@@ -1282,28 +1311,86 @@ async function resetDatabase() {
 // 데이터베이스 초기화 버튼 이벤트
 document.getElementById('btn-reset-database').addEventListener('click', resetDatabase);
 
+// ============================================
+// 수량 입력 필드 키보드 편의성 함수
+// ============================================
+
+// 입력 필드에 키보드 이벤트 리스너 추가
+function attachQuantityInputListeners(input, type) {
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // 폼 제출 방지
+
+            const container = document.getElementById(`custom-quantities-${type}`);
+            const allInputs = Array.from(container.querySelectorAll(`input.custom-quantity-input-${type}`));
+            const currentIndex = allInputs.indexOf(input);
+            const isLast = currentIndex === allInputs.length - 1;
+
+            if (isLast && input.value.trim() !== '') {
+                // 마지막 필드이고 값이 있으면 새 필드 추가
+                if (type === 'in') {
+                    addCustomQuantityInputIn();
+                } else {
+                    addCustomQuantityInputOut();
+                }
+                // 새로 추가된 필드로 포커스 (setTimeout으로 DOM 업데이트 대기)
+                setTimeout(() => {
+                    const newInputs = container.querySelectorAll(`input.custom-quantity-input-${type}`);
+                    if (newInputs.length > 0) {
+                        newInputs[newInputs.length - 1].focus();
+                    }
+                }, 50);
+            } else if (!isLast) {
+                // 다음 필드로 포커스 이동
+                allInputs[currentIndex + 1].focus();
+            } else if (isLast && type === 'out' && input.value.trim() === '') {
+                // 출고의 마지막 필드가 비어있으면 제출 버튼으로 포커스
+                document.querySelector('#product-form button[type="submit"]').focus();
+            }
+        }
+    });
+}
+
 // 생산 추가 수량 입력 필드 추가
 function addCustomQuantityInputIn() {
     const container = document.getElementById('custom-quantities-in');
-    const newInput = document.createElement('div');
-    newInput.style.cssText = 'display: flex; gap: 10px; margin-bottom: 5px;';
-    newInput.innerHTML = `
+    const newInputDiv = document.createElement('div');
+    newInputDiv.style.cssText = 'display: flex; gap: 10px; margin-bottom: 5px;';
+    newInputDiv.innerHTML = `
         <input type="number" class="custom-quantity-input-in" min="1" placeholder="예: 20">
         <button type="button" class="btn-remove-quantity" onclick="this.parentElement.remove()">-</button>
     `;
-    container.appendChild(newInput);
+    container.appendChild(newInputDiv);
+
+    // 새로 추가된 입력 필드에 이벤트 리스너 추가
+    const newInput = newInputDiv.querySelector('.custom-quantity-input-in');
+    attachQuantityInputListeners(newInput, 'in');
+
+    // 새 필드로 자동 포커스
+    setTimeout(() => {
+        newInput.focus();
+    }, 50);
 }
 
 // 출고 추가 수량 입력 필드 추가
 function addCustomQuantityInputOut() {
     const container = document.getElementById('custom-quantities-out');
-    const newInput = document.createElement('div');
-    newInput.style.cssText = 'display: flex; gap: 10px; margin-bottom: 5px;';
-    newInput.innerHTML = `
+    const newInputDiv = document.createElement('div');
+    newInputDiv.style.cssText = 'display: flex; gap: 10px; margin-bottom: 5px;';
+    newInputDiv.innerHTML = `
         <input type="number" class="custom-quantity-input-out" min="1" placeholder="예: 20">
         <button type="button" class="btn-remove-quantity" onclick="this.parentElement.remove()">-</button>
     `;
-    container.appendChild(newInput);
+    container.appendChild(newInputDiv);
+
+    // 새로 추가된 입력 필드에 이벤트 리스너 추가
+    const newInput = newInputDiv.querySelector('.custom-quantity-input-out');
+    attachQuantityInputListeners(newInput, 'out');
+
+    // 새 필드로 자동 포커스
+    setTimeout(() => {
+        newInput.focus();
+    }, 50);
 }
 
 // 제품 등록 및 바코드 자동 생성
@@ -1487,6 +1574,14 @@ productForm.addEventListener('submit', async (e) => {
             </div>
         `;
 
+        // 초기화된 입력 필드에 이벤트 리스너 추가 (섹션을 계속 열어둘 경우를 대비)
+        setTimeout(() => {
+            const inInput = document.querySelector('#custom-quantities-in .custom-quantity-input-in');
+            const outInput = document.querySelector('#custom-quantities-out .custom-quantity-input-out');
+            if (inInput) attachQuantityInputListeners(inInput, 'in');
+            if (outInput) attachQuantityInputListeners(outInput, 'out');
+        }, 50);
+
         // 등록 후 섹션 닫고 바코드 입력으로 포커스
         productRegisterSection.style.display = 'none';
         scanIndicator.style.display = 'flex';
@@ -1530,11 +1625,11 @@ function openBarcodePrintPage() {
         }
     });
 
-    // 제품명을 정렬하여 색상 매핑 생성 (충돌 방지)
-    const sortedProducts = products.map(p => p.name).sort();
+    // 제품별 색상 매핑 생성 (재고 현황과 동일한 색상 사용)
     const productColorMap = {};
-    sortedProducts.forEach((name, index) => {
-        productColorMap[name] = index % 20;
+    products.forEach(product => {
+        const colorIndex = getProductColorIndex(product.name);
+        productColorMap[product.name] = colorIndex % 20;
     });
 
     // 새 창 열기
