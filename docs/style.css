@@ -645,7 +645,7 @@ tbody tr:hover {
 
 .inventory-section table th:nth-child(2),
 .inventory-section table td:nth-child(2) {
-    /* 현재 재고 */
+    /* 금일생산 */
     width: 20%;
     min-width: 100px;
     text-align: right;
@@ -654,7 +654,7 @@ tbody tr:hover {
 
 .inventory-section table th:nth-child(3),
 .inventory-section table td:nth-child(3) {
-    /* 목표 재고 */
+    /* 생산목표 */
     width: 20%;
     min-width: 100px;
     text-align: right;
@@ -892,7 +892,7 @@ tbody tr:hover {
     font-weight: 700;
 }
 
-/* 목표 재고 수정 가능 표시 */
+/* 생산목표 수정 가능 표시 */
 .editable-stock {
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1401,7 +1401,7 @@ tbody tr:hover {
         margin-bottom: 2px;
     }
     .inventory-section td:nth-of-type(2):before {
-        content: "현재 재고";
+        content: "금일생산";
         display: block;
         font-size: 0.7rem;
         font-weight: 500;
@@ -1411,7 +1411,7 @@ tbody tr:hover {
         margin-bottom: 2px;
     }
     .inventory-section td:nth-of-type(3):before {
-        content: "목표 재고";
+        content: "생산목표";
         display: block;
         font-size: 0.7rem;
         font-weight: 500;
