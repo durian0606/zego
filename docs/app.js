@@ -2235,9 +2235,9 @@ async function editProductionValue(element) {
     }
 
     const input = document.createElement('input');
-    input.type = 'number';
+    input.type = 'text';
+    input.inputMode = 'numeric';
     input.value = currentValue;
-    input.min = '0';
     input.className = 'inline-edit-input';
     input.style.width = '60px';
     input.style.textAlign = 'center';
