@@ -703,10 +703,14 @@ function updateProductionHistoryTable() {
                 production = closing.products[productName].production || 0;
             }
 
+            // 클릭하면 편집 가능하도록 설정
+            const cellClass = 'production-editable';
+            const cellData = `data-date="${d.dateKey}" data-product="${productName}" onclick="editProductionValue(this)"`;
+
             if (production > 0) {
-                tbodyHtml += `<td><span class="transaction-type transaction-in">${production}</span></td>`;
+                tbodyHtml += `<td class="${cellClass}" ${cellData}><span class="transaction-type transaction-in">${production}</span></td>`;
             } else {
-                tbodyHtml += `<td class="no-data-cell">-</td>`;
+                tbodyHtml += `<td class="${cellClass} no-data-cell" ${cellData}>-</td>`;
             }
         });
 
@@ -2218,18 +2222,20 @@ async function cleanupOldClosings() {
 }
 
 // 마감 기록 인라인 수정
-async function editClosingValue(element) {
+async function editProductionValue(element) {
     // 이미 편집 중이면 무시
     if (element.querySelector('input')) return;
 
     const dateKey = element.getAttribute('data-date');
     const productName = element.getAttribute('data-product');
-    const type = element.getAttribute('data-type'); // 'production' or 'shipment'
+    const type = 'production'; // 생산현황 테이블은 생산만 표시
 
     const closing = AppState.dailyClosingsData[dateKey];
-    if (!closing || !closing.products || !closing.products[productName]) return;
+    let currentValue = 0;
 
-    const currentValue = closing.products[productName][type] || 0;
+    if (closing && closing.products && closing.products[productName]) {
+        currentValue = closing.products[productName][type] || 0;
+    }
     const originalContent = element.innerHTML;
 
     // 인라인 편집 컨테이너 생성
@@ -2281,13 +2287,33 @@ async function editClosingValue(element) {
         }
 
         try {
-            await dailyClosingsRef.child(dateKey).child('products').child(productName).update({
-                [type]: newValue,
-                editedAt: Date.now()
-            });
-            showScanResult('마감 기록이 수정되었습니다.', 'success');
+            // 마감 기록이 없으면 새로 생성
+            const closingRef = dailyClosingsRef.child(dateKey);
+            const snapshot = await closingRef.once('value');
+
+            if (!snapshot.exists()) {
+                // 새 마감 기록 생성
+                await closingRef.set({
+                    date: dateKey,
+                    closedAt: Date.now(),
+                    products: {
+                        [productName]: {
+                            production: newValue,
+                            shipment: 0,
+                            editedAt: Date.now()
+                        }
+                    }
+                });
+            } else {
+                // 기존 마감 기록 업데이트
+                await closingRef.child('products').child(productName).update({
+                    [type]: newValue,
+                    editedAt: Date.now()
+                });
+            }
+            showScanResult('생산 현황이 수정되었습니다.', 'success');
         } catch (error) {
-            console.error('마감 기록 수정 오류:', error);
+            console.error('생산 현황 수정 오류:', error);
             showScanResult('수정 중 오류가 발생했습니다.', 'error');
             cancelEdit();
         }

@@ -1697,13 +1697,15 @@ tbody tr:hover {
 }
 
 /* 마감 기록 수정 가능 셀 */
-.closing-editable {
+.closing-editable,
+.production-editable {
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.closing-editable:hover {
-    background: rgba(102, 126, 234, 0.1) !important;
+.closing-editable:hover,
+.production-editable:hover {
+    background: rgba(102, 126, 234, 0.15) !important;
     border-radius: 4px;
 }
 
