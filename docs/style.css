@@ -2,16 +2,25 @@
 :root {
     --color-primary: #667eea;
     --color-primary-dark: #5568d3;
+    --color-primary-light: rgba(102, 126, 234, 0.1);
     --color-success: #10b981;
+    --color-success-light: #d1fae5;
     --color-danger: #ef4444;
     --color-danger-dark: #dc2626;
+    --color-danger-light: #fee2e2;
     --color-warning: #f59e0b;
+    --color-text-dark: #1f2937;
+    --color-text-muted: #6b7280;
+    --color-text-light: #9ca3af;
+    --color-bg-gray: #f3f4f6;
+    --color-border: #e5e7eb;
     --spacing-sm: clamp(6px, 1.5vw, 10px);
     --spacing-md: clamp(10px, 2.5vw, 25px);
     --spacing-lg: clamp(15px, 3vw, 30px);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 20px;
+    --touch-target: 44px;
 }
 
 * {
@@ -483,11 +492,13 @@ section h2 {
 }
 
 .btn-close {
-    background: #ef4444;
+    background: var(--color-danger);
     color: white;
     border: none;
-    width: clamp(30px, 4vw, 35px);
-    height: clamp(30px, 4vw, 35px);
+    width: var(--touch-target);
+    height: var(--touch-target);
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
     border-radius: 50%;
     font-size: clamp(1rem, 2vw, 1.2rem);
     cursor: pointer;
@@ -498,7 +509,7 @@ section h2 {
 }
 
 .btn-close:hover {
-    background: #dc2626;
+    background: var(--color-danger-dark);
     transform: rotate(90deg);
 }
 
@@ -938,17 +949,17 @@ tbody tr:hover {
 .inventory-section tr.product-color-5,
 .production-history-section tr.product-color-5,
 .history-section tr.product-color-5,
-.barcode-management-section tr.product-color-5 { background: #99FFB3; border-left: 4px solid #33FF66; } /* 초록 */
+.barcode-management-section tr.product-color-5 { background: #99FFB3; border-left: 4px solid #33FF66; color: var(--color-text-dark); } /* 초록 - 접근성 개선 */
 
 .inventory-section tr.product-color-6,
 .production-history-section tr.product-color-6,
 .history-section tr.product-color-6,
-.barcode-management-section tr.product-color-6 { background: #99FFE6; border-left: 4px solid #33FFCC; } /* 민트 */
+.barcode-management-section tr.product-color-6 { background: #99FFE6; border-left: 4px solid #33FFCC; color: var(--color-text-dark); } /* 민트 - 접근성 개선 */
 
 .inventory-section tr.product-color-7,
 .production-history-section tr.product-color-7,
 .history-section tr.product-color-7,
-.barcode-management-section tr.product-color-7 { background: #99F0FF; border-left: 4px solid #33D6FF; } /* 청록 */
+.barcode-management-section tr.product-color-7 { background: #99F0FF; border-left: 4px solid #33D6FF; color: var(--color-text-dark); } /* 청록 - 접근성 개선 */
 
 .inventory-section tr.product-color-8,
 .production-history-section tr.product-color-8,
@@ -1003,12 +1014,12 @@ tbody tr:hover {
 .inventory-section tr.product-color-18,
 .production-history-section tr.product-color-18,
 .history-section tr.product-color-18,
-.barcode-management-section tr.product-color-18 { background: #E0FF99; border-left: 4px solid #CCFF33; } /* 라임 */
+.barcode-management-section tr.product-color-18 { background: #E0FF99; border-left: 4px solid #CCFF33; color: var(--color-text-dark); } /* 라임 - 접근성 개선 */
 
 .inventory-section tr.product-color-19,
 .production-history-section tr.product-color-19,
 .history-section tr.product-color-19,
-.barcode-management-section tr.product-color-19 { background: #99FFFF; border-left: 4px solid #00FFFF; } /* 틸 */
+.barcode-management-section tr.product-color-19 { background: #99FFFF; border-left: 4px solid #00FFFF; color: var(--color-text-dark); } /* 틸 - 접근성 개선 */
 
 .inventory-section tr.product-color-20,
 .production-history-section tr.product-color-20,
@@ -1740,11 +1751,11 @@ tbody tr:hover {
 
 /* 인라인 저장/취소 버튼 */
 .inline-edit-btn {
-    width: 32px;
-    height: 32px;
+    width: var(--touch-target);
+    height: var(--touch-target);
     padding: 0;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -1752,13 +1763,13 @@ tbody tr:hover {
     font-size: 1.1em;
     font-weight: 700;
     transition: all 0.2s ease;
-    min-width: 32px;
-    min-height: 32px;
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
     flex-shrink: 0;
 }
 
 .inline-edit-btn-save {
-    background: #10b981;
+    background: var(--color-success);
     color: white;
 }
 
@@ -1768,12 +1779,12 @@ tbody tr:hover {
 }
 
 .inline-edit-btn-cancel {
-    background: #ef4444;
+    background: var(--color-danger);
     color: white;
 }
 
 .inline-edit-btn-cancel:hover {
-    background: #dc2626;
+    background: var(--color-danger-dark);
     transform: scale(1.1);
 }
 
@@ -1803,4 +1814,130 @@ tbody tr:hover {
         height: 36px;
     }
 
+}
+
+/* ============================================
+   UI/UX 개선 - 추가 스타일
+   ============================================ */
+
+/* 버튼 disabled 상태 스타일 */
+.btn:disabled,
+.btn-primary:disabled,
+.btn-register:disabled,
+.btn-print:disabled,
+.btn-barcode-mgmt:disabled,
+.btn-closing:disabled {
+    background: var(--color-text-light) !important;
+    color: white !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    opacity: 0.7;
+}
+
+/* hover 효과는 hover 지원 기기에서만 */
+@media (hover: hover) {
+    section:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .production-editable:hover,
+    .closing-editable:hover {
+        background: var(--color-primary-light) !important;
+    }
+}
+
+/* hover 미지원 기기에서 hover 효과 제거 */
+@media (hover: none) {
+    section:hover {
+        transform: none;
+    }
+}
+
+/* 빈 데이터 상태 UI 개선 */
+.no-data {
+    text-align: center;
+    padding: 30px 20px !important;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.no-data::before {
+    content: '📭';
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    font-style: normal;
+}
+
+/* 생산 현황 테이블 - 가로 스크롤 힌트 */
+.production-history-section .table-wrapper {
+    position: relative;
+}
+
+.production-history-section .table-wrapper::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 25px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.9));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.production-history-section .table-wrapper:hover::after {
+    opacity: 1;
+}
+
+/* 320px 이하 극소 화면 대응 */
+@media (max-width: 400px) {
+    .header-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+    }
+
+    .status-badge {
+        grid-column: 1 / -1;
+        text-align: center;
+        justify-content: center;
+    }
+
+    header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    header h1 {
+        font-size: 1rem;
+    }
+
+    .btn-register,
+    .btn-print,
+    .btn-barcode-mgmt {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+
+    /* 스캔 인디케이터 위치 조정 */
+    .scan-indicator {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+/* 모바일에서 긴 제품명 처리 개선 */
+@media (max-width: 768px) {
+    td {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
 }
