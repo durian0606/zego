@@ -2121,18 +2121,25 @@ async function closeTodayProduction() {
 
     try {
         // Firebase에서 직접 오늘 히스토리 쿼리 (50개 제한 없이)
+        console.log('금일 마감 시작 - todayTimestamp:', todayTimestamp, new Date(todayTimestamp));
+
         const snapshot = await historyRef
             .orderByChild('timestamp')
             .startAt(todayTimestamp)
             .once('value');
 
+        console.log('Firebase 쿼리 결과:', snapshot.val());
+
         const todayHistory = [];
         snapshot.forEach((child) => {
             const item = child.val();
+            console.log('히스토리 항목:', item);
             if (item.type !== 'ADJUST' && item.productName && item.productName !== 'undefined') {
                 todayHistory.push(item);
             }
         });
+
+        console.log('필터링된 오늘 히스토리:', todayHistory.length, '개');
 
         if (todayHistory.length === 0) {
             showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
