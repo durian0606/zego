@@ -46,6 +46,7 @@ const AppState = {
     dailyClosingsData: {},  // 마감 기록 데이터
     isEditingMinStock: false,
     isEditingCurrentStock: false,
+    isEditingProduction: false,  // 생산현황 편집 중
     editingProduct: null  // 수정 중인 제품명 (null이면 신규 등록 모드)
 };
 
@@ -2085,7 +2086,8 @@ barcodeInput.addEventListener('blur', () => {
         if (productRegisterSection.style.display === 'none' &&
             settingsSection.style.display === 'none' &&
             !AppState.isEditingMinStock &&
-            !AppState.isEditingCurrentStock) {
+            !AppState.isEditingCurrentStock &&
+            !AppState.isEditingProduction) {
             barcodeInput.focus();
         }
     }, 100);
@@ -2096,7 +2098,8 @@ document.addEventListener('click', (e) => {
     if (productRegisterSection.style.display === 'none' &&
         settingsSection.style.display === 'none' &&
         !AppState.isEditingMinStock &&
-        !AppState.isEditingCurrentStock) {
+        !AppState.isEditingCurrentStock &&
+        !AppState.isEditingProduction) {
         barcodeInput.focus();
     }
 });
@@ -2225,6 +2228,8 @@ async function cleanupOldClosings() {
 async function editProductionValue(element) {
     if (element.querySelector('input')) return;
 
+    AppState.isEditingProduction = true;
+
     const dateKey = element.getAttribute('data-date');
     const productName = element.getAttribute('data-product');
 
@@ -2252,9 +2257,13 @@ async function editProductionValue(element) {
     const save = async () => {
         if (saved) return;
         saved = true;
+        AppState.isEditingProduction = false;
 
         const newValue = parseInt(input.value) || 0;
-        if (newValue < 0) return;
+        if (newValue < 0) {
+            updateProductionHistoryTable();
+            return;
+        }
 
         try {
             const closingRef = dailyClosingsRef.child(dateKey);
@@ -2269,14 +2278,16 @@ async function editProductionValue(element) {
             } else {
                 await closingRef.child('products').child(productName).update({ production: newValue });
             }
+            // Firebase 리스너가 자동으로 테이블 업데이트함
         } catch (error) {
             console.error('수정 오류:', error);
+            updateProductionHistoryTable();
         }
     };
 
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); save(); }
-        if (e.key === 'Escape') { saved = true; updateProductionHistoryTable(); }
+        if (e.key === 'Escape') { saved = true; AppState.isEditingProduction = false; updateProductionHistoryTable(); }
     });
 
     input.addEventListener('blur', () => save());
