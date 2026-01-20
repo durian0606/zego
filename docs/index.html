@@ -63,7 +63,13 @@
 
             <!-- 생산/출고 현황 -->
             <section class="daily-summary-section">
-                <h2 id="daily-summary-title">생산/출고 현황</h2>
+                <div class="section-header-with-button">
+                    <h2 id="daily-summary-title">생산/출고 현황</h2>
+                    <button id="btn-close-today" class="btn btn-closing" title="금일 마감">
+                        <i data-lucide="check-circle" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                        금일 마감
+                    </button>
+                </div>
                 <div class="table-wrapper">
                     <table id="daily-summary-table">
                         <thead>
@@ -81,6 +87,28 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- 7일간 마감 기록 -->
+                <div class="closing-history-wrapper">
+                    <h3>7일간 마감 기록</h3>
+                    <div class="table-wrapper">
+                        <table id="closing-history-table">
+                            <thead>
+                                <tr>
+                                    <th>날짜</th>
+                                    <th>제품명</th>
+                                    <th>생산</th>
+                                    <th>출고</th>
+                                </tr>
+                            </thead>
+                            <tbody id="closing-history-tbody">
+                                <tr>
+                                    <td colspan="4" class="no-data">마감 기록이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 

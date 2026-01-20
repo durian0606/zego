@@ -3,6 +3,7 @@ const database = firebase.database();
 const productsRef = database.ref('products');
 const barcodesRef = database.ref('barcodes');
 const historyRef = database.ref('history');
+const dailyClosingsRef = database.ref('dailyClosings');
 
 // undefined 항목 삭제 (일회성)
 productsRef.child('undefined').remove().then(() => {
@@ -41,6 +42,7 @@ const AppState = {
     productsData: {},
     barcodesData: {},
     historyData: [],
+    dailyClosingsData: {},  // 마감 기록 데이터
     isEditingMinStock: false,
     isEditingCurrentStock: false,
     editingProduct: null  // 수정 중인 제품명 (null이면 신규 등록 모드)
@@ -109,6 +111,25 @@ function showConfirmDialog(message) {
     });
 }
 
+// 날짜 키 형식 변환 (YYYY-MM-DD)
+function formatDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// 표시용 날짜 형식 (M월 D일)
+function formatDisplayDate(date) {
+    return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+// 날짜 키에서 Date 객체 생성
+function parseDateKey(dateKey) {
+    const [year, month, day] = dateKey.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
 // ============================================
 
 // 연결 상태 모니터링
@@ -151,6 +172,13 @@ historyRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
     });
     updateHistoryTable();
     updateDailySummaryTable();
+});
+
+// 마감 기록 실시간 감지 (최근 7일)
+dailyClosingsRef.orderByKey().limitToLast(7).on('value', (snapshot) => {
+    AppState.dailyClosingsData = snapshot.val() || {};
+    console.log('Firebase에서 마감 기록 업데이트:', Object.keys(AppState.dailyClosingsData).length, '개');
+    updateClosingHistoryTable();
 });
 
 // 재고 테이블 업데이트
@@ -235,17 +263,36 @@ function editMinStock(element) {
     AppState.isEditingMinStock = true; // 편집 시작
     const originalContent = element.innerHTML;
 
+    // 인라인 편집 컨테이너 생성
+    const container = document.createElement('div');
+    container.className = 'inline-edit-container';
+
     // input 필드 생성
     const input = document.createElement('input');
     input.type = 'number';
     input.value = currentValue;
     input.min = '0';
     input.className = 'inline-edit-input';
-    input.style.cssText = 'width: 80px; padding: 5px; font-size: 1.5em; text-align: center; border: 2px solid #667eea;';
+
+    // 저장 버튼
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
+    saveBtn.innerHTML = '&#10003;';
+    saveBtn.title = '저장 (Enter)';
+
+    // 취소 버튼
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
+    cancelBtn.innerHTML = '&#10005;';
+    cancelBtn.title = '취소 (ESC)';
+
+    container.appendChild(input);
+    container.appendChild(saveBtn);
+    container.appendChild(cancelBtn);
 
     // 전체 내용 교체
     element.innerHTML = '';
-    element.appendChild(input);
+    element.appendChild(container);
 
     // 포커스 및 전체 선택
     setTimeout(() => {
@@ -253,8 +300,12 @@ function editMinStock(element) {
         input.select();
     }, 0);
 
+    // 저장 중 플래그
+    let isSaving = false;
+
     // 취소 함수
     const cancelEdit = () => {
+        if (isSaving) return;
         element.innerHTML = originalContent;
         AppState.isEditingMinStock = false;
         barcodeInput.focus();
@@ -262,9 +313,13 @@ function editMinStock(element) {
 
     // 저장 함수
     const saveValue = async () => {
+        if (isSaving) return;
+        isSaving = true;
+
         const newValue = input.value.trim();
 
         if (newValue === '') {
+            isSaving = false;
             cancelEdit();
             return;
         }
@@ -272,12 +327,14 @@ function editMinStock(element) {
         const minStock = parseInt(newValue);
         if (isNaN(minStock) || minStock < 0) {
             showScanResult('올바른 숫자를 입력해주세요.', 'error');
+            isSaving = false;
             cancelEdit();
             return;
         }
 
         // 값이 변경되지 않았으면 그냥 취소
         if (minStock === currentValue) {
+            isSaving = false;
             cancelEdit();
             return;
         }
@@ -306,23 +363,26 @@ function editMinStock(element) {
             element.innerHTML = originalContent;
             AppState.isEditingMinStock = false;
         }
-    };
-
-    // 저장 중 플래그
-    let isSaving = false;
-
-    const saveValueWrapped = async () => {
-        isSaving = true;
-        await saveValue();
         isSaving = false;
     };
+
+    // 버튼 이벤트
+    saveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        saveValue();
+    });
+
+    cancelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelEdit();
+    });
 
     // 엔터 키: 저장, ESC: 취소
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             e.stopPropagation();
-            saveValueWrapped();
+            saveValue();
         } else if (e.key === 'Escape') {
             e.preventDefault();
             e.stopPropagation();
@@ -330,13 +390,13 @@ function editMinStock(element) {
         }
     });
 
-    // 포커스 잃을 때: 저장 중이 아니면 취소
+    // 포커스 잃을 때: 저장 중이 아니면 취소 (버튼 클릭 허용을 위해 딜레이)
     input.addEventListener('blur', () => {
         setTimeout(() => {
-            if (AppState.isEditingMinStock && !isSaving) {
+            if (AppState.isEditingMinStock && !isSaving && element.contains(container)) {
                 cancelEdit();
             }
-        }, 100);
+        }, 150);
     });
 }
 
@@ -354,17 +414,36 @@ function editCurrentStock(element) {
     AppState.isEditingCurrentStock = true; // 편집 시작
     const originalContent = element.innerHTML;
 
+    // 인라인 편집 컨테이너 생성
+    const container = document.createElement('div');
+    container.className = 'inline-edit-container';
+
     // input 필드 생성
     const input = document.createElement('input');
     input.type = 'number';
     input.value = currentValue;
     input.min = '0';
     input.className = 'inline-edit-input';
-    input.style.cssText = 'width: 100px; padding: 5px; font-size: 2em; text-align: center; border: 2px solid #667eea;';
+
+    // 저장 버튼
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
+    saveBtn.innerHTML = '&#10003;';
+    saveBtn.title = '저장 (Enter)';
+
+    // 취소 버튼
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
+    cancelBtn.innerHTML = '&#10005;';
+    cancelBtn.title = '취소 (ESC)';
+
+    container.appendChild(input);
+    container.appendChild(saveBtn);
+    container.appendChild(cancelBtn);
 
     // 전체 내용 교체
     element.innerHTML = '';
-    element.appendChild(input);
+    element.appendChild(container);
 
     // 포커스 및 전체 선택
     setTimeout(() => {
@@ -372,8 +451,12 @@ function editCurrentStock(element) {
         input.select();
     }, 0);
 
+    // 저장 중 플래그
+    let isSaving = false;
+
     // 취소 함수
     const cancelEdit = () => {
+        if (isSaving) return;
         element.innerHTML = originalContent;
         AppState.isEditingCurrentStock = false;
         barcodeInput.focus();
@@ -381,9 +464,13 @@ function editCurrentStock(element) {
 
     // 저장 함수
     const saveValue = async () => {
+        if (isSaving) return;
+        isSaving = true;
+
         const newValue = input.value.trim();
 
         if (newValue === '') {
+            isSaving = false;
             cancelEdit();
             return;
         }
@@ -391,12 +478,14 @@ function editCurrentStock(element) {
         const newStock = parseInt(newValue);
         if (isNaN(newStock) || newStock < 0) {
             showScanResult('올바른 숫자를 입력해주세요.', 'error');
+            isSaving = false;
             cancelEdit();
             return;
         }
 
         // 값이 변경되지 않았으면 그냥 취소
         if (newStock === currentValue) {
+            isSaving = false;
             cancelEdit();
             return;
         }
@@ -436,23 +525,26 @@ function editCurrentStock(element) {
             element.innerHTML = originalContent;
             AppState.isEditingCurrentStock = false;
         }
-    };
-
-    // 저장 중 플래그
-    let isSaving = false;
-
-    const saveValueWrapped = async () => {
-        isSaving = true;
-        await saveValue();
         isSaving = false;
     };
+
+    // 버튼 이벤트
+    saveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        saveValue();
+    });
+
+    cancelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelEdit();
+    });
 
     // 엔터 키: 저장, ESC: 취소
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             e.stopPropagation();
-            saveValueWrapped();
+            saveValue();
         } else if (e.key === 'Escape') {
             e.preventDefault();
             e.stopPropagation();
@@ -460,13 +552,13 @@ function editCurrentStock(element) {
         }
     });
 
-    // 포커스 잃을 때: 저장 중이 아니면 취소
+    // 포커스 잃을 때: 저장 중이 아니면 취소 (버튼 클릭 허용을 위해 딜레이)
     input.addEventListener('blur', () => {
         setTimeout(() => {
-            if (AppState.isEditingCurrentStock && !isSaving) {
+            if (AppState.isEditingCurrentStock && !isSaving && element.contains(container)) {
                 cancelEdit();
             }
-        }, 100);
+        }, 150);
     });
 }
 
@@ -2025,5 +2117,266 @@ document.addEventListener('click', (e) => {
         barcodeInput.focus();
     }
 });
+
+// ============================================
+// 금일 마감 기능
+// ============================================
+
+// 7일간 마감 기록 테이블 업데이트
+function updateClosingHistoryTable() {
+    const closingsTbody = document.getElementById('closing-history-tbody');
+    if (!closingsTbody) return;
+
+    const closings = AppState.dailyClosingsData;
+
+    if (!closings || Object.keys(closings).length === 0) {
+        closingsTbody.innerHTML = '<tr><td colspan="4" class="no-data">마감 기록이 없습니다.</td></tr>';
+        return;
+    }
+
+    // 날짜 내림차순 정렬
+    const sortedDates = Object.keys(closings).sort((a, b) => b.localeCompare(a));
+    const todayKey = formatDateKey(new Date());
+
+    let html = '';
+    sortedDates.forEach(dateKey => {
+        const closing = closings[dateKey];
+        const dateObj = parseDateKey(dateKey);
+        const displayDate = formatDisplayDate(dateObj);
+        const isToday = dateKey === todayKey;
+
+        const products = closing.products || {};
+        const productNames = Object.keys(products).sort();
+
+        if (productNames.length === 0) return;
+
+        productNames.forEach((productName, idx) => {
+            const data = products[productName];
+            const colorIndex = getProductColorIndex(productName) + 1;
+            const colorClass = `product-color-${colorIndex}`;
+
+            html += `
+                <tr class="${colorClass}">
+                    <td>${idx === 0 ? `<strong>${displayDate}</strong>${isToday ? ' (오늘)' : ''}` : ''}</td>
+                    <td><strong>${productName}</strong></td>
+                    <td class="closing-editable" data-date="${dateKey}" data-product="${productName}" data-type="production" onclick="editClosingValue(this)">
+                        ${data.production > 0 ? `<span class="transaction-type transaction-in">${data.production}개</span>` : '-'}
+                    </td>
+                    <td class="closing-editable" data-date="${dateKey}" data-product="${productName}" data-type="shipment" onclick="editClosingValue(this)">
+                        ${data.shipment > 0 ? `<span class="transaction-type transaction-out">${data.shipment}개</span>` : '-'}
+                    </td>
+                </tr>
+            `;
+        });
+    });
+
+    closingsTbody.innerHTML = html || '<tr><td colspan="4" class="no-data">마감 기록이 없습니다.</td></tr>';
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+// 금일 마감 실행
+async function closeTodayProduction() {
+    const today = new Date();
+    const dateKey = formatDateKey(today);
+
+    // 이미 마감된 경우 확인
+    if (AppState.dailyClosingsData[dateKey]) {
+        const confirmed = await showConfirmDialog(
+            `${formatDisplayDate(today)}은 이미 마감되었습니다.\n\n기존 마감을 덮어쓰시겠습니까?`
+        );
+        if (!confirmed) return;
+    }
+
+    // 오늘 히스토리에서 생산/출고 집계
+    const todayStart = new Date(today);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayTimestamp = todayStart.getTime();
+
+    const validHistory = filterValidHistory(AppState.historyData);
+    const todayHistory = validHistory.filter(item =>
+        item.timestamp >= todayTimestamp &&
+        item.type !== 'ADJUST'
+    );
+
+    if (todayHistory.length === 0) {
+        showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
+        return;
+    }
+
+    // 제품별 집계
+    const productSummary = {};
+    todayHistory.forEach(item => {
+        if (!productSummary[item.productName]) {
+            productSummary[item.productName] = {
+                production: 0,
+                shipment: 0
+            };
+        }
+        if (item.type === 'IN') {
+            productSummary[item.productName].production += item.quantity;
+        } else if (item.type === 'OUT') {
+            productSummary[item.productName].shipment += item.quantity;
+        }
+    });
+
+    // 마감 확인
+    const summaryText = Object.entries(productSummary)
+        .map(([name, data]) => `${name}: 생산 ${data.production}개, 출고 ${data.shipment}개`)
+        .join('\n');
+
+    const confirmed = await showConfirmDialog(
+        `${formatDisplayDate(today)} 마감을 진행하시겠습니까?\n\n[마감 내용]\n${summaryText}`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        // Firebase에 마감 기록 저장
+        await dailyClosingsRef.child(dateKey).set({
+            date: dateKey,
+            closedAt: Date.now(),
+            products: productSummary
+        });
+
+        // 7일 초과 기록 자동 삭제
+        await cleanupOldClosings();
+
+        showScanResult(`${formatDisplayDate(today)} 마감이 완료되었습니다.`, 'success');
+    } catch (error) {
+        console.error('마감 저장 오류:', error);
+        showScanResult('마감 저장 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 7일 초과 마감 기록 자동 삭제
+async function cleanupOldClosings() {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const cutoffKey = formatDateKey(sevenDaysAgo);
+
+    const closings = AppState.dailyClosingsData;
+    const keysToDelete = Object.keys(closings).filter(key => key < cutoffKey);
+
+    for (const key of keysToDelete) {
+        try {
+            await dailyClosingsRef.child(key).remove();
+            console.log(`오래된 마감 기록 삭제: ${key}`);
+        } catch (error) {
+            console.error(`마감 기록 삭제 오류 (${key}):`, error);
+        }
+    }
+}
+
+// 마감 기록 인라인 수정
+async function editClosingValue(element) {
+    // 이미 편집 중이면 무시
+    if (element.querySelector('input')) return;
+
+    const dateKey = element.getAttribute('data-date');
+    const productName = element.getAttribute('data-product');
+    const type = element.getAttribute('data-type'); // 'production' or 'shipment'
+
+    const closing = AppState.dailyClosingsData[dateKey];
+    if (!closing || !closing.products || !closing.products[productName]) return;
+
+    const currentValue = closing.products[productName][type] || 0;
+    const originalContent = element.innerHTML;
+
+    // 인라인 편집 컨테이너 생성
+    const container = document.createElement('div');
+    container.className = 'inline-edit-container';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = currentValue;
+    input.min = '0';
+    input.className = 'inline-edit-input';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
+    saveBtn.innerHTML = '&#10003;'; // 체크마크
+    saveBtn.title = '저장 (Enter)';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
+    cancelBtn.innerHTML = '&#10005;'; // X 마크
+    cancelBtn.title = '취소 (ESC)';
+
+    container.appendChild(input);
+    container.appendChild(saveBtn);
+    container.appendChild(cancelBtn);
+
+    element.innerHTML = '';
+    element.appendChild(container);
+
+    input.focus();
+    input.select();
+
+    let isSaving = false;
+
+    const cancelEdit = () => {
+        if (isSaving) return;
+        element.innerHTML = originalContent;
+    };
+
+    const saveValue = async () => {
+        if (isSaving) return;
+        isSaving = true;
+
+        const newValue = parseInt(input.value) || 0;
+        if (newValue < 0) {
+            showScanResult('0 이상의 숫자를 입력해주세요.', 'error');
+            isSaving = false;
+            return;
+        }
+
+        try {
+            await dailyClosingsRef.child(dateKey).child('products').child(productName).update({
+                [type]: newValue,
+                editedAt: Date.now()
+            });
+            showScanResult('마감 기록이 수정되었습니다.', 'success');
+        } catch (error) {
+            console.error('마감 기록 수정 오류:', error);
+            showScanResult('수정 중 오류가 발생했습니다.', 'error');
+            cancelEdit();
+        }
+    };
+
+    saveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        saveValue();
+    });
+
+    cancelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelEdit();
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveValue();
+        } else if (e.key === 'Escape') {
+            cancelEdit();
+        }
+    });
+
+    // blur 이벤트로 취소 (버튼 클릭 시 blur가 먼저 발생하지 않도록 딜레이)
+    input.addEventListener('blur', () => {
+        setTimeout(() => {
+            if (!isSaving && element.contains(container)) {
+                cancelEdit();
+            }
+        }, 150);
+    });
+}
+
+// 마감 버튼 이벤트 리스너
+document.getElementById('btn-close-today').addEventListener('click', closeTodayProduction);
 
 console.log('우리곡간식품 재고관리 시스템이 시작되었습니다!');

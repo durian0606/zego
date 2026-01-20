@@ -1641,3 +1641,212 @@ tbody tr:hover {
         padding: 16px 10px;
     }
 }
+
+/* ============================================
+   마감 버튼 및 7일 기록 테이블 스타일
+   ============================================ */
+
+/* 섹션 헤더 + 버튼 레이아웃 */
+.section-header-with-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.section-header-with-button h2 {
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+/* 마감 버튼 스타일 */
+.btn-closing {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: var(--spacing-sm) clamp(12px, 2.5vw, 20px);
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-closing:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-closing:active {
+    transform: translateY(0);
+}
+
+.btn-closing:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 7일간 마감 기록 래퍼 */
+.closing-history-wrapper {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px dashed #e5e7eb;
+}
+
+.closing-history-wrapper h3 {
+    font-size: clamp(0.9rem, 2vw, 1.2rem);
+    color: #4b5563;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #10b981;
+    display: inline-block;
+}
+
+/* 마감 기록 수정 가능 셀 */
+.closing-editable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.closing-editable:hover {
+    background: rgba(102, 126, 234, 0.1) !important;
+    border-radius: 4px;
+}
+
+/* ============================================
+   인라인 편집 UI 개선 스타일
+   ============================================ */
+
+/* 인라인 편집 컨테이너 */
+.inline-edit-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+/* 인라인 편집 입력 필드 */
+.inline-edit-input {
+    width: clamp(60px, 15vw, 100px) !important;
+    padding: 6px 10px !important;
+    font-size: inherit !important;
+    text-align: center;
+    border: 2px solid #667eea !important;
+    border-radius: 6px;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.inline-edit-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* 인라인 저장/취소 버튼 */
+.inline-edit-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    min-width: 32px;
+    min-height: 32px;
+    flex-shrink: 0;
+}
+
+.inline-edit-btn-save {
+    background: #10b981;
+    color: white;
+}
+
+.inline-edit-btn-save:hover {
+    background: #059669;
+    transform: scale(1.1);
+}
+
+.inline-edit-btn-cancel {
+    background: #ef4444;
+    color: white;
+}
+
+.inline-edit-btn-cancel:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* 반응형 - 모바일 */
+@media (max-width: 768px) {
+    .section-header-with-button {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-closing {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .inline-edit-container {
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+
+    .inline-edit-input {
+        width: clamp(50px, 20vw, 80px) !important;
+    }
+
+    .inline-edit-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* 마감 기록 테이블 모바일 스타일 */
+    .closing-history-wrapper .table-wrapper table tbody tr {
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border-left: 4px solid #10b981;
+    }
+
+    .closing-history-wrapper .table-wrapper table tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .closing-history-wrapper .table-wrapper table tbody td:last-child {
+        border-bottom: none;
+    }
+
+    .closing-history-wrapper .table-wrapper table tbody td:before {
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 0.75rem;
+    }
+
+    .closing-history-wrapper .table-wrapper table tbody td:nth-of-type(1):before { content: "날짜"; }
+    .closing-history-wrapper .table-wrapper table tbody td:nth-of-type(2):before { content: "제품명"; }
+    .closing-history-wrapper .table-wrapper table tbody td:nth-of-type(3):before { content: "생산"; }
+    .closing-history-wrapper .table-wrapper table tbody td:nth-of-type(4):before { content: "출고"; }
+}
