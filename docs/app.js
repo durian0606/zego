@@ -2133,12 +2133,8 @@ async function closeTodayProduction() {
         const todayHistory = [];
         snapshot.forEach((child) => {
             const item = child.val();
-            console.log('히스토리 항목:', item, 'type:', item.type, 'productName:', item.productName, 'timestamp:', item.timestamp);
-            // 필터링 조건 확인
-            const isValidType = item.type !== 'ADJUST';
-            const hasProductName = item.productName && item.productName !== 'undefined';
-            console.log('필터 결과 - isValidType:', isValidType, 'hasProductName:', hasProductName);
-            if (isValidType && hasProductName) {
+            // productName만 확인 (ADJUST도 포함)
+            if (item.productName && item.productName !== 'undefined') {
                 todayHistory.push(item);
             }
         });
@@ -2163,6 +2159,13 @@ async function closeTodayProduction() {
                 productSummary[item.productName].production += item.quantity;
             } else if (item.type === 'OUT') {
                 productSummary[item.productName].shipment += item.quantity;
+            } else if (item.type === 'ADJUST') {
+                // ADJUST: 양수면 생산, 음수면 출고로 처리
+                if (item.quantity > 0) {
+                    productSummary[item.productName].production += item.quantity;
+                } else {
+                    productSummary[item.productName].shipment += Math.abs(item.quantity);
+                }
             }
         });
 
