@@ -108,12 +108,30 @@ The application uses Firebase Realtime Database with three main data nodes:
 }
 ```
 
+**dailyClosings/** - Daily closing records (7 days retention)
+```javascript
+{
+  "2026-01-20": {           // Date key (YYYY-MM-DD format)
+    date: string,           // Same as key
+    closedAt: timestamp,    // When closing was performed
+    products: {
+      "제품명": {
+        production: number, // Total production for the day
+        shipment: number,   // Total shipment for the day
+        editedAt: timestamp // Optional: when manually edited
+      }
+    }
+  }
+}
+```
+
 ### Key Application Architecture
 
-**State Management** (AppState object in app.js:40-47)
+**State Management** (AppState object in app.js:40-48)
 - `productsData`: In-memory cache of products from Firebase
 - `barcodesData`: In-memory cache of barcodes from Firebase
 - `historyData`: Recent 50 transaction records (sorted newest first)
+- `dailyClosingsData`: Daily closing records (last 7 days)
 - `isEditingMinStock`, `isEditingCurrentStock`: Inline editing flags
 - `editingProduct`: Product name being edited (null = new product mode)
 
@@ -158,6 +176,24 @@ The application uses Firebase Realtime Database with three main data nodes:
 - Separate pages for production (IN) and shipment (OUT)
 - Preserves product colors in print view
 - Print-optimized CSS with @media print rules
+
+**Daily Closing System** (app.js:2057-2180)
+- "금일 마감" button saves today's production/shipment totals to Firebase
+- Data stored in `dailyClosings/` node with date key (YYYY-MM-DD)
+- Shows last 7 days of closing records in a dedicated table
+- Each record can be inline-edited (click on production/shipment values)
+- Auto-cleanup removes records older than 7 days
+- Key functions:
+  - `closeTodayProduction()` - Execute daily closing
+  - `updateClosingHistoryTable()` - Render 7-day history table
+  - `editClosingValue()` - Inline edit closing records
+  - `cleanupOldClosings()` - Remove old records
+
+**Inline Edit UI** (app.js:252-401, 403-550)
+- Click on stock values to edit inline
+- Shows input field with save (✓) and cancel (✗) buttons
+- Keyboard shortcuts: Enter to save, ESC to cancel
+- CSS class: `.inline-edit-container`, `.inline-edit-btn-save`, `.inline-edit-btn-cancel`
 
 ## Important Implementation Details
 
