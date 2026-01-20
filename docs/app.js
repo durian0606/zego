@@ -2133,8 +2133,12 @@ async function closeTodayProduction() {
         const todayHistory = [];
         snapshot.forEach((child) => {
             const item = child.val();
-            console.log('히스토리 항목:', item);
-            if (item.type !== 'ADJUST' && item.productName && item.productName !== 'undefined') {
+            console.log('히스토리 항목:', item, 'type:', item.type, 'productName:', item.productName, 'timestamp:', item.timestamp);
+            // 필터링 조건 확인
+            const isValidType = item.type !== 'ADJUST';
+            const hasProductName = item.productName && item.productName !== 'undefined';
+            console.log('필터 결과 - isValidType:', isValidType, 'hasProductName:', hasProductName);
+            if (isValidType && hasProductName) {
                 todayHistory.push(item);
             }
         });
