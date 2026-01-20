@@ -2221,131 +2221,65 @@ async function cleanupOldClosings() {
     }
 }
 
-// 마감 기록 인라인 수정
+// 생산 현황 인라인 수정 (간단 버전)
 async function editProductionValue(element) {
-    // 이미 편집 중이면 무시
     if (element.querySelector('input')) return;
 
     const dateKey = element.getAttribute('data-date');
     const productName = element.getAttribute('data-product');
-    const type = 'production'; // 생산현황 테이블은 생산만 표시
 
     const closing = AppState.dailyClosingsData[dateKey];
     let currentValue = 0;
-
     if (closing && closing.products && closing.products[productName]) {
-        currentValue = closing.products[productName][type] || 0;
+        currentValue = closing.products[productName].production || 0;
     }
-    const originalContent = element.innerHTML;
-
-    // 인라인 편집 컨테이너 생성
-    const container = document.createElement('div');
-    container.className = 'inline-edit-container';
 
     const input = document.createElement('input');
     input.type = 'number';
     input.value = currentValue;
     input.min = '0';
     input.className = 'inline-edit-input';
-
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
-    saveBtn.innerHTML = '&#10003;'; // 체크마크
-    saveBtn.title = '저장 (Enter)';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
-    cancelBtn.innerHTML = '&#10005;'; // X 마크
-    cancelBtn.title = '취소 (ESC)';
-
-    container.appendChild(input);
-    container.appendChild(saveBtn);
-    container.appendChild(cancelBtn);
+    input.style.width = '60px';
+    input.style.textAlign = 'center';
 
     element.innerHTML = '';
-    element.appendChild(container);
-
+    element.appendChild(input);
     input.focus();
     input.select();
 
-    let isSaving = false;
+    let saved = false;
 
-    const cancelEdit = () => {
-        if (isSaving) return;
-        element.innerHTML = originalContent;
-    };
-
-    const saveValue = async () => {
-        if (isSaving) return;
-        isSaving = true;
+    const save = async () => {
+        if (saved) return;
+        saved = true;
 
         const newValue = parseInt(input.value) || 0;
-        if (newValue < 0) {
-            showScanResult('0 이상의 숫자를 입력해주세요.', 'error');
-            isSaving = false;
-            return;
-        }
+        if (newValue < 0) return;
 
         try {
-            // 마감 기록이 없으면 새로 생성
             const closingRef = dailyClosingsRef.child(dateKey);
             const snapshot = await closingRef.once('value');
 
             if (!snapshot.exists()) {
-                // 새 마감 기록 생성
                 await closingRef.set({
                     date: dateKey,
                     closedAt: Date.now(),
-                    products: {
-                        [productName]: {
-                            production: newValue,
-                            shipment: 0,
-                            editedAt: Date.now()
-                        }
-                    }
+                    products: { [productName]: { production: newValue, shipment: 0 } }
                 });
             } else {
-                // 기존 마감 기록 업데이트
-                await closingRef.child('products').child(productName).update({
-                    [type]: newValue,
-                    editedAt: Date.now()
-                });
+                await closingRef.child('products').child(productName).update({ production: newValue });
             }
-            showScanResult('생산 현황이 수정되었습니다.', 'success');
         } catch (error) {
-            console.error('생산 현황 수정 오류:', error);
-            showScanResult('수정 중 오류가 발생했습니다.', 'error');
-            cancelEdit();
+            console.error('수정 오류:', error);
         }
     };
 
-    saveBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        saveValue();
-    });
-
-    cancelBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        cancelEdit();
-    });
-
     input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            saveValue();
-        } else if (e.key === 'Escape') {
-            cancelEdit();
-        }
+        if (e.key === 'Enter') { e.preventDefault(); save(); }
+        if (e.key === 'Escape') { saved = true; updateProductionHistoryTable(); }
     });
 
-    // blur 이벤트로 취소 (버튼 클릭 시 blur가 먼저 발생하지 않도록 딜레이)
-    input.addEventListener('blur', () => {
-        setTimeout(() => {
-            if (!isSaving && element.contains(container)) {
-                cancelEdit();
-            }
-        }, 150);
-    });
+    input.addEventListener('blur', () => save());
 }
 
 // 마감 버튼 이벤트 리스너
