@@ -18,7 +18,8 @@ const scanResult = document.getElementById('scan-result');
 const scanIndicator = document.getElementById('scan-indicator');
 const loadingOverlay = document.getElementById('loading-overlay');
 const inventoryTbody = document.getElementById('inventory-tbody');
-const dailySummaryTbody = document.getElementById('daily-summary-tbody');
+const productionHistoryThead = document.getElementById('production-history-thead');
+const productionHistoryTbody = document.getElementById('production-history-tbody');
 const historyTbody = document.getElementById('history-tbody');
 const barcodeTbody = document.getElementById('barcode-tbody');
 const connectionStatus = document.getElementById('connection-status');
@@ -149,7 +150,7 @@ productsRef.on('value', (snapshot) => {
     AppState.productsData = snapshot.val() || {};
     updateSortedProductNames();
     updateInventoryTable();
-    updateDailySummaryTable();
+    updateProductionHistoryTable();
     updateHistoryTable();
     updateBarcodeTable();
 });
@@ -161,7 +162,7 @@ barcodesRef.on('value', (snapshot) => {
     console.log('바코드 목록:', Object.keys(AppState.barcodesData));
     updateBarcodeTable();
     updateInventoryTable();
-    updateDailySummaryTable();
+    updateProductionHistoryTable();
 });
 
 // 히스토리 실시간 감지 (최근 50개만)
@@ -171,14 +172,14 @@ historyRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
         AppState.historyData.unshift(child.val()); // 최신순으로
     });
     updateHistoryTable();
-    updateDailySummaryTable();
+    updateProductionHistoryTable();
 });
 
 // 마감 기록 실시간 감지 (최근 7일)
 dailyClosingsRef.orderByKey().limitToLast(7).on('value', (snapshot) => {
     AppState.dailyClosingsData = snapshot.val() || {};
     console.log('Firebase에서 마감 기록 업데이트:', Object.keys(AppState.dailyClosingsData).length, '개');
-    updateClosingHistoryTable();
+    updateProductionHistoryTable();
 });
 
 // 재고 테이블 업데이트
@@ -653,88 +654,66 @@ function updateHistoryTable() {
     }
 }
 
-// 생산/출고 현황 테이블 업데이트 (어제/오늘)
-function updateDailySummaryTable() {
-    const validHistory = filterValidHistory(AppState.historyData);
+// 생산 현황 테이블 업데이트 (5일치 마감 기록 기반)
+function updateProductionHistoryTable() {
     const validProducts = filterValidProducts(AppState.productsData);
-    const validProductNames = new Set(validProducts.map(p => p.name));
+    const closings = AppState.dailyClosingsData;
 
-    // 오늘과 어제 날짜 계산
+    // 5일치 날짜 배열 생성 (과거 → 오늘)
+    const dates = [];
     const today = new Date();
-    const todayStr = `${today.getMonth() + 1}월 ${today.getDate()}일`;
+    for (let i = 4; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        dates.push({
+            dateKey: formatDateKey(date),
+            displayDate: `${date.getMonth() + 1}/${date.getDate()}`,
+            isToday: i === 0
+        });
+    }
 
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = `${yesterday.getMonth() + 1}월 ${yesterday.getDate()}일`;
-
-    // 제목 업데이트
-    document.getElementById('daily-summary-title').textContent =
-        `생산/출고 현황 (어제: ${yesterdayStr} / 오늘: ${todayStr})`;
-
-    // 오늘 00:00:00
-    today.setHours(0, 0, 0, 0);
-    const todayTimestamp = today.getTime();
-
-    // 어제 00:00:00
-    yesterday.setHours(0, 0, 0, 0);
-    const yesterdayTimestamp = yesterday.getTime();
-
-    // 어제와 오늘 데이터 필터링
-    const recentHistory = validHistory.filter(item => {
-        return item.timestamp >= yesterdayTimestamp &&
-               item.type !== 'ADJUST' &&
-               validProductNames.has(item.productName);
+    // 테이블 헤더 생성
+    let theadHtml = '<tr><th>제품명</th>';
+    dates.forEach(d => {
+        theadHtml += `<th>${d.displayDate}${d.isToday ? '<br>(오늘)' : ''}</th>`;
     });
+    theadHtml += '</tr>';
+    productionHistoryThead.innerHTML = theadHtml;
 
-    if (recentHistory.length === 0) {
-        dailySummaryTbody.innerHTML = '<tr><td colspan="5" class="no-data">생산/출고 내역이 없습니다.</td></tr>';
+    // 제품이 없으면 빈 메시지 표시
+    if (validProducts.length === 0) {
+        productionHistoryTbody.innerHTML = '<tr><td colspan="6" class="no-data">등록된 제품이 없습니다.</td></tr>';
         return;
     }
 
-    // 제품별로 그룹화 (어제/오늘 구분)
-    const productSummary = {};
-    recentHistory.forEach(item => {
-        if (!productSummary[item.productName]) {
-            productSummary[item.productName] = {
-                yesterdayProduction: 0,
-                yesterdayShipment: 0,
-                todayProduction: 0,
-                todayShipment: 0
-            };
-        }
-
-        const isToday = item.timestamp >= todayTimestamp;
-
-        if (item.type === 'IN') {
-            if (isToday) {
-                productSummary[item.productName].todayProduction += item.quantity;
-            } else {
-                productSummary[item.productName].yesterdayProduction += item.quantity;
-            }
-        } else if (item.type === 'OUT') {
-            if (isToday) {
-                productSummary[item.productName].todayShipment += item.quantity;
-            } else {
-                productSummary[item.productName].yesterdayShipment += item.quantity;
-            }
-        }
-    });
-
-    // 테이블 렌더링
-    dailySummaryTbody.innerHTML = Object.entries(productSummary).map(([productName, summary]) => {
+    // 테이블 바디 생성
+    let tbodyHtml = '';
+    validProducts.forEach(product => {
+        const productName = product.name;
         const colorIndex = getProductColorIndex(productName) + 1;
         const colorClass = `product-color-${colorIndex}`;
 
-        return `
-            <tr class="${colorClass}">
-                <td><strong>${productName}</strong></td>
-                <td>${summary.yesterdayProduction > 0 ? `<span class="transaction-type transaction-in">${summary.yesterdayProduction}개</span>` : '-'}</td>
-                <td>${summary.yesterdayShipment > 0 ? `<span class="transaction-type transaction-out">${summary.yesterdayShipment}개</span>` : '-'}</td>
-                <td>${summary.todayProduction > 0 ? `<span class="transaction-type transaction-in">${summary.todayProduction}개</span>` : '-'}</td>
-                <td>${summary.todayShipment > 0 ? `<span class="transaction-type transaction-out">${summary.todayShipment}개</span>` : '-'}</td>
-            </tr>
-        `;
-    }).join('');
+        tbodyHtml += `<tr class="${colorClass}"><td><strong>${productName}</strong></td>`;
+
+        dates.forEach(d => {
+            const closing = closings[d.dateKey];
+            let production = 0;
+
+            if (closing && closing.products && closing.products[productName]) {
+                production = closing.products[productName].production || 0;
+            }
+
+            if (production > 0) {
+                tbodyHtml += `<td><span class="transaction-type transaction-in">${production}</span></td>`;
+            } else {
+                tbodyHtml += `<td class="no-data-cell">-</td>`;
+            }
+        });
+
+        tbodyHtml += '</tr>';
+    });
+
+    productionHistoryTbody.innerHTML = tbodyHtml;
 
     // Lucide 아이콘 다시 렌더링
     if (typeof lucide !== 'undefined') {
@@ -2122,61 +2101,6 @@ document.addEventListener('click', (e) => {
 // 금일 마감 기능
 // ============================================
 
-// 7일간 마감 기록 테이블 업데이트
-function updateClosingHistoryTable() {
-    const closingsTbody = document.getElementById('closing-history-tbody');
-    if (!closingsTbody) return;
-
-    const closings = AppState.dailyClosingsData;
-
-    if (!closings || Object.keys(closings).length === 0) {
-        closingsTbody.innerHTML = '<tr><td colspan="4" class="no-data">마감 기록이 없습니다.</td></tr>';
-        return;
-    }
-
-    // 날짜 내림차순 정렬
-    const sortedDates = Object.keys(closings).sort((a, b) => b.localeCompare(a));
-    const todayKey = formatDateKey(new Date());
-
-    let html = '';
-    sortedDates.forEach(dateKey => {
-        const closing = closings[dateKey];
-        const dateObj = parseDateKey(dateKey);
-        const displayDate = formatDisplayDate(dateObj);
-        const isToday = dateKey === todayKey;
-
-        const products = closing.products || {};
-        const productNames = Object.keys(products).sort();
-
-        if (productNames.length === 0) return;
-
-        productNames.forEach((productName, idx) => {
-            const data = products[productName];
-            const colorIndex = getProductColorIndex(productName) + 1;
-            const colorClass = `product-color-${colorIndex}`;
-
-            html += `
-                <tr class="${colorClass}">
-                    <td>${idx === 0 ? `<strong>${displayDate}</strong>${isToday ? ' (오늘)' : ''}` : ''}</td>
-                    <td><strong>${productName}</strong></td>
-                    <td class="closing-editable" data-date="${dateKey}" data-product="${productName}" data-type="production" onclick="editClosingValue(this)">
-                        ${data.production > 0 ? `<span class="transaction-type transaction-in">${data.production}개</span>` : '-'}
-                    </td>
-                    <td class="closing-editable" data-date="${dateKey}" data-product="${productName}" data-type="shipment" onclick="editClosingValue(this)">
-                        ${data.shipment > 0 ? `<span class="transaction-type transaction-out">${data.shipment}개</span>` : '-'}
-                    </td>
-                </tr>
-            `;
-        });
-    });
-
-    closingsTbody.innerHTML = html || '<tr><td colspan="4" class="no-data">마감 기록이 없습니다.</td></tr>';
-
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
 // 금일 마감 실행
 async function closeTodayProduction() {
     const today = new Date();
@@ -2190,50 +2114,58 @@ async function closeTodayProduction() {
         if (!confirmed) return;
     }
 
-    // 오늘 히스토리에서 생산/출고 집계
+    // 오늘 00:00:00 타임스탬프
     const todayStart = new Date(today);
     todayStart.setHours(0, 0, 0, 0);
     const todayTimestamp = todayStart.getTime();
 
-    const validHistory = filterValidHistory(AppState.historyData);
-    const todayHistory = validHistory.filter(item =>
-        item.timestamp >= todayTimestamp &&
-        item.type !== 'ADJUST'
-    );
-
-    if (todayHistory.length === 0) {
-        showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
-        return;
-    }
-
-    // 제품별 집계
-    const productSummary = {};
-    todayHistory.forEach(item => {
-        if (!productSummary[item.productName]) {
-            productSummary[item.productName] = {
-                production: 0,
-                shipment: 0
-            };
-        }
-        if (item.type === 'IN') {
-            productSummary[item.productName].production += item.quantity;
-        } else if (item.type === 'OUT') {
-            productSummary[item.productName].shipment += item.quantity;
-        }
-    });
-
-    // 마감 확인
-    const summaryText = Object.entries(productSummary)
-        .map(([name, data]) => `${name}: 생산 ${data.production}개, 출고 ${data.shipment}개`)
-        .join('\n');
-
-    const confirmed = await showConfirmDialog(
-        `${formatDisplayDate(today)} 마감을 진행하시겠습니까?\n\n[마감 내용]\n${summaryText}`
-    );
-
-    if (!confirmed) return;
-
     try {
+        // Firebase에서 직접 오늘 히스토리 쿼리 (50개 제한 없이)
+        const snapshot = await historyRef
+            .orderByChild('timestamp')
+            .startAt(todayTimestamp)
+            .once('value');
+
+        const todayHistory = [];
+        snapshot.forEach((child) => {
+            const item = child.val();
+            if (item.type !== 'ADJUST' && item.productName && item.productName !== 'undefined') {
+                todayHistory.push(item);
+            }
+        });
+
+        if (todayHistory.length === 0) {
+            showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
+            return;
+        }
+
+        // 제품별 집계
+        const productSummary = {};
+        todayHistory.forEach(item => {
+            if (!productSummary[item.productName]) {
+                productSummary[item.productName] = {
+                    production: 0,
+                    shipment: 0
+                };
+            }
+            if (item.type === 'IN') {
+                productSummary[item.productName].production += item.quantity;
+            } else if (item.type === 'OUT') {
+                productSummary[item.productName].shipment += item.quantity;
+            }
+        });
+
+        // 마감 확인
+        const summaryText = Object.entries(productSummary)
+            .map(([name, data]) => `${name}: 생산 ${data.production}개, 출고 ${data.shipment}개`)
+            .join('\n');
+
+        const confirmed = await showConfirmDialog(
+            `${formatDisplayDate(today)} 마감을 진행하시겠습니까?\n\n[마감 내용]\n${summaryText}`
+        );
+
+        if (!confirmed) return;
+
         // Firebase에 마감 기록 저장
         await dailyClosingsRef.child(dateKey).set({
             date: dateKey,

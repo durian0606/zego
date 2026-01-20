@@ -61,54 +61,26 @@
                 </div>
             </section>
 
-            <!-- 생산/출고 현황 -->
-            <section class="daily-summary-section">
+            <!-- 생산 현황 (5일치) -->
+            <section class="production-history-section">
                 <div class="section-header-with-button">
-                    <h2 id="daily-summary-title">생산/출고 현황</h2>
+                    <h2>생산 현황</h2>
                     <button id="btn-close-today" class="btn btn-closing" title="금일 마감">
                         <i data-lucide="check-circle" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
                         금일 마감
                     </button>
                 </div>
                 <div class="table-wrapper">
-                    <table id="daily-summary-table">
-                        <thead>
-                            <tr>
-                                <th>제품명</th>
-                                <th>어제 생산</th>
-                                <th>어제 출고</th>
-                                <th>오늘 생산</th>
-                                <th>오늘 출고</th>
-                            </tr>
+                    <table id="production-history-table">
+                        <thead id="production-history-thead">
+                            <!-- JS에서 동적으로 생성 -->
                         </thead>
-                        <tbody id="daily-summary-tbody">
+                        <tbody id="production-history-tbody">
                             <tr>
-                                <td colspan="5" class="no-data">생산/출고 내역이 없습니다.</td>
+                                <td colspan="6" class="no-data">마감 기록이 없습니다.</td>
                             </tr>
                         </tbody>
                     </table>
-                </div>
-
-                <!-- 7일간 마감 기록 -->
-                <div class="closing-history-wrapper">
-                    <h3>7일간 마감 기록</h3>
-                    <div class="table-wrapper">
-                        <table id="closing-history-table">
-                            <thead>
-                                <tr>
-                                    <th>날짜</th>
-                                    <th>제품명</th>
-                                    <th>생산</th>
-                                    <th>출고</th>
-                                </tr>
-                            </thead>
-                            <tbody id="closing-history-tbody">
-                                <tr>
-                                    <td colspan="4" class="no-data">마감 기록이 없습니다.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
             </section>
 

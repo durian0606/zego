@@ -670,45 +670,48 @@ tbody tr:hover {
     text-align: center;
 }
 
-/* 금일 생산/출고 현황 테이블 */
-.daily-summary-section table th:nth-child(1),
-.daily-summary-section table td:nth-child(1) {
+/* 생산 현황 테이블 (5일치) */
+.production-history-section table th:nth-child(1),
+.production-history-section table td:nth-child(1) {
     /* 제품명 */
     width: auto;
-    min-width: 100px;
+    min-width: 80px;
 }
 
-.daily-summary-section table th:nth-child(2),
-.daily-summary-section table td:nth-child(2),
-.daily-summary-section table th:nth-child(3),
-.daily-summary-section table td:nth-child(3) {
-    /* 금일 생산, 금일 출고 */
-    width: 150px;
+.production-history-section table th:not(:nth-child(1)),
+.production-history-section table td:not(:nth-child(1)) {
+    /* 날짜 컬럼들 */
+    width: 80px;
     text-align: center;
 }
 
-.daily-summary-section th {
-    font-size: clamp(0.8rem, 2.5vw, 1.5rem);
-    padding: clamp(8px, 2vw, 18px);
+.production-history-section th {
+    font-size: clamp(0.75rem, 2vw, 1.2rem);
+    padding: clamp(6px, 1.5vw, 14px);
 }
 
-.daily-summary-section td {
-    font-size: clamp(0.75rem, 2.2vw, 1.3rem);
-    padding: clamp(8px, 2vw, 18px);
+.production-history-section td {
+    font-size: clamp(0.7rem, 2vw, 1.1rem);
+    padding: clamp(6px, 1.5vw, 14px);
 }
 
-/* 금일 생산/출고 현황 섹션 제목 크기 확대 */
-.daily-summary-section h2 {
+/* 생산 현황 섹션 제목 */
+.production-history-section h2 {
     font-size: clamp(1.1rem, 3.5vw, 2rem);
     padding-bottom: 12px;
 }
 
-/* 금일 생산/출고 현황 - 생산/출고 배지 크기 확대 */
-.daily-summary-section .transaction-type {
-    padding: 6px 14px;
-    border-radius: 12px;
-    font-size: 1.1em;
+/* 생산 현황 - 생산량 배지 */
+.production-history-section .transaction-type {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 1em;
     font-weight: 700;
+}
+
+/* 데이터 없는 셀 */
+.production-history-section .no-data-cell {
+    color: #9ca3af;
 }
 
 /* 히스토리 테이블 - 제품명 완전 표시 */
@@ -913,102 +916,102 @@ tbody tr:hover {
 
 /* 제품별 색상 구분 (모든 섹션 공통) - 선명한 20가지 색상 */
 .inventory-section tr.product-color-1,
-.daily-summary-section tr.product-color-1,
+.production-history-section tr.product-color-1,
 .history-section tr.product-color-1,
 .barcode-management-section tr.product-color-1 { background: #FFB3BA; border-left: 4px solid #FF6B7A; } /* 빨강 */
 
 .inventory-section tr.product-color-2,
-.daily-summary-section tr.product-color-2,
+.production-history-section tr.product-color-2,
 .history-section tr.product-color-2,
 .barcode-management-section tr.product-color-2 { background: #FFCC99; border-left: 4px solid #FF9933; } /* 주황 */
 
 .inventory-section tr.product-color-3,
-.daily-summary-section tr.product-color-3,
+.production-history-section tr.product-color-3,
 .history-section tr.product-color-3,
 .barcode-management-section tr.product-color-3 { background: #FFFDE7; border-left: 4px solid #F9A825; color: #333; } /* 노랑 - 접근성 개선 */
 
 .inventory-section tr.product-color-4,
-.daily-summary-section tr.product-color-4,
+.production-history-section tr.product-color-4,
 .history-section tr.product-color-4,
 .barcode-management-section tr.product-color-4 { background: #F0F9D7; border-left: 4px solid #99CC00; color: #333; } /* 연두 - 접근성 개선 */
 
 .inventory-section tr.product-color-5,
-.daily-summary-section tr.product-color-5,
+.production-history-section tr.product-color-5,
 .history-section tr.product-color-5,
 .barcode-management-section tr.product-color-5 { background: #99FFB3; border-left: 4px solid #33FF66; } /* 초록 */
 
 .inventory-section tr.product-color-6,
-.daily-summary-section tr.product-color-6,
+.production-history-section tr.product-color-6,
 .history-section tr.product-color-6,
 .barcode-management-section tr.product-color-6 { background: #99FFE6; border-left: 4px solid #33FFCC; } /* 민트 */
 
 .inventory-section tr.product-color-7,
-.daily-summary-section tr.product-color-7,
+.production-history-section tr.product-color-7,
 .history-section tr.product-color-7,
 .barcode-management-section tr.product-color-7 { background: #99F0FF; border-left: 4px solid #33D6FF; } /* 청록 */
 
 .inventory-section tr.product-color-8,
-.daily-summary-section tr.product-color-8,
+.production-history-section tr.product-color-8,
 .history-section tr.product-color-8,
 .barcode-management-section tr.product-color-8 { background: #B3E0FF; border-left: 4px solid #66BBFF; } /* 하늘 */
 
 .inventory-section tr.product-color-9,
-.daily-summary-section tr.product-color-9,
+.production-history-section tr.product-color-9,
 .history-section tr.product-color-9,
 .barcode-management-section tr.product-color-9 { background: #99CCFF; border-left: 4px solid #3399FF; } /* 파랑 */
 
 .inventory-section tr.product-color-10,
-.daily-summary-section tr.product-color-10,
+.production-history-section tr.product-color-10,
 .history-section tr.product-color-10,
 .barcode-management-section tr.product-color-10 { background: #B3B3FF; border-left: 4px solid #6666FF; } /* 남색 */
 
 .inventory-section tr.product-color-11,
-.daily-summary-section tr.product-color-11,
+.production-history-section tr.product-color-11,
 .history-section tr.product-color-11,
 .barcode-management-section tr.product-color-11 { background: #D4B3FF; border-left: 4px solid #9966FF; } /* 보라 */
 
 .inventory-section tr.product-color-12,
-.daily-summary-section tr.product-color-12,
+.production-history-section tr.product-color-12,
 .history-section tr.product-color-12,
 .barcode-management-section tr.product-color-12 { background: #FFB3E6; border-left: 4px solid #FF66CC; } /* 자주 */
 
 .inventory-section tr.product-color-13,
-.daily-summary-section tr.product-color-13,
+.production-history-section tr.product-color-13,
 .history-section tr.product-color-13,
 .barcode-management-section tr.product-color-13 { background: #FFB3D9; border-left: 4px solid #FF66B3; } /* 분홍 */
 
 .inventory-section tr.product-color-14,
-.daily-summary-section tr.product-color-14,
+.production-history-section tr.product-color-14,
 .history-section tr.product-color-14,
 .barcode-management-section tr.product-color-14 { background: #FF99CC; border-left: 4px solid #FF3399; } /* 핫핑크 */
 
 .inventory-section tr.product-color-15,
-.daily-summary-section tr.product-color-15,
+.production-history-section tr.product-color-15,
 .history-section tr.product-color-15,
 .barcode-management-section tr.product-color-15 { background: #E6CCFF; border-left: 4px solid #CC99FF; } /* 라벤더 */
 
 .inventory-section tr.product-color-16,
-.daily-summary-section tr.product-color-16,
+.production-history-section tr.product-color-16,
 .history-section tr.product-color-16,
 .barcode-management-section tr.product-color-16 { background: #FFD1B3; border-left: 4px solid #FF9966; } /* 코랄 */
 
 .inventory-section tr.product-color-17,
-.daily-summary-section tr.product-color-17,
+.production-history-section tr.product-color-17,
 .history-section tr.product-color-17,
 .barcode-management-section tr.product-color-17 { background: #FFE0B3; border-left: 4px solid #FFCC66; } /* 피치 */
 
 .inventory-section tr.product-color-18,
-.daily-summary-section tr.product-color-18,
+.production-history-section tr.product-color-18,
 .history-section tr.product-color-18,
 .barcode-management-section tr.product-color-18 { background: #E0FF99; border-left: 4px solid #CCFF33; } /* 라임 */
 
 .inventory-section tr.product-color-19,
-.daily-summary-section tr.product-color-19,
+.production-history-section tr.product-color-19,
 .history-section tr.product-color-19,
 .barcode-management-section tr.product-color-19 { background: #99FFFF; border-left: 4px solid #00FFFF; } /* 틸 */
 
 .inventory-section tr.product-color-20,
-.daily-summary-section tr.product-color-20,
+.production-history-section tr.product-color-20,
 .history-section tr.product-color-20,
 .barcode-management-section tr.product-color-20 { background: #C2B3FF; border-left: 4px solid #9966FF; } /* 인디고 */
 
@@ -1267,102 +1270,102 @@ tbody tr:hover {
 
     /* 모바일에서도 제품별 색상 유지 - 선명한 20가지 (모든 섹션) */
     .inventory-section tr.product-color-1,
-    .daily-summary-section tr.product-color-1,
+    .production-history-section tr.product-color-1,
     .history-section tr.product-color-1,
     .barcode-management-section tr.product-color-1 { background: #FFB3BA; border: 3px solid #FF6B7A; }
 
     .inventory-section tr.product-color-2,
-    .daily-summary-section tr.product-color-2,
+    .production-history-section tr.product-color-2,
     .history-section tr.product-color-2,
     .barcode-management-section tr.product-color-2 { background: #FFCC99; border: 3px solid #FF9933; }
 
     .inventory-section tr.product-color-3,
-    .daily-summary-section tr.product-color-3,
+    .production-history-section tr.product-color-3,
     .history-section tr.product-color-3,
     .barcode-management-section tr.product-color-3 { background: #FFFDE7; border: 3px solid #F9A825; color: #333; }
 
     .inventory-section tr.product-color-4,
-    .daily-summary-section tr.product-color-4,
+    .production-history-section tr.product-color-4,
     .history-section tr.product-color-4,
     .barcode-management-section tr.product-color-4 { background: #F0F9D7; border: 3px solid #99CC00; color: #333; }
 
     .inventory-section tr.product-color-5,
-    .daily-summary-section tr.product-color-5,
+    .production-history-section tr.product-color-5,
     .history-section tr.product-color-5,
     .barcode-management-section tr.product-color-5 { background: #99FFB3; border: 3px solid #33FF66; }
 
     .inventory-section tr.product-color-6,
-    .daily-summary-section tr.product-color-6,
+    .production-history-section tr.product-color-6,
     .history-section tr.product-color-6,
     .barcode-management-section tr.product-color-6 { background: #99FFE6; border: 3px solid #33FFCC; }
 
     .inventory-section tr.product-color-7,
-    .daily-summary-section tr.product-color-7,
+    .production-history-section tr.product-color-7,
     .history-section tr.product-color-7,
     .barcode-management-section tr.product-color-7 { background: #99F0FF; border: 3px solid #33D6FF; }
 
     .inventory-section tr.product-color-8,
-    .daily-summary-section tr.product-color-8,
+    .production-history-section tr.product-color-8,
     .history-section tr.product-color-8,
     .barcode-management-section tr.product-color-8 { background: #B3E0FF; border: 3px solid #66BBFF; }
 
     .inventory-section tr.product-color-9,
-    .daily-summary-section tr.product-color-9,
+    .production-history-section tr.product-color-9,
     .history-section tr.product-color-9,
     .barcode-management-section tr.product-color-9 { background: #99CCFF; border: 3px solid #3399FF; }
 
     .inventory-section tr.product-color-10,
-    .daily-summary-section tr.product-color-10,
+    .production-history-section tr.product-color-10,
     .history-section tr.product-color-10,
     .barcode-management-section tr.product-color-10 { background: #B3B3FF; border: 3px solid #6666FF; }
 
     .inventory-section tr.product-color-11,
-    .daily-summary-section tr.product-color-11,
+    .production-history-section tr.product-color-11,
     .history-section tr.product-color-11,
     .barcode-management-section tr.product-color-11 { background: #D4B3FF; border: 3px solid #9966FF; }
 
     .inventory-section tr.product-color-12,
-    .daily-summary-section tr.product-color-12,
+    .production-history-section tr.product-color-12,
     .history-section tr.product-color-12,
     .barcode-management-section tr.product-color-12 { background: #FFB3E6; border: 3px solid #FF66CC; }
 
     .inventory-section tr.product-color-13,
-    .daily-summary-section tr.product-color-13,
+    .production-history-section tr.product-color-13,
     .history-section tr.product-color-13,
     .barcode-management-section tr.product-color-13 { background: #FFB3D9; border: 3px solid #FF66B3; }
 
     .inventory-section tr.product-color-14,
-    .daily-summary-section tr.product-color-14,
+    .production-history-section tr.product-color-14,
     .history-section tr.product-color-14,
     .barcode-management-section tr.product-color-14 { background: #FF99CC; border: 3px solid #FF3399; }
 
     .inventory-section tr.product-color-15,
-    .daily-summary-section tr.product-color-15,
+    .production-history-section tr.product-color-15,
     .history-section tr.product-color-15,
     .barcode-management-section tr.product-color-15 { background: #E6CCFF; border: 3px solid #CC99FF; }
 
     .inventory-section tr.product-color-16,
-    .daily-summary-section tr.product-color-16,
+    .production-history-section tr.product-color-16,
     .history-section tr.product-color-16,
     .barcode-management-section tr.product-color-16 { background: #FFD1B3; border: 3px solid #FF9966; }
 
     .inventory-section tr.product-color-17,
-    .daily-summary-section tr.product-color-17,
+    .production-history-section tr.product-color-17,
     .history-section tr.product-color-17,
     .barcode-management-section tr.product-color-17 { background: #FFE0B3; border: 3px solid #FFCC66; }
 
     .inventory-section tr.product-color-18,
-    .daily-summary-section tr.product-color-18,
+    .production-history-section tr.product-color-18,
     .history-section tr.product-color-18,
     .barcode-management-section tr.product-color-18 { background: #E0FF99; border: 3px solid #CCFF33; }
 
     .inventory-section tr.product-color-19,
-    .daily-summary-section tr.product-color-19,
+    .production-history-section tr.product-color-19,
     .history-section tr.product-color-19,
     .barcode-management-section tr.product-color-19 { background: #99FFFF; border: 3px solid #00FFFF; }
 
     .inventory-section tr.product-color-20,
-    .daily-summary-section tr.product-color-20,
+    .production-history-section tr.product-color-20,
     .history-section tr.product-color-20,
     .barcode-management-section tr.product-color-20 { background: #C2B3FF; border: 3px solid #9966FF; }
 
@@ -1450,25 +1453,26 @@ tbody tr:hover {
     .barcode-management-section td:nth-of-type(3):before { content: "출고 바코드"; }
     .barcode-management-section td:nth-of-type(4):before { content: "작업"; }
 
-    /* 금일 생산/출고 현황 테이블 라벨 */
-    .daily-summary-section td:nth-of-type(1):before,
-    .daily-summary-section td:nth-of-type(2):before,
-    .daily-summary-section td:nth-of-type(3):before,
-    .daily-summary-section td:nth-of-type(4):before,
-    .daily-summary-section td:nth-of-type(5):before {
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 2px;
+    /* 생산 현황 테이블 - 모바일에서 가로 스크롤 허용 */
+    .production-history-section .table-wrapper {
+        overflow-x: auto;
     }
-    .daily-summary-section td:nth-of-type(1):before { content: "제품명"; }
-    .daily-summary-section td:nth-of-type(2):before { content: "어제 생산"; }
-    .daily-summary-section td:nth-of-type(3):before { content: "어제 출고"; }
-    .daily-summary-section td:nth-of-type(4):before { content: "오늘 생산"; }
-    .daily-summary-section td:nth-of-type(5):before { content: "오늘 출고"; }
+
+    .production-history-section table {
+        min-width: 450px;
+    }
+
+    .production-history-section table thead {
+        display: table-header-group;
+    }
+
+    .production-history-section table tbody tr {
+        display: table-row;
+    }
+
+    .production-history-section table td {
+        display: table-cell;
+    }
 
     /* 히스토리 테이블 라벨 */
     .history-section td:nth-of-type(1):before,
@@ -1619,11 +1623,6 @@ tbody tr:hover {
     .barcode-management-section td:nth-of-type(2):before,
     .barcode-management-section td:nth-of-type(3):before,
     .barcode-management-section td:nth-of-type(4):before,
-    .daily-summary-section td:nth-of-type(1):before,
-    .daily-summary-section td:nth-of-type(2):before,
-    .daily-summary-section td:nth-of-type(3):before,
-    .daily-summary-section td:nth-of-type(4):before,
-    .daily-summary-section td:nth-of-type(5):before,
     .history-section td:nth-of-type(1):before,
     .history-section td:nth-of-type(2):before,
     .history-section td:nth-of-type(3):before,
@@ -1695,22 +1694,6 @@ tbody tr:hover {
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
-}
-
-/* 7일간 마감 기록 래퍼 */
-.closing-history-wrapper {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 2px dashed #e5e7eb;
-}
-
-.closing-history-wrapper h3 {
-    font-size: clamp(0.9rem, 2vw, 1.2rem);
-    color: #4b5563;
-    margin-bottom: 15px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #10b981;
-    display: inline-block;
 }
 
 /* 마감 기록 수정 가능 셀 */
@@ -1818,35 +1801,4 @@ tbody tr:hover {
         height: 36px;
     }
 
-    /* 마감 기록 테이블 모바일 스타일 */
-    .closing-history-wrapper .table-wrapper table tbody tr {
-        display: flex;
-        flex-direction: column;
-        padding: 12px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-        border-left: 4px solid #10b981;
-    }
-
-    .closing-history-wrapper .table-wrapper table tbody td {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .closing-history-wrapper .table-wrapper table tbody td:last-child {
-        border-bottom: none;
-    }
-
-    .closing-history-wrapper .table-wrapper table tbody td:before {
-        font-weight: 600;
-        color: #6b7280;
-        font-size: 0.75rem;
-    }
-
-    .closing-history-wrapper .table-wrapper table tbody td:nth-of-type(1):before { content: "날짜"; }
-    .closing-history-wrapper .table-wrapper table tbody td:nth-of-type(2):before { content: "제품명"; }
-    .closing-history-wrapper .table-wrapper table tbody td:nth-of-type(3):before { content: "생산"; }
-    .closing-history-wrapper .table-wrapper table tbody td:nth-of-type(4):before { content: "출고"; }
 }
