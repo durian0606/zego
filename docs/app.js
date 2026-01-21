@@ -133,6 +133,68 @@ function parseDateKey(dateKey) {
 }
 
 // ============================================
+// 드래그앤드롭 정렬 기능
+// ============================================
+
+// SortableJS 인스턴스
+let inventorySortableInstance = null;
+
+// 재고 테이블 드래그앤드롭 초기화
+function initInventoryDragAndDrop() {
+    const tbody = document.getElementById('inventory-tbody');
+    if (!tbody) return;
+
+    // 기존 인스턴스가 있으면 제거
+    if (inventorySortableInstance) {
+        inventorySortableInstance.destroy();
+        inventorySortableInstance = null;
+    }
+
+    // 데이터가 없으면 초기화하지 않음
+    const rows = tbody.querySelectorAll('tr[data-product]');
+    if (rows.length === 0) return;
+
+    inventorySortableInstance = new Sortable(tbody, {
+        animation: 150,
+        handle: '.drag-handle',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+
+        // 편집 중일 때 드래그 비활성화
+        onStart: function(evt) {
+            if (AppState.isEditingMinStock || AppState.isEditingCurrentStock) {
+                return false;
+            }
+        },
+
+        // 드래그 완료 시 Firebase 업데이트
+        onEnd: async function(evt) {
+            const rows = tbody.querySelectorAll('tr[data-product]');
+            const updates = {};
+
+            rows.forEach((row, index) => {
+                const productName = row.getAttribute('data-product');
+                if (productName) {
+                    updates[`${productName}/sortOrder`] = index;
+                    updates[`${productName}/updatedAt`] = Date.now();
+                }
+            });
+
+            try {
+                await productsRef.update(updates);
+                showScanResult('순서가 저장되었습니다.', 'success');
+            } catch (error) {
+                console.error('순서 저장 오류:', error);
+                showScanResult('순서 저장 중 오류가 발생했습니다.', 'error');
+                // 롤백: 테이블 다시 렌더링
+                updateInventoryTable();
+            }
+        }
+    });
+}
+
+// ============================================
 
 // 연결 상태 모니터링
 const connectedRef = database.ref('.info/connected');
@@ -189,12 +251,26 @@ function updateInventoryTable() {
     console.log('제품 데이터:', products);
 
     if (products.length === 0) {
-        inventoryTbody.innerHTML = '<tr><td colspan="4" class="no-data">제품이 없습니다.</td></tr>';
+        inventoryTbody.innerHTML = '<tr><td colspan="5" class="no-data">제품이 없습니다.</td></tr>';
         return;
     }
 
-    // 정렬: 부족한 수량이 많은 순서대로, 목표 재고가 0인 항목은 맨 아래
+    // 정렬: sortOrder가 있는 제품 우선, 그 다음 기존 로직 (부족한 수량 순)
     const sortedProducts = products.sort((a, b) => {
+        const orderA = a.sortOrder;
+        const orderB = b.sortOrder;
+
+        // 둘 다 sortOrder가 있으면 sortOrder 순
+        if (orderA !== undefined && orderA !== null &&
+            orderB !== undefined && orderB !== null) {
+            return orderA - orderB;
+        }
+
+        // sortOrder가 있는 쪽이 먼저
+        if (orderA !== undefined && orderA !== null) return -1;
+        if (orderB !== undefined && orderB !== null) return 1;
+
+        // 둘 다 없으면 기존 로직 (부족한 수량 순)
         const minStockA = a.minStock || 0;
         const minStockB = b.minStock || 0;
 
@@ -231,7 +307,10 @@ function updateInventoryTable() {
         const colorClass = `product-color-${colorIndex}`;
 
         return `
-            <tr class="${colorClass}">
+            <tr class="${colorClass}" data-product="${product.name}">
+                <td class="drag-handle" title="드래그하여 순서 변경">
+                    <i data-lucide="grip-vertical" style="width: 18px; height: 18px; opacity: 0.5;"></i>
+                </td>
                 <td><strong>${product.name}</strong></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
@@ -248,6 +327,11 @@ function updateInventoryTable() {
     // Lucide 아이콘 다시 렌더링
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
+    }
+
+    // 드래그앤드롭 정렬 초기화
+    if (typeof Sortable !== 'undefined') {
+        initInventoryDragAndDrop();
     }
 }
 

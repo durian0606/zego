@@ -46,6 +46,7 @@
                     <table id="inventory-table">
                         <thead>
                             <tr>
+                                <th style="width: 40px;"></th>
                                 <th>제품명</th>
                                 <th>금일생산</th>
                                 <th>생산목표</th>
@@ -54,7 +55,7 @@
                         </thead>
                         <tbody id="inventory-tbody">
                             <tr>
-                                <td colspan="4" class="no-data">제품이 없습니다.</td>
+                                <td colspan="5" class="no-data">제품이 없습니다.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -198,6 +199,9 @@
 
     <!-- JsBarcode 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <!-- SortableJS 라이브러리 (드래그앤드롭 정렬) -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <!-- 앱 로직 -->
     <script src="app.js"></script>
