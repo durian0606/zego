@@ -744,6 +744,34 @@ function updateProductionHistoryTable() {
     const validProducts = filterValidProducts(AppState.productsData);
     const closings = AppState.dailyClosingsData;
 
+    // 금일 생산현황과 동일한 순서로 정렬 (sortOrder 기반)
+    const sortedProducts = validProducts.sort((a, b) => {
+        const orderA = a.sortOrder;
+        const orderB = b.sortOrder;
+
+        // 둘 다 sortOrder가 있으면 sortOrder 순
+        if (orderA !== undefined && orderA !== null &&
+            orderB !== undefined && orderB !== null) {
+            return orderA - orderB;
+        }
+
+        // sortOrder가 있는 쪽이 먼저
+        if (orderA !== undefined && orderA !== null) return -1;
+        if (orderB !== undefined && orderB !== null) return 1;
+
+        // 둘 다 없으면 기존 로직 (부족한 수량 순)
+        const minStockA = a.minStock || 0;
+        const minStockB = b.minStock || 0;
+
+        if (minStockA === 0 && minStockB !== 0) return 1;
+        if (minStockA !== 0 && minStockB === 0) return -1;
+        if (minStockA === 0 && minStockB === 0) return 0;
+
+        const shortageA = minStockA - (a.currentStock || 0);
+        const shortageB = minStockB - (b.currentStock || 0);
+        return shortageB - shortageA;
+    });
+
     // 5일치 날짜 배열 생성 (과거 → 오늘)
     const dates = [];
     const today = new Date();
@@ -766,14 +794,14 @@ function updateProductionHistoryTable() {
     productionHistoryThead.innerHTML = theadHtml;
 
     // 제품이 없으면 빈 메시지 표시
-    if (validProducts.length === 0) {
+    if (sortedProducts.length === 0) {
         productionHistoryTbody.innerHTML = '<tr><td colspan="6" class="no-data">등록된 제품이 없습니다.</td></tr>';
         return;
     }
 
     // 테이블 바디 생성
     let tbodyHtml = '';
-    validProducts.forEach(product => {
+    sortedProducts.forEach(product => {
         const productName = product.name;
         const colorIndex = getProductColorIndex(productName) + 1;
         const colorClass = `product-color-${colorIndex}`;
