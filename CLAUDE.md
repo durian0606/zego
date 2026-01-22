@@ -34,7 +34,7 @@ firebase init hosting
 
 ### Git Operations
 
-**중요: 코드 변경 작업 완료 후 항상 커밋 및 푸시를 수행할 것.**
+**중요: 코드 변경 작업 완료 후 항상 커밋 및 푸시를 수행하고 /context를 수행할 것.**
 
 ```bash
 # Check git status
@@ -267,3 +267,4 @@ The `docs/firebase-config.js` file contains Firebase API keys and project config
 - No authentication system (relies on Firebase security rules)
 - Test mode security rules allow unrestricted read/write access
 - Production deployments should implement proper Firebase security rules
+
