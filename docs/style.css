@@ -1502,27 +1502,124 @@ tbody tr:hover {
         padding: 10px 16px;
     }
 
-    /* 테이블 카드 형태 변환 */
+    /* 테이블 카드 형태 변환 (금일생산현황 제외) */
     .table-wrapper {
         border: none;
     }
 
-    table, thead, tbody, th, td, tr {
+    .history-section table,
+    .history-section thead,
+    .history-section tbody,
+    .history-section th,
+    .history-section td,
+    .history-section tr,
+    .barcode-management-section table,
+    .barcode-management-section thead,
+    .barcode-management-section tbody,
+    .barcode-management-section th,
+    .barcode-management-section td,
+    .barcode-management-section tr {
         display: block;
     }
 
-    thead tr {
+    .history-section thead tr,
+    .barcode-management-section thead tr {
         position: absolute;
         top: -9999px;
         left: -9999px;
     }
 
-    tr {
+    .history-section tr,
+    .barcode-management-section tr {
         margin-bottom: 12px;
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
         padding: 12px;
         background: white;
+    }
+
+    /* 금일생산현황 - 모바일에서도 가로 테이블 유지 */
+    .inventory-section .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .inventory-section table {
+        display: table;
+        width: 100%;
+        min-width: 400px;
+    }
+
+    .inventory-section thead {
+        display: table-header-group;
+    }
+
+    .inventory-section tbody {
+        display: table-row-group;
+    }
+
+    .inventory-section tr {
+        display: table-row;
+        margin-bottom: 0;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+    }
+
+    .inventory-section th,
+    .inventory-section td {
+        display: table-cell;
+        font-size: 0.75rem;
+        padding: 6px 4px;
+    }
+
+    .inventory-section th {
+        font-size: 0.7rem;
+        padding: 8px 4px;
+    }
+
+    .inventory-section .stock-number {
+        font-size: 1rem !important;
+    }
+
+    .inventory-section .product-name {
+        font-size: 0.75rem;
+    }
+
+    .inventory-section table th:nth-child(1),
+    .inventory-section table td:nth-child(1) {
+        width: 30px;
+        min-width: 30px;
+        padding: 4px !important;
+    }
+
+    .inventory-section table th:nth-child(2),
+    .inventory-section table td:nth-child(2) {
+        min-width: 70px;
+    }
+
+    .inventory-section table th:nth-child(3),
+    .inventory-section table td:nth-child(3),
+    .inventory-section table th:nth-child(4),
+    .inventory-section table td:nth-child(4) {
+        min-width: 60px;
+        padding-right: 8px;
+    }
+
+    .inventory-section table th:nth-child(5),
+    .inventory-section table td:nth-child(5) {
+        min-width: 50px;
+    }
+
+    .inventory-section .btn-edit,
+    .inventory-section .btn-delete {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+
+    .inventory-section .status-badge {
+        font-size: 0.65rem;
+        padding: 2px 6px;
     }
 
     /* 모바일에서 색상 테두리 유지 */
@@ -1569,47 +1666,6 @@ tbody tr:hover {
     }
 
     /* 재고 현황 테이블 라벨 */
-    .inventory-section td:nth-of-type(1):before {
-        content: "";
-        display: none;
-    }
-    .inventory-section td:nth-of-type(2):before {
-        content: "제품";
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: var(--color-text-muted);
-        margin-bottom: 2px;
-    }
-    .inventory-section td:nth-of-type(3):before {
-        content: "금일생산";
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: var(--color-text-muted);
-        margin-bottom: 2px;
-    }
-    .inventory-section td:nth-of-type(4):before {
-        content: "생산목표";
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: var(--color-text-muted);
-        margin-bottom: 2px;
-    }
-    .inventory-section td:nth-of-type(5):before {
-        content: "상태";
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: var(--color-text-muted);
-        margin-bottom: 2px;
-    }
-
-    .inventory-section .stock-number {
-        font-size: 1.5rem !important;
-    }
-
     /* 바코드 관리 테이블 라벨 */
     .barcode-management-section td:nth-of-type(1):before,
     .barcode-management-section td:nth-of-type(2):before,
@@ -1746,26 +1802,22 @@ tbody tr:hover {
         min-height: 36px;
     }
 
-    /* 드래그 핸들 */
-    .drag-handle {
+    /* 드래그 핸들 (카드 형태 테이블용) */
+    .history-section .drag-handle,
+    .barcode-management-section .drag-handle {
         padding: 12px 8px !important;
         min-width: 44px;
     }
 
+    /* 금일생산현황 드래그 핸들 - 테이블 셀 유지 */
     .inventory-section td.drag-handle {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: auto;
-        min-width: auto;
-        padding: 8px !important;
-        background: var(--color-bg-light);
-        border-radius: var(--radius-sm);
+        padding: 4px !important;
+        vertical-align: middle;
     }
 
-    .inventory-section tr[data-product] {
-        position: relative;
-        padding-right: 44px;
+    .inventory-section td.drag-handle i {
+        width: 14px;
+        height: 14px;
     }
 }
 
@@ -1804,18 +1856,36 @@ tbody tr:hover {
         font-size: 1rem;
     }
 
-    tr {
+    /* 카드 형태 테이블 (history, barcode-management) */
+    .history-section tr,
+    .barcode-management-section tr {
         padding: 10px;
         margin-bottom: 10px;
     }
 
-    td {
+    .history-section td,
+    .barcode-management-section td {
         padding: 8px 6px;
         font-size: 0.8rem;
     }
 
+    /* 금일생산현황 - 더 작은 폰트 */
+    .inventory-section th,
+    .inventory-section td {
+        font-size: 0.7rem;
+        padding: 4px 2px;
+    }
+
     .inventory-section .stock-number {
-        font-size: 1.25rem !important;
+        font-size: 0.9rem !important;
+    }
+
+    .inventory-section .product-name {
+        font-size: 0.7rem;
+    }
+
+    .inventory-section table {
+        min-width: 340px;
     }
 
     .scan-indicator {
@@ -1923,23 +1993,58 @@ tbody tr:hover {
         font-size: 0.75rem;
     }
 
-    td::before {
+    /* 카드 형태 테이블 라벨 */
+    .history-section td::before,
+    .barcode-management-section td::before {
         font-size: 0.65rem;
     }
 
+    /* 금일생산현황 - 초소형 화면 */
+    .inventory-section table {
+        min-width: 300px;
+    }
+
+    .inventory-section th,
+    .inventory-section td {
+        font-size: 0.6rem;
+        padding: 3px 2px;
+    }
+
     .inventory-section .stock-number {
-        font-size: 1.1rem !important;
+        font-size: 0.8rem !important;
     }
 
     .inventory-section .product-name {
-        font-size: 0.85rem;
+        font-size: 0.6rem;
+    }
+
+    .inventory-section .status-badge {
+        font-size: 0.55rem;
+        padding: 1px 4px;
+    }
+
+    .inventory-section td.drag-handle {
+        padding: 2px !important;
+    }
+
+    .inventory-section td.drag-handle i {
+        width: 10px;
+        height: 10px;
     }
 
     /* 버튼들 */
-    .btn-edit,
-    .btn-delete {
+    .history-section .btn-edit,
+    .history-section .btn-delete,
+    .barcode-management-section .btn-edit,
+    .barcode-management-section .btn-delete {
         padding: 4px 6px;
         font-size: 0.7rem;
+    }
+
+    .inventory-section .btn-edit,
+    .inventory-section .btn-delete {
+        padding: 2px 4px;
+        font-size: 0.55rem;
     }
 
     /* 스캔 인디케이터 */
