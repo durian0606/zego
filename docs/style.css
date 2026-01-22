@@ -1627,3 +1627,25 @@ tbody tr:hover {
         font-size: 0.75rem;
     }
 }
+
+/* ============================================
+   행 강조 효과 (수정/스캔 시)
+   ============================================ */
+@keyframes rowHighlight {
+    0% {
+        background-color: #fef08a;
+        box-shadow: 0 0 0 2px #eab308;
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: none;
+    }
+}
+
+tr.row-highlight {
+    animation: rowHighlight 2s ease-out forwards;
+}
+
+tr.row-highlight td {
+    position: relative;
+}

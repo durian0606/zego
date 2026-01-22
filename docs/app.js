@@ -604,6 +604,7 @@ function editCurrentStock(element) {
 
             AppState.isEditingCurrentStock = false;
             showScanResult(`현재 재고가 ${currentValue}개에서 ${newStock}개로 수동 조정되었습니다.`, 'success');
+            highlightProductRow(productName);
             barcodeInput.focus();
         } catch (error) {
             console.error('현재 재고 업데이트 오류:', error);
@@ -1238,6 +1239,23 @@ function showScanResult(message, type) {
     }, 5000);
 }
 
+// 제품 행 강조 효과
+function highlightProductRow(productName) {
+    // 모든 테이블에서 해당 제품 행 찾기
+    const rows = document.querySelectorAll(`tr[data-product="${productName}"]`);
+    rows.forEach(row => {
+        // 기존 애니메이션 제거 후 다시 적용
+        row.classList.remove('row-highlight');
+        void row.offsetWidth; // reflow 트리거
+        row.classList.add('row-highlight');
+
+        // 2초 후 클래스 제거
+        setTimeout(() => {
+            row.classList.remove('row-highlight');
+        }, 2000);
+    });
+}
+
 // 제품 찾기 (제품명으로)
 function findProductByName(productName) {
     return AppState.productsData[productName];
@@ -1272,6 +1290,7 @@ async function updateStock(barcodeInfo) {
     } else {
         // VIEW 타입 - 조회만
         showScanResult(`${productName} - 현재 재고: ${beforeStock}개`, 'success');
+        highlightProductRow(productName);
         return;
     }
 
@@ -1295,6 +1314,9 @@ async function updateStock(barcodeInfo) {
 
         const typeText = type === 'IN' ? '생산' : '출고';
         showScanResult(`${productName} ${typeText} 완료! (${beforeStock} → ${afterStock})`, 'success');
+
+        // 해당 제품 행 강조
+        highlightProductRow(productName);
 
     } catch (error) {
         console.error('재고 업데이트 오류:', error);
