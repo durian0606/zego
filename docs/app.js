@@ -706,14 +706,18 @@ function updateHistoryTable() {
         const displayHours = hours % 12 || 12;
         const formattedTime = `${year}.${month}.${day} ${ampm} ${displayHours}:${minutes}`;
 
-        // 생산/출고 컬럼 분리
+        // 오늘 날짜 키
+        const today = new Date();
+        const todayKey = formatDateKey(today);
+
+        // 생산/출고 컬럼 분리 (클릭하여 수정 가능)
         let productionCell, shipmentCell;
         if (item.type === 'IN') {
-            productionCell = `<span class="transaction-type transaction-in">${item.totalQuantity}</span>`;
+            productionCell = `<span class="transaction-type transaction-in editable-history" data-product="${item.productName}" data-type="production" data-date="${todayKey}" onclick="editTodayHistoryValue(this)">${item.totalQuantity}</span>`;
             shipmentCell = '-';
         } else if (item.type === 'OUT') {
             productionCell = '-';
-            shipmentCell = `<span class="transaction-type transaction-out">${item.totalQuantity}</span>`;
+            shipmentCell = `<span class="transaction-type transaction-out editable-history" data-product="${item.productName}" data-type="shipment" data-date="${todayKey}" onclick="editTodayHistoryValue(this)">${item.totalQuantity}</span>`;
         } else {
             productionCell = '-';
             shipmentCell = '-';
@@ -2423,6 +2427,91 @@ async function editProductionValue(element) {
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); save(); }
         if (e.key === 'Escape') { saved = true; AppState.isEditingProduction = false; updateProductionHistoryTable(); }
+    });
+
+    input.addEventListener('blur', () => save());
+}
+
+// 금일 생산현황 테이블에서 생산/출고 값 수정
+async function editTodayHistoryValue(element) {
+    if (element.querySelector('input')) return;
+
+    AppState.isEditingProduction = true;
+
+    const productName = element.getAttribute('data-product');
+    const type = element.getAttribute('data-type'); // 'production' or 'shipment'
+    const dateKey = element.getAttribute('data-date');
+    const currentValue = parseInt(element.textContent) || 0;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.value = currentValue;
+    input.className = 'inline-edit-input';
+    input.style.width = '50px';
+    input.style.textAlign = 'center';
+
+    const originalHtml = element.innerHTML;
+    element.innerHTML = '';
+    element.appendChild(input);
+    input.focus();
+    input.select();
+
+    let saved = false;
+
+    const save = async () => {
+        if (saved) return;
+        saved = true;
+        AppState.isEditingProduction = false;
+
+        const newValue = parseInt(input.value) || 0;
+        if (newValue < 0) {
+            element.innerHTML = originalHtml;
+            return;
+        }
+
+        try {
+            const closingRef = dailyClosingsRef.child(dateKey);
+            const snapshot = await closingRef.once('value');
+
+            if (!snapshot.exists()) {
+                // 새로 생성
+                const productData = { editedAt: Date.now() };
+                productData[type] = newValue;
+                if (type === 'production') productData.shipment = 0;
+                if (type === 'shipment') productData.production = 0;
+
+                await closingRef.set({
+                    date: dateKey,
+                    closedAt: Date.now(),
+                    products: { [productName]: productData }
+                });
+            } else {
+                // 기존 데이터 업데이트
+                const updateData = { editedAt: Date.now() };
+                updateData[type] = newValue;
+                await closingRef.child('products').child(productName).update(updateData);
+            }
+
+            // 테이블 UI 업데이트
+            element.textContent = newValue;
+            showScanResult(`${productName}의 ${type === 'production' ? '생산' : '출고'}량이 ${newValue}(으)로 수정되었습니다.`, 'success');
+        } catch (error) {
+            console.error('수정 오류:', error);
+            element.innerHTML = originalHtml;
+            showScanResult('수정 중 오류가 발생했습니다.', 'error');
+        }
+    };
+
+    const cancel = () => {
+        saved = true;
+        AppState.isEditingProduction = false;
+        element.innerHTML = originalHtml;
+    };
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); save(); }
+        if (e.key === 'Escape') { cancel(); }
     });
 
     input.addEventListener('blur', () => save());

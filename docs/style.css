@@ -1108,6 +1108,18 @@ tbody tr:hover {
     color: #5b21b6;
 }
 
+/* 금일 생산현황 수정 가능한 값 */
+.editable-history {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.editable-history:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
 
 /* 수정 버튼 (기본) */
 .btn-edit {
