@@ -34,6 +34,8 @@ firebase init hosting
 
 ### Git Operations
 
+**중요: 코드 변경 작업 완료 후 항상 커밋 및 푸시를 수행할 것.**
+
 ```bash
 # Check git status
 git status
