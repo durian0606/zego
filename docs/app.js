@@ -1903,8 +1903,8 @@ function openBarcodePrintPage() {
         }
         .barcode-list {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
             justify-items: stretch;
         }
         .barcode-item {
@@ -1997,8 +1997,8 @@ function openBarcodePrintPage() {
                 padding-bottom: 6px;
             }
             .barcode-list {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 15px;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 25px;
             }
             .barcode-item {
                 border: 1px solid #999;
@@ -2015,7 +2015,7 @@ function openBarcodePrintPage() {
         }
 
         @page {
-            size: A4 portrait;
+            size: A4 landscape;
             margin: 10mm;
         }
     </style>
