@@ -1725,9 +1725,9 @@ tbody tr:hover {
     /* 날짜 컬럼들 - 최소 너비로 압축 */
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        width: 32px;
-        min-width: 32px;
-        max-width: 40px;
+        width: 48px;
+        min-width: 48px;
+        max-width: 60px;
         padding: 6px 2px;
     }
 
@@ -1917,9 +1917,9 @@ tbody tr:hover {
     /* 전일 생산현황 - 400px */
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        width: 28px;
-        min-width: 28px;
-        max-width: 36px;
+        width: 42px;
+        min-width: 42px;
+        max-width: 54px;
     }
 
     .inventory-section .product-name {
@@ -2102,9 +2102,9 @@ tbody tr:hover {
 
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        width: 24px;
-        min-width: 24px;
-        max-width: 32px;
+        width: 36px;
+        min-width: 36px;
+        max-width: 48px;
     }
 
     .production-history-section table th {
