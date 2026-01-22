@@ -239,6 +239,32 @@ header h1 {
     cursor: not-allowed;
 }
 
+/* 리셋 버튼 */
+.btn-reset {
+    background: var(--color-warning);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-reset:hover {
+    background: #d97706;
+}
+
+.btn-reset:disabled {
+    background: var(--color-text-light);
+    cursor: not-allowed;
+}
+
 /* 수량 추가/삭제 버튼 */
 .btn-add-quantity,
 .btn-remove-quantity {

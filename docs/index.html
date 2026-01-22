@@ -90,7 +90,13 @@
 
             <!-- 금일 생산현황 테이블 -->
             <section class="inventory-section">
-                <h2>금일 생산현황</h2>
+                <div class="section-header-with-button">
+                    <h2>금일 생산현황</h2>
+                    <button id="btn-reset-today" class="btn btn-reset" title="금일생산 리셋">
+                        <i data-lucide="refresh-cw" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                        리셋
+                    </button>
+                </div>
                 <div class="table-wrapper">
                     <table id="inventory-table">
                         <thead>

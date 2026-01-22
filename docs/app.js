@@ -2664,4 +2664,61 @@ async function editTodayHistoryValue(element) {
 // 마감 버튼 이벤트 리스너
 document.getElementById('btn-close-today').addEventListener('click', closeTodayProduction);
 
+// ============================================
+// 금일 생산현황 리셋 기능
+// ============================================
+
+// 금일 생산현황 리셋 (모든 제품의 currentStock을 0으로)
+async function resetTodayProduction(skipConfirm = false) {
+    if (!skipConfirm) {
+        const confirmed = confirm('금일 생산현황을 모두 0으로 리셋하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.');
+        if (!confirmed) return;
+    }
+
+    const products = filterValidProducts(AppState.productsData);
+    if (products.length === 0) {
+        showScanResult('리셋할 제품이 없습니다.', 'info');
+        return;
+    }
+
+    try {
+        const updates = {};
+        products.forEach(product => {
+            updates[`${product.name}/currentStock`] = 0;
+            updates[`${product.name}/updatedAt`] = Date.now();
+        });
+
+        await productsRef.update(updates);
+        showScanResult('금일 생산현황이 리셋되었습니다.', 'success');
+        console.log('금일 생산현황 리셋 완료:', new Date().toLocaleString());
+    } catch (error) {
+        console.error('리셋 오류:', error);
+        showScanResult('리셋 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 리셋 버튼 이벤트 리스너
+document.getElementById('btn-reset-today').addEventListener('click', () => resetTodayProduction(false));
+
+// 자정 자동 리셋 타이머 설정
+function setupMidnightReset() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0); // 다음 자정 (00:00:00)
+
+    const msUntilMidnight = midnight.getTime() - now.getTime();
+
+    console.log(`자정 자동 리셋 예정: ${midnight.toLocaleString()} (${Math.round(msUntilMidnight / 60000)}분 후)`);
+
+    setTimeout(() => {
+        console.log('자정이 되어 금일 생산현황을 자동 리셋합니다.');
+        resetTodayProduction(true); // 확인 없이 자동 리셋
+        // 다음 자정을 위해 타이머 재설정
+        setupMidnightReset();
+    }, msUntilMidnight);
+}
+
+// 앱 시작 시 자정 타이머 설정
+setupMidnightReset();
+
 console.log('우리곡간식품 재고관리 시스템이 시작되었습니다!');
