@@ -654,15 +654,14 @@ function updateHistoryTable() {
     const validProducts = filterValidProducts(AppState.productsData);
     const validProductNames = new Set(validProducts.map(p => p.name));
 
-    // 어제 00:00:00 타임스탬프 계산
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
-    const yesterdayTimestamp = yesterday.getTime();
+    // 오늘 00:00:00 타임스탬프 계산
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
 
-    // 어제와 오늘 데이터만 필터링 (ADJUST 제외, 삭제된 제품 제외)
+    // 오늘 데이터만 필터링 (ADJUST 제외, 삭제된 제품 제외)
     const recentHistory = validHistory.filter(item => {
-        return item.timestamp >= yesterdayTimestamp &&
+        return item.timestamp >= todayTimestamp &&
                item.type !== 'ADJUST' &&
                validProductNames.has(item.productName);
     });
