@@ -355,10 +355,17 @@ function updateDashboard() {
     }
 }
 
-// 7일 생산 추이 차트 업데이트
+// 7일 생산 추이 차트 업데이트 (종류별 스택 차트)
 function updateWeeklyChart(closings) {
     const chartContainer = document.getElementById('weekly-chart');
     if (!chartContainer) return;
+
+    // 제품 카테고리 정의
+    const categories = [
+        { name: '누룽지', keyword: '누룽지', color: '#eab308' },
+        { name: '서리태', keyword: '서리태', color: '#374151' },
+        { name: '뻥튀기', keyword: '뻥튀기', color: '#f97316' }
+    ];
 
     // 최근 7일 날짜 생성
     const dates = [];
@@ -372,26 +379,46 @@ function updateWeeklyChart(closings) {
         });
     }
 
-    // 각 날짜별 총 생산량 계산
-    const maxValue = Math.max(1, ...dates.map(d => {
+    // 각 날짜별 카테고리별 생산량 계산
+    const dailyData = dates.map(d => {
         const closing = closings[d.key];
-        if (!closing || !closing.products) return 0;
-        return Object.values(closing.products).reduce((sum, p) => sum + (p.production || 0), 0);
-    }));
+        const categoryTotals = {};
+
+        categories.forEach(cat => {
+            categoryTotals[cat.keyword] = 0;
+        });
+
+        if (closing && closing.products) {
+            Object.entries(closing.products).forEach(([productName, data]) => {
+                const production = data.production || 0;
+                categories.forEach(cat => {
+                    if (productName.includes(cat.keyword)) {
+                        categoryTotals[cat.keyword] += production;
+                    }
+                });
+            });
+        }
+
+        const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
+        return { ...d, categoryTotals, total };
+    });
+
+    // 최대값 계산 (스택 총합 기준)
+    const maxValue = Math.max(1, ...dailyData.map(d => d.total));
 
     // 차트 HTML 생성
-    chartContainer.innerHTML = dates.map(d => {
-        const closing = closings[d.key];
-        let total = 0;
-        if (closing && closing.products) {
-            total = Object.values(closing.products).reduce((sum, p) => sum + (p.production || 0), 0);
-        }
-        const height = Math.max(4, (total / maxValue) * 100);
+    chartContainer.innerHTML = dailyData.map(d => {
+        const stackBars = categories.map(cat => {
+            const value = d.categoryTotals[cat.keyword];
+            const height = (value / maxValue) * 100;
+            if (value === 0) return '';
+            return `<div class="bar-stack" style="height: ${height}px; background: ${cat.color};" title="${cat.name}: ${value}"></div>`;
+        }).join('');
 
         return `
             <div class="bar-item">
-                <span class="bar-value">${total > 0 ? total : ''}</span>
-                <div class="bar" style="height: ${height}px;"></div>
+                <span class="bar-value">${d.total > 0 ? d.total : ''}</span>
+                <div class="bar-stacked">${stackBars}</div>
                 <span class="bar-label">${d.label}</span>
             </div>
         `;

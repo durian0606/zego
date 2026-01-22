@@ -473,6 +473,28 @@ section h2 {
     font-weight: 500;
 }
 
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--color-text-dark);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
 .bar-chart {
     display: flex;
     align-items: flex-end;
@@ -497,6 +519,23 @@ section h2 {
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     transition: height 0.3s ease;
     min-height: 4px;
+}
+
+.bar-stacked {
+    width: 100%;
+    max-width: 40px;
+    display: flex;
+    flex-direction: column-reverse;
+    min-height: 4px;
+}
+
+.bar-stack {
+    width: 100%;
+    transition: height 0.3s ease;
+}
+
+.bar-stack:last-child {
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
 .bar-label {
