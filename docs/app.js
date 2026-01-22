@@ -2265,9 +2265,27 @@ async function closeTodayProduction() {
             return;
         }
 
-        // 제품별 집계
+        // 기존 마감 데이터에서 수정된 값 확인
+        const existingClosing = AppState.dailyClosingsData[dateKey];
+        const editedProducts = {};
+        if (existingClosing && existingClosing.products) {
+            Object.entries(existingClosing.products).forEach(([productName, data]) => {
+                if (data.editedAt) {
+                    editedProducts[productName] = {
+                        production: data.production || 0,
+                        shipment: data.shipment || 0,
+                        editedAt: data.editedAt
+                    };
+                }
+            });
+        }
+
+        // 제품별 집계 (history 기반)
         const productSummary = {};
         todayHistory.forEach(item => {
+            // 이미 수동 수정된 제품은 건너뛰기
+            if (editedProducts[item.productName]) return;
+
             if (!productSummary[item.productName]) {
                 productSummary[item.productName] = {
                     production: 0,
@@ -2286,6 +2304,11 @@ async function closeTodayProduction() {
                     productSummary[item.productName].shipment += Math.abs(item.quantity);
                 }
             }
+        });
+
+        // 수동 수정된 값을 최종 집계에 병합
+        Object.entries(editedProducts).forEach(([productName, data]) => {
+            productSummary[productName] = data;
         });
 
         // 마감 확인
@@ -2385,10 +2408,10 @@ async function editProductionValue(element) {
                 await closingRef.set({
                     date: dateKey,
                     closedAt: Date.now(),
-                    products: { [productName]: { production: newValue, shipment: 0 } }
+                    products: { [productName]: { production: newValue, shipment: 0, editedAt: Date.now() } }
                 });
             } else {
-                await closingRef.child('products').child(productName).update({ production: newValue });
+                await closingRef.child('products').child(productName).update({ production: newValue, editedAt: Date.now() });
             }
             // Firebase 리스너가 자동으로 테이블 업데이트함
         } catch (error) {
