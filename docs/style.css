@@ -1714,22 +1714,20 @@ tbody tr:hover {
         text-align: center;
     }
 
-    /* 제품명 컬럼 - 넓게, 한 줄 유지 */
+    /* 제품명 컬럼 - 전체 표시 */
     .production-history-section table th:first-child,
     .production-history-section table td:first-child {
-        width: 80px;
-        min-width: 80px;
+        width: auto;
         text-align: left;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        padding-right: 8px;
     }
 
-    /* 날짜 컬럼들 - 균등 분배 */
+    /* 날짜 컬럼들 - 최소 너비로 압축 */
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        width: auto;
-        min-width: 40px;
+        width: 32px;
+        min-width: 32px;
+        max-width: 40px;
         padding: 6px 2px;
     }
 
@@ -1916,15 +1914,12 @@ tbody tr:hover {
         padding: 4px 2px;
     }
 
-    .production-history-section table th:first-child,
-    .production-history-section table td:first-child {
-        width: 70px;
-        min-width: 70px;
-    }
-
+    /* 전일 생산현황 - 400px */
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        min-width: 36px;
+        width: 28px;
+        min-width: 28px;
+        max-width: 36px;
     }
 
     .inventory-section .product-name {
@@ -2096,7 +2091,7 @@ tbody tr:hover {
 
     /* 전일 생산현황 - 320px */
     .production-history-section table {
-        min-width: 280px;
+        min-width: 260px;
     }
 
     .production-history-section table th,
@@ -2105,16 +2100,11 @@ tbody tr:hover {
         padding: 3px 1px;
     }
 
-    .production-history-section table th:first-child,
-    .production-history-section table td:first-child {
-        width: 60px;
-        min-width: 60px;
-        font-size: 0.55rem;
-    }
-
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        min-width: 32px;
+        width: 24px;
+        min-width: 24px;
+        max-width: 32px;
     }
 
     .production-history-section table th {
