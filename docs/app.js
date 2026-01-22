@@ -962,10 +962,11 @@ function updateProductionHistoryTable() {
         return shortageB - shortageA;
     });
 
-    // 7일치 날짜 배열 생성 (과거 → 오늘)
+    // 화면 크기에 따라 표시할 일수 결정 (모바일: 5일, PC: 7일)
+    const daysToShow = window.innerWidth <= 768 ? 5 : 7;
     const dates = [];
     const today = new Date();
-    for (let i = 6; i >= 0; i--) {
+    for (let i = daysToShow - 1; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         dates.push({
@@ -985,7 +986,7 @@ function updateProductionHistoryTable() {
 
     // 제품이 없으면 빈 메시지 표시
     if (sortedProducts.length === 0) {
-        productionHistoryTbody.innerHTML = '<tr><td colspan="8" class="no-data">등록된 제품이 없습니다.</td></tr>';
+        productionHistoryTbody.innerHTML = `<tr><td colspan="${daysToShow + 1}" class="no-data">등록된 제품이 없습니다.</td></tr>`;
         return;
     }
 
@@ -2747,5 +2748,20 @@ function setupMidnightReset() {
 
 // 앱 시작 시 자정 타이머 설정
 setupMidnightReset();
+
+// 화면 크기 변경 시 전일 생산현황 테이블 업데이트 (5일/7일 전환)
+let resizeTimeout;
+let lastWidth = window.innerWidth;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        const currentWidth = window.innerWidth;
+        // 768px 경계를 넘을 때만 업데이트
+        if ((lastWidth <= 768 && currentWidth > 768) || (lastWidth > 768 && currentWidth <= 768)) {
+            updateProductionHistoryTable();
+        }
+        lastWidth = currentWidth;
+    }, 250);
+});
 
 console.log('우리곡간식품 재고관리 시스템이 시작되었습니다!');
