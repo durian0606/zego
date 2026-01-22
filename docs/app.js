@@ -2236,84 +2236,35 @@ async function closeTodayProduction() {
         if (!confirmed) return;
     }
 
-    // 오늘 00:00:00 타임스탬프
-    const todayStart = new Date(today);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayTimestamp = todayStart.getTime();
-
     try {
-        // Firebase에서 직접 오늘 히스토리 쿼리 (50개 제한 없이)
-        console.log('금일 마감 시작 - todayTimestamp:', todayTimestamp, new Date(todayTimestamp));
-
-        const snapshot = await historyRef
-            .orderByChild('timestamp')
-            .startAt(todayTimestamp)
-            .once('value');
-
-        console.log('Firebase 쿼리 결과:', snapshot.val());
-
-        const todayHistory = [];
-        snapshot.forEach((child) => {
-            const item = child.val();
-            // productName만 확인 (ADJUST도 포함)
-            if (item.productName && item.productName !== 'undefined') {
-                todayHistory.push(item);
-            }
-        });
-
-        console.log('필터링된 오늘 히스토리:', todayHistory.length, '개');
-
-        // 기존 마감 데이터에서 수정된 값 확인 (history 체크 전에 먼저 확인)
-        const existingClosing = AppState.dailyClosingsData[dateKey];
-        const editedProducts = {};
-        if (existingClosing && existingClosing.products) {
-            Object.entries(existingClosing.products).forEach(([productName, data]) => {
-                if (data.editedAt) {
-                    editedProducts[productName] = {
-                        production: data.production || 0,
-                        shipment: data.shipment || 0,
-                        editedAt: data.editedAt
-                    };
-                }
-            });
-        }
-
-        // history도 없고 수정된 값도 없으면 마감할 내용 없음
-        if (todayHistory.length === 0 && Object.keys(editedProducts).length === 0) {
-            showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
-            return;
-        }
-
-        // 제품별 집계 (history 기반)
+        // 화면에 표시된 금일 생산현황 값을 직접 읽어오기
         const productSummary = {};
-        todayHistory.forEach(item => {
-            // 이미 수동 수정된 제품은 건너뛰기
-            if (editedProducts[item.productName]) return;
+        const editableHistoryElements = document.querySelectorAll('#history-table .editable-history');
 
-            if (!productSummary[item.productName]) {
-                productSummary[item.productName] = {
+        editableHistoryElements.forEach(element => {
+            const productName = element.getAttribute('data-product');
+            const type = element.getAttribute('data-type'); // 'production' or 'shipment'
+            const value = parseInt(element.textContent) || 0;
+
+            if (!productSummary[productName]) {
+                productSummary[productName] = {
                     production: 0,
                     shipment: 0
                 };
             }
-            if (item.type === 'IN') {
-                productSummary[item.productName].production += item.quantity;
-            } else if (item.type === 'OUT') {
-                productSummary[item.productName].shipment += item.quantity;
-            } else if (item.type === 'ADJUST') {
-                // ADJUST: 양수면 생산, 음수면 출고로 처리
-                if (item.quantity > 0) {
-                    productSummary[item.productName].production += item.quantity;
-                } else {
-                    productSummary[item.productName].shipment += Math.abs(item.quantity);
-                }
+
+            if (type === 'production') {
+                productSummary[productName].production = value;
+            } else if (type === 'shipment') {
+                productSummary[productName].shipment = value;
             }
         });
 
-        // 수동 수정된 값을 최종 집계에 병합
-        Object.entries(editedProducts).forEach(([productName, data]) => {
-            productSummary[productName] = data;
-        });
+        // 마감할 내용이 없으면 종료
+        if (Object.keys(productSummary).length === 0) {
+            showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
+            return;
+        }
 
         // 마감 확인
         const summaryText = Object.entries(productSummary)
