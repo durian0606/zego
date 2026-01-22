@@ -1827,6 +1827,157 @@ tbody tr:hover {
 }
 
 /* ============================================
+   초소형 화면 (320px 이하) - iPhone SE 등
+   ============================================ */
+@media (max-width: 320px) {
+    /* 헤더 */
+    header {
+        padding: 8px 12px;
+    }
+
+    header h1 {
+        font-size: 0.8rem;
+    }
+
+    .header-actions {
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+    }
+
+    .btn-register,
+    .btn-print,
+    .btn-barcode-mgmt,
+    .btn-settings {
+        font-size: 0.6rem;
+        padding: 6px;
+        min-height: 36px;
+    }
+
+    .btn-register i,
+    .btn-print i,
+    .btn-barcode-mgmt i {
+        width: 12px;
+        height: 12px;
+        margin-right: 2px;
+    }
+
+    /* 대시보드 카드 1열 */
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .dashboard-card {
+        padding: 12px;
+    }
+
+    .card-value {
+        font-size: 1rem;
+    }
+
+    .card-label {
+        font-size: 0.7rem;
+    }
+
+    .card-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .card-icon i {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* 차트 */
+    .bar-chart {
+        height: 50px;
+    }
+
+    .bar-label {
+        font-size: 0.6rem;
+    }
+
+    .bar-value {
+        font-size: 0.55rem;
+    }
+
+    /* 섹션 */
+    section {
+        padding: 12px;
+        margin: 8px;
+    }
+
+    section h2 {
+        font-size: 0.85rem;
+    }
+
+    /* 테이블 */
+    tr {
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    td {
+        padding: 6px 4px;
+        font-size: 0.75rem;
+    }
+
+    td::before {
+        font-size: 0.65rem;
+    }
+
+    .inventory-section .stock-number {
+        font-size: 1.1rem !important;
+    }
+
+    .inventory-section .product-name {
+        font-size: 0.85rem;
+    }
+
+    /* 버튼들 */
+    .btn-edit,
+    .btn-delete {
+        padding: 4px 6px;
+        font-size: 0.7rem;
+    }
+
+    /* 스캔 인디케이터 */
+    .scan-indicator {
+        bottom: 4px;
+        right: 4px;
+        left: 4px;
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        text-align: center;
+    }
+
+    /* 폼 */
+    .form-group label {
+        font-size: 0.75rem;
+    }
+
+    .form-group input,
+    .form-group select {
+        font-size: 0.8rem;
+        padding: 8px;
+    }
+
+    /* 인라인 편집 */
+    .inline-edit-container input {
+        font-size: 0.9rem;
+        padding: 4px 6px;
+    }
+
+    .inline-edit-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+    }
+}
+
+/* ============================================
    현재 작업 중인 제품 강조 (지속적)
    ============================================ */
 tr.row-highlight {
