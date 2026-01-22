@@ -39,6 +39,55 @@
             <!-- 스캔 결과 표시 -->
             <div id="scan-result" class="scan-result"></div>
 
+            <!-- 대시보드 통계 -->
+            <section class="dashboard-section">
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background: #dbeafe;">
+                            <i data-lucide="package-plus" style="color: #3b82f6;"></i>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-label">오늘 총 생산</span>
+                            <span class="card-value" id="stat-today-production">0</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background: #dcfce7;">
+                            <i data-lucide="truck" style="color: #22c55e;"></i>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-label">오늘 총 출고</span>
+                            <span class="card-value" id="stat-today-shipment">0</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background: #fef3c7;">
+                            <i data-lucide="boxes" style="color: #f59e0b;"></i>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-label">총 재고</span>
+                            <span class="card-value" id="stat-total-stock">0</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background: #fee2e2;">
+                            <i data-lucide="alert-triangle" style="color: #ef4444;"></i>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-label">부족 품목</span>
+                            <span class="card-value" id="stat-low-stock">0</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 7일 생산 추이 차트 -->
+                <div class="chart-container">
+                    <h3>최근 7일 생산 추이</h3>
+                    <div class="bar-chart" id="weekly-chart">
+                        <!-- JS에서 동적으로 생성 -->
+                    </div>
+                </div>
+            </section>
+
             <!-- 금일 생산현황 테이블 -->
             <section class="inventory-section">
                 <h2>금일 생산현황</h2>

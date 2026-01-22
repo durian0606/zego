@@ -5,6 +5,63 @@ const barcodesRef = database.ref('barcodes');
 const historyRef = database.ref('history');
 const dailyClosingsRef = database.ref('dailyClosings');
 
+// ============================================
+// 스캔 피드백 (소리/진동)
+// ============================================
+const AudioFeedback = {
+    context: null,
+    enabled: true,
+
+    init() {
+        // 사용자 인터랙션 후 AudioContext 생성 (브라우저 정책)
+        if (!this.context) {
+            this.context = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    },
+
+    // 성공 소리 (높은 비프음 2번)
+    playSuccess() {
+        if (!this.enabled) return;
+        this.init();
+        this.beep(880, 0.1);
+        setTimeout(() => this.beep(1100, 0.1), 120);
+        this.vibrate([50, 30, 50]);
+    },
+
+    // 실패 소리 (낮은 버저음)
+    playError() {
+        if (!this.enabled) return;
+        this.init();
+        this.beep(200, 0.3);
+        this.vibrate([200, 100, 200]);
+    },
+
+    // 비프음 생성
+    beep(frequency, duration) {
+        if (!this.context) return;
+        const oscillator = this.context.createOscillator();
+        const gainNode = this.context.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.context.destination);
+
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + duration);
+        oscillator.stop(this.context.currentTime + duration);
+    },
+
+    // 진동 (모바일)
+    vibrate(pattern) {
+        if (navigator.vibrate) {
+            navigator.vibrate(pattern);
+        }
+    }
+};
+
 // undefined 항목 삭제 (일회성)
 productsRef.child('undefined').remove().then(() => {
     console.log('undefined 항목 삭제 완료');
@@ -217,6 +274,7 @@ productsRef.on('value', (snapshot) => {
     updateProductionHistoryTable();
     updateHistoryTable();
     updateBarcodeTable();
+    updateDashboard();
 });
 
 // 바코드 목록 실시간 감지
@@ -237,6 +295,7 @@ historyRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
     });
     updateHistoryTable();
     updateProductionHistoryTable();
+    updateDashboard();
 });
 
 // 마감 기록 실시간 감지 (최근 7일)
@@ -244,7 +303,100 @@ dailyClosingsRef.orderByKey().limitToLast(7).on('value', (snapshot) => {
     AppState.dailyClosingsData = snapshot.val() || {};
     console.log('Firebase에서 마감 기록 업데이트:', Object.keys(AppState.dailyClosingsData).length, '개');
     updateProductionHistoryTable();
+    updateDashboard();
 });
+
+// ============================================
+// 대시보드 업데이트
+// ============================================
+function updateDashboard() {
+    const products = filterValidProducts(AppState.productsData);
+    const history = filterValidHistory(AppState.historyData);
+    const closings = AppState.dailyClosingsData;
+
+    // 오늘 날짜
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
+
+    // 오늘 생산/출고 계산
+    let todayProduction = 0;
+    let todayShipment = 0;
+    history.forEach(item => {
+        if (item.timestamp >= todayTimestamp) {
+            if (item.type === 'IN') todayProduction += item.quantity;
+            else if (item.type === 'OUT') todayShipment += item.quantity;
+        }
+    });
+
+    // 총 재고 계산
+    let totalStock = 0;
+    let lowStockCount = 0;
+    products.forEach(product => {
+        totalStock += product.currentStock || 0;
+        const minStock = product.minStock || 0;
+        if (minStock > 0 && (product.currentStock || 0) < minStock) {
+            lowStockCount++;
+        }
+    });
+
+    // DOM 업데이트
+    document.getElementById('stat-today-production').textContent = todayProduction.toLocaleString();
+    document.getElementById('stat-today-shipment').textContent = todayShipment.toLocaleString();
+    document.getElementById('stat-total-stock').textContent = totalStock.toLocaleString();
+    document.getElementById('stat-low-stock').textContent = lowStockCount;
+
+    // 7일 차트 업데이트
+    updateWeeklyChart(closings);
+
+    // Lucide 아이콘 렌더링
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+// 7일 생산 추이 차트 업데이트
+function updateWeeklyChart(closings) {
+    const chartContainer = document.getElementById('weekly-chart');
+    if (!chartContainer) return;
+
+    // 최근 7일 날짜 생성
+    const dates = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        dates.push({
+            key: formatDateKey(date),
+            label: `${date.getMonth() + 1}/${date.getDate()}`
+        });
+    }
+
+    // 각 날짜별 총 생산량 계산
+    const maxValue = Math.max(1, ...dates.map(d => {
+        const closing = closings[d.key];
+        if (!closing || !closing.products) return 0;
+        return Object.values(closing.products).reduce((sum, p) => sum + (p.production || 0), 0);
+    }));
+
+    // 차트 HTML 생성
+    chartContainer.innerHTML = dates.map(d => {
+        const closing = closings[d.key];
+        let total = 0;
+        if (closing && closing.products) {
+            total = Object.values(closing.products).reduce((sum, p) => sum + (p.production || 0), 0);
+        }
+        const height = Math.max(4, (total / maxValue) * 100);
+
+        return `
+            <div class="bar-item">
+                <span class="bar-value">${total > 0 ? total : ''}</span>
+                <div class="bar" style="height: ${height}px;"></div>
+                <span class="bar-label">${d.label}</span>
+            </div>
+        `;
+    }).join('');
+}
 
 // 재고 테이블 업데이트
 function updateInventoryTable() {
@@ -1232,6 +1384,13 @@ function showScanResult(message, type) {
     scanResult.textContent = message;
     scanResult.className = `scan-result ${type}`;
     scanResult.style.display = 'block';
+
+    // 소리/진동 피드백
+    if (type === 'success') {
+        AudioFeedback.playSuccess();
+    } else if (type === 'error') {
+        AudioFeedback.playError();
+    }
 
     // 스캔 인디케이터 잠시 숨김
     scanIndicator.style.display = 'none';

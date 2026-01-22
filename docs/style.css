@@ -377,6 +377,139 @@ section h2 {
 }
 
 /* ============================================
+   대시보드
+   ============================================ */
+.dashboard-section {
+    padding: var(--spacing-md);
+}
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.dashboard-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.card-icon i {
+    width: 24px;
+    height: 24px;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-bottom: 2px;
+}
+
+.card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+}
+
+/* 7일 생산 추이 차트 */
+.chart-container {
+    background: white;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.chart-container h3 {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-md);
+    font-weight: 500;
+}
+
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 120px;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+}
+
+.bar-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.bar {
+    width: 100%;
+    max-width: 40px;
+    background: var(--color-primary);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: height 0.3s ease;
+    min-height: 4px;
+}
+
+.bar-label {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+}
+
+.bar-value {
+    font-size: 0.65rem;
+    color: var(--color-text-dark);
+    font-weight: 600;
+}
+
+/* 모바일 대시보드 */
+@media (max-width: 768px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .card-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .card-icon i {
+        width: 20px;
+        height: 20px;
+    }
+
+    .card-value {
+        font-size: 1.25rem;
+    }
+
+    .bar-chart {
+        height: 80px;
+    }
+}
+
+/* ============================================
    숨겨진 바코드 입력
    ============================================ */
 .hidden-input {
