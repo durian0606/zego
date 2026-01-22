@@ -2264,12 +2264,7 @@ async function closeTodayProduction() {
 
         console.log('필터링된 오늘 히스토리:', todayHistory.length, '개');
 
-        if (todayHistory.length === 0) {
-            showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
-            return;
-        }
-
-        // 기존 마감 데이터에서 수정된 값 확인
+        // 기존 마감 데이터에서 수정된 값 확인 (history 체크 전에 먼저 확인)
         const existingClosing = AppState.dailyClosingsData[dateKey];
         const editedProducts = {};
         if (existingClosing && existingClosing.products) {
@@ -2282,6 +2277,12 @@ async function closeTodayProduction() {
                     };
                 }
             });
+        }
+
+        // history도 없고 수정된 값도 없으면 마감할 내용 없음
+        if (todayHistory.length === 0 && Object.keys(editedProducts).length === 0) {
+            showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
+            return;
         }
 
         // 제품별 집계 (history 기반)
