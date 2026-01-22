@@ -1682,13 +1682,16 @@ tbody tr:hover {
     .barcode-management-section td:nth-of-type(3):before { content: "출고 바코드"; }
     .barcode-management-section td:nth-of-type(4):before { content: "작업"; }
 
-    /* 생산 현황 테이블 - 가로 스크롤 */
+    /* 전일 생산현황 테이블 - 모바일 최적화 */
     .production-history-section .table-wrapper {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .production-history-section table {
-        min-width: 450px;
+        width: 100%;
+        min-width: 320px;
+        table-layout: fixed;
     }
 
     .production-history-section table thead {
@@ -1703,9 +1706,35 @@ tbody tr:hover {
         padding: 0;
     }
 
+    .production-history-section table th,
     .production-history-section table td {
         display: table-cell;
-        padding: 10px 12px;
+        padding: 6px 4px;
+        font-size: 0.7rem;
+        text-align: center;
+    }
+
+    /* 제품명 컬럼 - 넓게, 한 줄 유지 */
+    .production-history-section table th:first-child,
+    .production-history-section table td:first-child {
+        width: 80px;
+        min-width: 80px;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 날짜 컬럼들 - 균등 분배 */
+    .production-history-section table th:not(:first-child),
+    .production-history-section table td:not(:first-child) {
+        width: auto;
+        min-width: 40px;
+        padding: 6px 2px;
+    }
+
+    .production-history-section table th {
+        font-size: 0.65rem;
     }
 
     /* 히스토리 테이블 라벨 */
@@ -1880,6 +1909,24 @@ tbody tr:hover {
         font-size: 0.9rem !important;
     }
 
+    /* 전일 생산현황 - 400px */
+    .production-history-section table th,
+    .production-history-section table td {
+        font-size: 0.65rem;
+        padding: 4px 2px;
+    }
+
+    .production-history-section table th:first-child,
+    .production-history-section table td:first-child {
+        width: 70px;
+        min-width: 70px;
+    }
+
+    .production-history-section table th:not(:first-child),
+    .production-history-section table td:not(:first-child) {
+        min-width: 36px;
+    }
+
     .inventory-section .product-name {
         font-size: 0.7rem;
     }
@@ -2044,6 +2091,33 @@ tbody tr:hover {
     .inventory-section .btn-edit,
     .inventory-section .btn-delete {
         padding: 2px 4px;
+        font-size: 0.55rem;
+    }
+
+    /* 전일 생산현황 - 320px */
+    .production-history-section table {
+        min-width: 280px;
+    }
+
+    .production-history-section table th,
+    .production-history-section table td {
+        font-size: 0.6rem;
+        padding: 3px 1px;
+    }
+
+    .production-history-section table th:first-child,
+    .production-history-section table td:first-child {
+        width: 60px;
+        min-width: 60px;
+        font-size: 0.55rem;
+    }
+
+    .production-history-section table th:not(:first-child),
+    .production-history-section table td:not(:first-child) {
+        min-width: 32px;
+    }
+
+    .production-history-section table th {
         font-size: 0.55rem;
     }
 
