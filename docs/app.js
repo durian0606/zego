@@ -902,7 +902,7 @@ function updateHistoryTable() {
     restoreWorkingProductHighlight();
 }
 
-// 생산 현황 테이블 업데이트 (5일치 마감 기록 기반)
+// 생산 현황 테이블 업데이트 (7일치 마감 기록 기반)
 function updateProductionHistoryTable() {
     const validProducts = filterValidProducts(AppState.productsData);
     const closings = AppState.dailyClosingsData;
@@ -935,10 +935,10 @@ function updateProductionHistoryTable() {
         return shortageB - shortageA;
     });
 
-    // 5일치 날짜 배열 생성 (과거 → 오늘)
+    // 7일치 날짜 배열 생성 (과거 → 오늘)
     const dates = [];
     const today = new Date();
-    for (let i = 4; i >= 0; i--) {
+    for (let i = 6; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         dates.push({
@@ -958,7 +958,7 @@ function updateProductionHistoryTable() {
 
     // 제품이 없으면 빈 메시지 표시
     if (sortedProducts.length === 0) {
-        productionHistoryTbody.innerHTML = '<tr><td colspan="6" class="no-data">등록된 제품이 없습니다.</td></tr>';
+        productionHistoryTbody.innerHTML = '<tr><td colspan="8" class="no-data">등록된 제품이 없습니다.</td></tr>';
         return;
     }
 
