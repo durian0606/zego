@@ -47,7 +47,8 @@ const AppState = {
     isEditingMinStock: false,
     isEditingCurrentStock: false,
     isEditingProduction: false,  // 생산현황 편집 중
-    editingProduct: null  // 수정 중인 제품명 (null이면 신규 등록 모드)
+    editingProduct: null,  // 수정 중인 제품명 (null이면 신규 등록 모드)
+    currentWorkingProduct: null  // 현재 작업 중인 제품 (강조 표시용)
 };
 
 // ============================================
@@ -333,6 +334,9 @@ function updateInventoryTable() {
     if (typeof Sortable !== 'undefined') {
         initInventoryDragAndDrop();
     }
+
+    // 현재 작업 제품 강조 복원
+    restoreWorkingProductHighlight();
 }
 
 // 목표 재고 수정 함수
@@ -741,6 +745,9 @@ function updateHistoryTable() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    // 현재 작업 제품 강조 복원
+    restoreWorkingProductHighlight();
 }
 
 // 생산 현황 테이블 업데이트 (5일치 마감 기록 기반)
@@ -840,6 +847,9 @@ function updateProductionHistoryTable() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    // 현재 작업 제품 강조 복원
+    restoreWorkingProductHighlight();
 }
 
 // 바코드 관리 테이블 업데이트
@@ -1239,21 +1249,31 @@ function showScanResult(message, type) {
     }, 5000);
 }
 
-// 제품 행 강조 효과
+// 현재 작업 중인 제품 강조 (지속적)
 function highlightProductRow(productName) {
-    // 모든 테이블에서 해당 제품 행 찾기
+    // 기존 강조 모두 제거
+    document.querySelectorAll('tr.row-highlight').forEach(row => {
+        row.classList.remove('row-highlight');
+    });
+
+    // 해당 제품 행에 강조 추가
     const rows = document.querySelectorAll(`tr[data-product="${productName}"]`);
     rows.forEach(row => {
-        // 기존 애니메이션 제거 후 다시 적용
-        row.classList.remove('row-highlight');
-        void row.offsetWidth; // reflow 트리거
         row.classList.add('row-highlight');
-
-        // 2초 후 클래스 제거
-        setTimeout(() => {
-            row.classList.remove('row-highlight');
-        }, 2000);
     });
+
+    // 현재 작업 제품 저장 (테이블 리렌더링 시 복원용)
+    AppState.currentWorkingProduct = productName;
+}
+
+// 테이블 리렌더링 후 현재 작업 제품 강조 복원
+function restoreWorkingProductHighlight() {
+    if (AppState.currentWorkingProduct) {
+        const rows = document.querySelectorAll(`tr[data-product="${AppState.currentWorkingProduct}"]`);
+        rows.forEach(row => {
+            row.classList.add('row-highlight');
+        });
+    }
 }
 
 // 제품 찾기 (제품명으로)

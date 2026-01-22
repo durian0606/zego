@@ -1629,23 +1629,18 @@ tbody tr:hover {
 }
 
 /* ============================================
-   행 강조 효과 (수정/스캔 시)
+   현재 작업 중인 제품 강조 (지속적)
    ============================================ */
-@keyframes rowHighlight {
-    0% {
-        background-color: #fef08a;
-        box-shadow: 0 0 0 2px #eab308;
-    }
-    100% {
-        background-color: transparent;
-        box-shadow: none;
-    }
-}
-
 tr.row-highlight {
-    animation: rowHighlight 2s ease-out forwards;
+    background-color: #fef9c3 !important;
+    box-shadow: inset 4px 0 0 #eab308;
+    position: relative;
 }
 
-tr.row-highlight td {
-    position: relative;
+tr.row-highlight td:first-child::before {
+    content: "▶";
+    position: absolute;
+    left: -20px;
+    color: #eab308;
+    font-size: 0.9em;
 }
