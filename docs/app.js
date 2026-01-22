@@ -2237,38 +2237,30 @@ async function closeTodayProduction() {
     }
 
     try {
-        // 화면에 표시된 금일 생산현황 값을 직접 읽어오기
+        // 금일 생산현황 테이블에서 currentStock 값을 직접 읽어오기
         const productSummary = {};
-        const editableHistoryElements = document.querySelectorAll('#history-table .editable-history');
+        const inventoryRows = document.querySelectorAll('#inventory-table tbody tr[data-product]');
 
-        editableHistoryElements.forEach(element => {
-            const productName = element.getAttribute('data-product');
-            const type = element.getAttribute('data-type'); // 'production' or 'shipment'
-            const value = parseInt(element.textContent) || 0;
+        inventoryRows.forEach(row => {
+            const productName = row.getAttribute('data-product');
+            const stockCell = row.querySelector('[data-stock]');
+            const currentStock = stockCell ? parseInt(stockCell.getAttribute('data-stock')) || 0 : 0;
 
-            if (!productSummary[productName]) {
-                productSummary[productName] = {
-                    production: 0,
-                    shipment: 0
-                };
-            }
-
-            if (type === 'production') {
-                productSummary[productName].production = value;
-            } else if (type === 'shipment') {
-                productSummary[productName].shipment = value;
-            }
+            productSummary[productName] = {
+                production: currentStock,
+                shipment: 0
+            };
         });
 
         // 마감할 내용이 없으면 종료
         if (Object.keys(productSummary).length === 0) {
-            showScanResult('오늘 생산/출고 내역이 없습니다.', 'error');
+            showScanResult('등록된 제품이 없습니다.', 'error');
             return;
         }
 
         // 마감 확인
         const summaryText = Object.entries(productSummary)
-            .map(([name, data]) => `${name}: 생산 ${data.production}개, 출고 ${data.shipment}개`)
+            .map(([name, data]) => `${name}: ${data.production}개`)
             .join('\n');
 
         const confirmed = await showConfirmDialog(
