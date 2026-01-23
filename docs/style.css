@@ -458,6 +458,21 @@ section h2 {
     color: var(--color-text-dark);
 }
 
+/* 오늘 생산 품목별 표시 */
+.production-total {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.production-breakdown {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+    font-weight: 400;
+    margin-top: 2px;
+}
+
 /* 7일 생산 추이 차트 */
 .chart-container {
     background: white;

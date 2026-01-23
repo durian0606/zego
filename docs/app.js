@@ -320,28 +320,54 @@ function updateDashboard() {
     today.setHours(0, 0, 0, 0);
     const todayTimestamp = today.getTime();
 
-    // 금일생산현황 테이블에서 직접 값 읽어서 합계 계산
-    let todayProduction = 0;
-    let todayShipment = 0;
+    // 금일생산현황과 동일한 로직으로 계산 (수정된 값 반영)
+    const validProductNames = new Set(products.map(p => p.name));
+    const todayHistory = history.filter(item =>
+        item.timestamp >= todayTimestamp &&
+        item.type !== 'ADJUST' &&
+        validProductNames.has(item.productName)
+    );
 
-    const historyRows = document.querySelectorAll('#history-tbody tr');
-    historyRows.forEach(row => {
-        const productionCell = row.querySelector('td:nth-child(3)');
-        const shipmentCell = row.querySelector('td:nth-child(4)');
-
-        // 생산량 합산
-        if (productionCell) {
-            const prodSpan = productionCell.querySelector('.transaction-in');
-            if (prodSpan) {
-                todayProduction += parseInt(prodSpan.textContent) || 0;
-            }
+    // 제품별 그룹화
+    const groupedProduction = {};
+    todayHistory.forEach(item => {
+        if (item.type === 'IN') {
+            const key = item.productName;
+            if (!groupedProduction[key]) groupedProduction[key] = 0;
+            groupedProduction[key] += item.quantity;
         }
+    });
 
-        // 출고량 합산
-        if (shipmentCell) {
-            const shipSpan = shipmentCell.querySelector('.transaction-out');
-            if (shipSpan) {
-                todayShipment += parseInt(shipSpan.textContent) || 0;
+    // dailyClosings에서 수정된 값 확인
+    const todayKey = formatDateKey(new Date());
+    const todayClosing = closings[todayKey];
+    const editedProducts = todayClosing?.products || {};
+
+    // 수정된 값이 있으면 덮어쓰기
+    Object.keys(editedProducts).forEach(productName => {
+        const editedData = editedProducts[productName];
+        if (editedData && editedData.editedAt && editedData.production !== undefined) {
+            groupedProduction[productName] = editedData.production;
+        }
+    });
+
+    // 품목별 합계 계산
+    let catNurungji = 0, catSeoridae = 0, catPpungtwigi = 0;
+    Object.entries(groupedProduction).forEach(([productName, qty]) => {
+        if (productName.includes('누룽지')) catNurungji += qty;
+        else if (productName.includes('서리태')) catSeoridae += qty;
+        else if (productName.includes('뻥튀기')) catPpungtwigi += qty;
+    });
+
+    // 출고량 계산
+    let todayShipment = 0;
+    todayHistory.forEach(item => {
+        if (item.type === 'OUT') {
+            const editedData = editedProducts[item.productName];
+            if (editedData && editedData.editedAt && editedData.shipment !== undefined) {
+                todayShipment += editedData.shipment;
+            } else {
+                todayShipment += item.quantity;
             }
         }
     });
@@ -357,8 +383,15 @@ function updateDashboard() {
         }
     });
 
-    // DOM 업데이트
-    document.getElementById('stat-today-production').textContent = todayProduction.toLocaleString();
+    // DOM 업데이트 - 품목별 생산 통계
+    const totalProduction = catNurungji + catSeoridae + catPpungtwigi;
+    const productionEl = document.getElementById('stat-today-production');
+    if (productionEl) {
+        productionEl.innerHTML = `
+            <span class="production-total">${totalProduction.toLocaleString()}</span>
+            <span class="production-breakdown">누룽지 ${catNurungji} / 서리태 ${catSeoridae} / 뻥튀기 ${catPpungtwigi}</span>
+        `;
+    }
     document.getElementById('stat-today-shipment').textContent = todayShipment.toLocaleString();
     document.getElementById('stat-total-stock').textContent = totalStock.toLocaleString();
     document.getElementById('stat-low-stock').textContent = lowStockCount;
