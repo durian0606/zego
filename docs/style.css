@@ -542,6 +542,22 @@ section h2 {
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
+/* 그룹화된 막대그래프 (나란히 표시) */
+.bar-group {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 2px;
+    min-height: 4px;
+}
+
+.bar-grouped {
+    width: 10px;
+    min-height: 2px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: height 0.3s ease;
+}
+
 .bar-label {
     font-size: 0.7rem;
     color: var(--color-text-muted);

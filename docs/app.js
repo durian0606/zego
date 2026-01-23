@@ -397,8 +397,8 @@ function updateWeeklyChart(closings) {
     // 제품 카테고리 정의
     const categories = [
         { name: '누룽지', keyword: '누룽지', color: '#eab308' },
-        { name: '서리태', keyword: '서리태', color: '#374151' },
-        { name: '뻥튀기', keyword: '뻥튀기', color: '#f97316' }
+        { name: '뻥튀기', keyword: '뻥튀기', color: '#f97316' },
+        { name: '서리태', keyword: '서리태', color: '#374151' }
     ];
 
     // 최근 7일 날짜 생성
@@ -437,22 +437,27 @@ function updateWeeklyChart(closings) {
         return { ...d, categoryTotals, total };
     });
 
-    // 최대값 계산 (스택 총합 기준)
-    const maxValue = Math.max(1, ...dailyData.map(d => d.total));
+    // 최대값 계산 (개별 카테고리 최대값 기준)
+    let maxValue = 1;
+    dailyData.forEach(d => {
+        categories.forEach(cat => {
+            const val = d.categoryTotals[cat.keyword];
+            if (val > maxValue) maxValue = val;
+        });
+    });
 
-    // 차트 HTML 생성
+    // 차트 HTML 생성 (그룹화된 막대그래프)
     chartContainer.innerHTML = dailyData.map(d => {
-        const stackBars = categories.map(cat => {
+        const groupBars = categories.map(cat => {
             const value = d.categoryTotals[cat.keyword];
             const height = (value / maxValue) * 100;
-            if (value === 0) return '';
-            return `<div class="bar-stack" style="height: ${height}px; background: ${cat.color};" title="${cat.name}: ${value}"></div>`;
+            return `<div class="bar-grouped" style="height: ${height}px; background: ${cat.color};" title="${cat.name}: ${value}"></div>`;
         }).join('');
 
         return `
             <div class="bar-item">
                 <span class="bar-value">${d.total > 0 ? d.total : ''}</span>
-                <div class="bar-stacked">${stackBars}</div>
+                <div class="bar-group">${groupBars}</div>
                 <span class="bar-label">${d.label}</span>
             </div>
         `;
