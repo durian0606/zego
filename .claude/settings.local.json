@@ -15,7 +15,9 @@
       "Bash(start index.html)",
       "Bash(xdg-open:*)",
       "Bash(firebase projects:list:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

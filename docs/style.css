@@ -1710,7 +1710,7 @@ tbody tr:hover {
     .production-history-section table td {
         display: table-cell;
         padding: 6px 4px;
-        font-size: 0.7rem;
+        font-size: 0.85rem;
         text-align: center;
     }
 
@@ -1732,7 +1732,7 @@ tbody tr:hover {
     }
 
     .production-history-section table th {
-        font-size: 0.65rem;
+        font-size: 0.8rem;
     }
 
     /* 히스토리 테이블 라벨 */
@@ -1910,7 +1910,7 @@ tbody tr:hover {
     /* 전일 생산현황 - 400px */
     .production-history-section table th,
     .production-history-section table td {
-        font-size: 0.65rem;
+        font-size: 0.8rem;
         padding: 4px 2px;
     }
 
@@ -2096,7 +2096,7 @@ tbody tr:hover {
 
     .production-history-section table th,
     .production-history-section table td {
-        font-size: 0.6rem;
+        font-size: 0.75rem;
         padding: 3px 1px;
     }
 
@@ -2108,7 +2108,7 @@ tbody tr:hover {
     }
 
     .production-history-section table th {
-        font-size: 0.55rem;
+        font-size: 0.7rem;
     }
 
     /* 스캔 인디케이터 */
