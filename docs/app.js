@@ -371,10 +371,14 @@ function updateDashboard() {
         }
     });
 
-    // DOM 업데이트 - 종류별 생산 수량
+    // DOM 업데이트 - 종류별 생산 수량 (세로 배치)
     const productionEl = document.getElementById('stat-today-production');
     if (productionEl) {
-        productionEl.textContent = `누룽지 ${catNurungji} / 서리태 ${catSeoridae} / 뻥튀기 ${catPpungtwigi}`;
+        productionEl.innerHTML = `
+            <div class="production-item"><span class="production-label" style="color: #eab308;">누룽지</span><span class="production-value">${catNurungji}</span></div>
+            <div class="production-item"><span class="production-label" style="color: #f97316;">뻥튀기</span><span class="production-value">${catPpungtwigi}</span></div>
+            <div class="production-item"><span class="production-label" style="color: #374151;">서리태</span><span class="production-value">${catSeoridae}</span></div>
+        `;
     }
     document.getElementById('stat-today-shipment').textContent = todayShipment.toLocaleString();
     document.getElementById('stat-total-stock').textContent = totalStock.toLocaleString();

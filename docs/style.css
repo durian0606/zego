@@ -462,6 +462,24 @@ section h2 {
     font-size: 0.9rem;
 }
 
+/* 오늘 생산 품목별 세로 배치 */
+.production-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 0;
+    font-size: 0.85rem;
+}
+
+.production-label {
+    font-weight: 600;
+}
+
+.production-value {
+    font-weight: 700;
+    color: var(--color-text-dark);
+}
+
 /* 7일 생산 추이 차트 */
 .chart-container {
     background: white;
