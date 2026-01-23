@@ -302,6 +302,7 @@ historyRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
 dailyClosingsRef.orderByKey().limitToLast(7).on('value', (snapshot) => {
     AppState.dailyClosingsData = snapshot.val() || {};
     console.log('Firebase에서 마감 기록 업데이트:', Object.keys(AppState.dailyClosingsData).length, '개');
+    updateHistoryTable();  // 금일 생산현황 테이블도 업데이트 (수정된 값 반영)
     updateProductionHistoryTable();
     updateDashboard();
 });
@@ -319,35 +320,37 @@ function updateDashboard() {
     today.setHours(0, 0, 0, 0);
     const todayTimestamp = today.getTime();
 
-    // 오늘 생산/출고 계산 (금일생산현황 테이블과 동일한 로직 - 제품별 그룹화)
-    const validProductNames = new Set(products.map(p => p.name));
-    const todayHistory = history.filter(item =>
-        item.timestamp >= todayTimestamp &&
-        item.type !== 'ADJUST' &&
-        validProductNames.has(item.productName)
-    );
-
-    // 제품별 그룹화 후 합산
-    const groupedProduction = {};
-    todayHistory.forEach(item => {
-        if (item.type === 'IN') {
-            const key = item.productName;
-            if (!groupedProduction[key]) groupedProduction[key] = 0;
-            groupedProduction[key] += item.quantity;
-        }
-    });
-
-    // 품목별(누룽지/서리태/뻥튀기) 합계 계산
+    // 금일생산현황 테이블에서 직접 값 읽어서 품목별 합계 계산
     let catNurungji = 0, catSeoridae = 0, catPpungtwigi = 0;
-    Object.entries(groupedProduction).forEach(([productName, qty]) => {
-        if (productName.includes('누룽지')) catNurungji += qty;
-        else if (productName.includes('서리태')) catSeoridae += qty;
-        else if (productName.includes('뻥튀기')) catPpungtwigi += qty;
-    });
-
     let todayShipment = 0;
-    todayHistory.forEach(item => {
-        if (item.type === 'OUT') todayShipment += item.quantity;
+
+    const historyRows = document.querySelectorAll('#history-tbody tr');
+    historyRows.forEach(row => {
+        const productCell = row.querySelector('td:nth-child(2)');
+        const productionCell = row.querySelector('td:nth-child(3)');
+        const shipmentCell = row.querySelector('td:nth-child(4)');
+
+        if (!productCell) return;
+        const productName = productCell.textContent.trim();
+
+        // 생산량 합산
+        if (productionCell) {
+            const prodSpan = productionCell.querySelector('.transaction-in');
+            if (prodSpan) {
+                const qty = parseInt(prodSpan.textContent) || 0;
+                if (productName.includes('누룽지')) catNurungji += qty;
+                else if (productName.includes('서리태')) catSeoridae += qty;
+                else if (productName.includes('뻥튀기')) catPpungtwigi += qty;
+            }
+        }
+
+        // 출고량 합산
+        if (shipmentCell) {
+            const shipSpan = shipmentCell.querySelector('.transaction-out');
+            if (shipSpan) {
+                todayShipment += parseInt(shipSpan.textContent) || 0;
+            }
+        }
     });
 
     // 총 재고 계산
@@ -905,6 +908,13 @@ function updateHistoryTable() {
     // 배열로 변환하고 시간 역순 정렬
     const groupedArray = Object.values(groupedHistory).sort((a, b) => b.latestTimestamp - a.latestTimestamp);
 
+    // 오늘 날짜 키 (한 번만 계산)
+    const todayKey = formatDateKey(new Date());
+
+    // dailyClosings에서 수정된 값 확인
+    const todayClosing = AppState.dailyClosingsData[todayKey];
+    const editedProducts = todayClosing?.products || {};
+
     historyTbody.innerHTML = groupedArray.map(item => {
         // 시간 형식: 25.11.24 PM 10:41
         const date = new Date(item.latestTimestamp);
@@ -917,18 +927,25 @@ function updateHistoryTable() {
         const displayHours = hours % 12 || 12;
         const formattedTime = `${year}.${month}.${day} ${ampm} ${displayHours}:${minutes}`;
 
-        // 오늘 날짜 키
-        const today = new Date();
-        const todayKey = formatDateKey(today);
+        // 수정된 값이 있으면 사용, 없으면 원본 값
+        const editedData = editedProducts[item.productName];
+        let displayQuantity = item.totalQuantity;
+        if (editedData && editedData.editedAt) {
+            if (item.type === 'IN' && editedData.production !== undefined) {
+                displayQuantity = editedData.production;
+            } else if (item.type === 'OUT' && editedData.shipment !== undefined) {
+                displayQuantity = editedData.shipment;
+            }
+        }
 
         // 생산/출고 컬럼 분리 (클릭하여 수정 가능)
         let productionCell, shipmentCell;
         if (item.type === 'IN') {
-            productionCell = `<span class="transaction-type transaction-in editable-history" data-product="${item.productName}" data-type="production" data-date="${todayKey}" onclick="editTodayHistoryValue(this)">${item.totalQuantity}</span>`;
+            productionCell = `<span class="transaction-type transaction-in editable-history" data-product="${item.productName}" data-type="production" data-date="${todayKey}" onclick="editTodayHistoryValue(this)">${displayQuantity}</span>`;
             shipmentCell = '-';
         } else if (item.type === 'OUT') {
             productionCell = '-';
-            shipmentCell = `<span class="transaction-type transaction-out editable-history" data-product="${item.productName}" data-type="shipment" data-date="${todayKey}" onclick="editTodayHistoryValue(this)">${item.totalQuantity}</span>`;
+            shipmentCell = `<span class="transaction-type transaction-out editable-history" data-product="${item.productName}" data-type="shipment" data-date="${todayKey}" onclick="editTodayHistoryValue(this)">${displayQuantity}</span>`;
         } else {
             productionCell = '-';
             shipmentCell = '-';
