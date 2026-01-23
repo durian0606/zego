@@ -42,13 +42,17 @@
             <!-- 대시보드 통계 -->
             <section class="dashboard-section">
                 <div class="dashboard-cards">
-                    <div class="dashboard-card">
+                    <div class="dashboard-card production-by-category">
                         <div class="card-icon" style="background: #dbeafe;">
                             <i data-lucide="package-plus" style="color: #3b82f6;"></i>
                         </div>
                         <div class="card-content">
-                            <span class="card-label">오늘 총 생산</span>
-                            <span class="card-value" id="stat-today-production">0</span>
+                            <span class="card-label">오늘 생산</span>
+                            <div class="category-stats" id="stat-today-production-categories">
+                                <span class="cat-stat cat-nurungji">누룽지 <b>0</b></span>
+                                <span class="cat-stat cat-seoridae">서리태 <b>0</b></span>
+                                <span class="cat-stat cat-ppungtwigi">뻥튀기 <b>0</b></span>
+                            </div>
                         </div>
                     </div>
                     <div class="dashboard-card">

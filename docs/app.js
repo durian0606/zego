@@ -319,14 +319,35 @@ function updateDashboard() {
     today.setHours(0, 0, 0, 0);
     const todayTimestamp = today.getTime();
 
-    // 오늘 생산/출고 계산
-    let todayProduction = 0;
-    let todayShipment = 0;
-    history.forEach(item => {
-        if (item.timestamp >= todayTimestamp) {
-            if (item.type === 'IN') todayProduction += item.quantity;
-            else if (item.type === 'OUT') todayShipment += item.quantity;
+    // 오늘 생산/출고 계산 (금일생산현황 테이블과 동일한 로직 - 제품별 그룹화)
+    const validProductNames = new Set(products.map(p => p.name));
+    const todayHistory = history.filter(item =>
+        item.timestamp >= todayTimestamp &&
+        item.type !== 'ADJUST' &&
+        validProductNames.has(item.productName)
+    );
+
+    // 제품별 그룹화 후 합산
+    const groupedProduction = {};
+    todayHistory.forEach(item => {
+        if (item.type === 'IN') {
+            const key = item.productName;
+            if (!groupedProduction[key]) groupedProduction[key] = 0;
+            groupedProduction[key] += item.quantity;
         }
+    });
+
+    // 품목별(누룽지/서리태/뻥튀기) 합계 계산
+    let catNurungji = 0, catSeoridae = 0, catPpungtwigi = 0;
+    Object.entries(groupedProduction).forEach(([productName, qty]) => {
+        if (productName.includes('누룽지')) catNurungji += qty;
+        else if (productName.includes('서리태')) catSeoridae += qty;
+        else if (productName.includes('뻥튀기')) catPpungtwigi += qty;
+    });
+
+    let todayShipment = 0;
+    todayHistory.forEach(item => {
+        if (item.type === 'OUT') todayShipment += item.quantity;
     });
 
     // 총 재고 계산
@@ -340,8 +361,15 @@ function updateDashboard() {
         }
     });
 
-    // DOM 업데이트
-    document.getElementById('stat-today-production').textContent = todayProduction.toLocaleString();
+    // DOM 업데이트 - 품목별 생산 통계
+    const catStatsEl = document.getElementById('stat-today-production-categories');
+    if (catStatsEl) {
+        catStatsEl.innerHTML = `
+            <span class="cat-stat cat-nurungji">누룽지 <b>${catNurungji.toLocaleString()}</b></span>
+            <span class="cat-stat cat-seoridae">서리태 <b>${catSeoridae.toLocaleString()}</b></span>
+            <span class="cat-stat cat-ppungtwigi">뻥튀기 <b>${catPpungtwigi.toLocaleString()}</b></span>
+        `;
+    }
     document.getElementById('stat-today-shipment').textContent = todayShipment.toLocaleString();
     document.getElementById('stat-total-stock').textContent = totalStock.toLocaleString();
     document.getElementById('stat-low-stock').textContent = lowStockCount;
