@@ -320,27 +320,20 @@ function updateDashboard() {
     today.setHours(0, 0, 0, 0);
     const todayTimestamp = today.getTime();
 
-    // 금일생산현황 테이블에서 직접 값 읽어서 품목별 합계 계산
-    let catNurungji = 0, catSeoridae = 0, catPpungtwigi = 0;
+    // 금일생산현황 테이블에서 직접 값 읽어서 합계 계산
+    let todayProduction = 0;
     let todayShipment = 0;
 
     const historyRows = document.querySelectorAll('#history-tbody tr');
     historyRows.forEach(row => {
-        const productCell = row.querySelector('td:nth-child(2)');
         const productionCell = row.querySelector('td:nth-child(3)');
         const shipmentCell = row.querySelector('td:nth-child(4)');
-
-        if (!productCell) return;
-        const productName = productCell.textContent.trim();
 
         // 생산량 합산
         if (productionCell) {
             const prodSpan = productionCell.querySelector('.transaction-in');
             if (prodSpan) {
-                const qty = parseInt(prodSpan.textContent) || 0;
-                if (productName.includes('누룽지')) catNurungji += qty;
-                else if (productName.includes('서리태')) catSeoridae += qty;
-                else if (productName.includes('뻥튀기')) catPpungtwigi += qty;
+                todayProduction += parseInt(prodSpan.textContent) || 0;
             }
         }
 
@@ -364,15 +357,8 @@ function updateDashboard() {
         }
     });
 
-    // DOM 업데이트 - 품목별 생산 통계
-    const catStatsEl = document.getElementById('stat-today-production-categories');
-    if (catStatsEl) {
-        catStatsEl.innerHTML = `
-            <span class="cat-stat cat-nurungji">누룽지 <b>${catNurungji.toLocaleString()}</b></span>
-            <span class="cat-stat cat-seoridae">서리태 <b>${catSeoridae.toLocaleString()}</b></span>
-            <span class="cat-stat cat-ppungtwigi">뻥튀기 <b>${catPpungtwigi.toLocaleString()}</b></span>
-        `;
-    }
+    // DOM 업데이트
+    document.getElementById('stat-today-production').textContent = todayProduction.toLocaleString();
     document.getElementById('stat-today-shipment').textContent = todayShipment.toLocaleString();
     document.getElementById('stat-total-stock').textContent = totalStock.toLocaleString();
     document.getElementById('stat-low-stock').textContent = lowStockCount;

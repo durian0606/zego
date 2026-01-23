@@ -458,40 +458,6 @@ section h2 {
     color: var(--color-text-dark);
 }
 
-/* 품목별 생산 통계 */
-.category-stats {
-    display: flex;
-    gap: var(--spacing-sm);
-    flex-wrap: wrap;
-}
-
-.cat-stat {
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-}
-
-.cat-stat b {
-    font-weight: 700;
-    margin-left: 2px;
-}
-
-.cat-nurungji {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.cat-seoridae {
-    background: #e5e7eb;
-    color: #1f2937;
-}
-
-.cat-ppungtwigi {
-    background: #ffedd5;
-    color: #c2410c;
-}
-
 /* 7일 생산 추이 차트 */
 .chart-container {
     background: white;
@@ -601,15 +567,6 @@ section h2 {
 
     .card-value {
         font-size: 1.25rem;
-    }
-
-    .category-stats {
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .cat-stat {
-        font-size: 0.7rem;
     }
 
     .bar-chart {
