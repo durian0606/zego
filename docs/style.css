@@ -469,6 +469,7 @@ section h2 {
     align-items: center;
     padding: 2px 0;
     font-size: 0.85rem;
+    gap: 12px;
 }
 
 .production-label {
