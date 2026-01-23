@@ -320,7 +320,16 @@ function updateDashboard() {
     today.setHours(0, 0, 0, 0);
     const todayTimestamp = today.getTime();
 
-    // 금일생산현황 테이블과 완전히 동일한 로직으로 계산
+    // 금일 생산현황 테이블의 currentStock 값을 직접 사용 (카테고리별 합계)
+    let catNurungji = 0, catSeoridae = 0, catPpungtwigi = 0;
+    products.forEach(product => {
+        const stock = product.currentStock || 0;
+        if (product.name.includes('누룽지')) catNurungji += stock;
+        else if (product.name.includes('서리태')) catSeoridae += stock;
+        else if (product.name.includes('뻥튀기')) catPpungtwigi += stock;
+    });
+
+    // 출고량 계산 (히스토리 기반, dailyClosings 수정값 반영)
     const validProductNames = new Set(products.map(p => p.name));
     const todayHistory = history.filter(item =>
         item.timestamp >= todayTimestamp &&
@@ -328,37 +337,10 @@ function updateDashboard() {
         validProductNames.has(item.productName)
     );
 
-    // 제품별 그룹화 (히스토리에 있는 항목만)
-    const groupedProduction = {};
-    todayHistory.forEach(item => {
-        if (item.type === 'IN') {
-            const key = item.productName;
-            if (!groupedProduction[key]) groupedProduction[key] = { totalQuantity: 0 };
-            groupedProduction[key].totalQuantity += item.quantity;
-        }
-    });
-
-    // dailyClosings에서 수정된 값 확인
     const todayKey = formatDateKey(new Date());
     const todayClosing = closings[todayKey];
     const editedProducts = todayClosing?.products || {};
 
-    // 품목별 합계 계산 (금일 생산현황 테이블에 표시되는 값과 동일하게)
-    let catNurungji = 0, catSeoridae = 0, catPpungtwigi = 0;
-    Object.entries(groupedProduction).forEach(([productName, data]) => {
-        // 수정된 값이 있으면 displayQuantity로 사용 (금일 생산현황과 동일)
-        const editedData = editedProducts[productName];
-        let displayQuantity = data.totalQuantity;
-        if (editedData && editedData.editedAt && editedData.production !== undefined) {
-            displayQuantity = editedData.production;
-        }
-
-        if (productName.includes('누룽지')) catNurungji += displayQuantity;
-        else if (productName.includes('서리태')) catSeoridae += displayQuantity;
-        else if (productName.includes('뻥튀기')) catPpungtwigi += displayQuantity;
-    });
-
-    // 출고량 계산 (금일 생산현황 테이블과 동일한 로직)
     const groupedShipment = {};
     todayHistory.forEach(item => {
         if (item.type === 'OUT') {
