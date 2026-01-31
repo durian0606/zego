@@ -145,37 +145,64 @@ function updateSortedProductNames() {
     sortedProductNames = products.map(p => p.name).sort();
 }
 
-// 기존 제품에 productIndex가 없으면 바코드에서 추출하여 저장 (마이그레이션)
+// 기존 제품에 productIndex가 없거나 바코드 키가 productIndex와 불일치하면 수정
 let migrationDone = false;
-function migrateProductIndices() {
+async function migrateProductIndices() {
     if (migrationDone) return;
+
     const products = filterValidProducts(AppState.productsData);
     const barcodes = filterValidBarcodes(AppState.barcodesData);
-    let needsMigration = false;
-
-    for (const product of products) {
-        if (!product.productIndex) {
-            needsMigration = true;
-            break;
-        }
-    }
-
-    if (!needsMigration) {
-        migrationDone = true;
-        return;
-    }
 
     // 바코드 데이터가 아직 로드되지 않았으면 대기
     if (Object.keys(AppState.barcodesData).length === 0) return;
 
+    // productIndex가 없는 제품이 있는지 확인
+    let needsIndexMigration = false;
+    for (const product of products) {
+        if (!product.productIndex) {
+            needsIndexMigration = true;
+            break;
+        }
+    }
+
+    // 바코드 키가 productIndex와 불일치하는 제품이 있는지 확인
+    let needsBarcodeFix = false;
+    if (!needsIndexMigration) {
+        for (const product of products) {
+            if (!product.productIndex) continue;
+            const expectedPrefix = `P${product.productIndex}-`;
+            const productBarcodes = barcodes.filter(b => b.productName === product.name);
+            for (const bc of productBarcodes) {
+                if (!bc.barcode.startsWith(expectedPrefix)) {
+                    needsBarcodeFix = true;
+                    break;
+                }
+            }
+            if (needsBarcodeFix) break;
+        }
+    }
+
+    if (!needsIndexMigration && !needsBarcodeFix) {
+        migrationDone = true;
+        return;
+    }
+
     migrationDone = true;
+    console.log('마이그레이션 시작...');
+
+    // 1단계: 모든 제품에 고유 productIndex 부여
     const usedIndices = new Set();
 
+    // 기존 productIndex가 있는 제품 먼저 등록
     for (const product of products) {
         if (product.productIndex) {
             usedIndices.add(product.productIndex);
-            continue;
         }
+    }
+
+    // productIndex가 없는 제품에 인덱스 부여
+    for (const product of products) {
+        if (product.productIndex) continue;
 
         // 바코드에서 인덱스 추출
         const barcode = barcodes.find(b => b.productName === product.name);
@@ -186,29 +213,63 @@ function migrateProductIndices() {
 
         if (index && !usedIndices.has(index)) {
             usedIndices.add(index);
-            // Firebase에 productIndex 저장
-            productsRef.child(product.name).update({ productIndex: index });
+            await productsRef.child(product.name).update({ productIndex: index });
+            product.productIndex = index;
             console.log(`마이그레이션: ${product.name} → 인덱스 ${index}`);
         } else {
-            // 충돌하거나 바코드가 없으면 새 인덱스 부여
-            let maxIdx = 0;
-            for (const idx of usedIndices) {
-                const num = parseInt(idx, 10);
-                if (!isNaN(num) && num > maxIdx) maxIdx = num;
-            }
-            // 바코드 키에서도 최대 인덱스 확인
-            for (const key of Object.keys(AppState.barcodesData)) {
-                if (key.startsWith('P')) {
-                    const num = parseInt(key.substring(1, 4), 10);
-                    if (!isNaN(num) && num > maxIdx) maxIdx = num;
-                }
-            }
-            const newIndex = (maxIdx + 1).toString().padStart(3, '0');
+            const newIndex = calcNextIndex(usedIndices, AppState.barcodesData);
             usedIndices.add(newIndex);
-            productsRef.child(product.name).update({ productIndex: newIndex });
+            await productsRef.child(product.name).update({ productIndex: newIndex });
+            product.productIndex = newIndex;
             console.log(`마이그레이션: ${product.name} → 새 인덱스 ${newIndex} (충돌 방지)`);
         }
     }
+
+    // 2단계: 바코드 키가 productIndex와 불일치하는 제품의 바코드 재생성
+    for (const product of products) {
+        if (!product.productIndex) continue;
+        const expectedPrefix = `P${product.productIndex}-`;
+        const productBarcodes = barcodes.filter(b => b.productName === product.name);
+        const mismatchedBarcodes = productBarcodes.filter(b => !b.barcode.startsWith(expectedPrefix));
+
+        if (mismatchedBarcodes.length === 0) continue;
+
+        console.log(`바코드 수정: ${product.name} (인덱스 ${product.productIndex}) - ${mismatchedBarcodes.length}개 바코드 키 변경`);
+
+        for (const bc of mismatchedBarcodes) {
+            // 기존 바코드 삭제
+            await barcodesRef.child(bc.barcode).remove();
+
+            // 새 키로 바코드 재생성
+            const newKey = bc.barcode.replace(/^P\d{3}/, `P${product.productIndex}`);
+            await barcodesRef.child(newKey).set({
+                barcode: newKey,
+                productName: bc.productName,
+                type: bc.type,
+                quantity: bc.quantity,
+                createdAt: bc.createdAt || Date.now()
+            });
+            console.log(`  ${bc.barcode} → ${newKey}`);
+        }
+    }
+
+    console.log('마이그레이션 완료');
+}
+
+// usedIndices와 기존 바코드를 고려하여 다음 사용 가능한 인덱스 계산
+function calcNextIndex(usedIndices, barcodesData) {
+    let maxIdx = 0;
+    for (const idx of usedIndices) {
+        const num = parseInt(idx, 10);
+        if (!isNaN(num) && num > maxIdx) maxIdx = num;
+    }
+    for (const key of Object.keys(barcodesData || {})) {
+        if (key.startsWith('P')) {
+            const num = parseInt(key.substring(1, 4), 10);
+            if (!isNaN(num) && num > maxIdx) maxIdx = num;
+        }
+    }
+    return (maxIdx + 1).toString().padStart(3, '0');
 }
 
 // 다음 사용 가능한 제품 인덱스 계산 (기존 인덱스와 충돌하지 않는 값)
@@ -374,6 +435,7 @@ barcodesRef.on('value', (snapshot) => {
     AppState.barcodesData = snapshot.val() || {};
     console.log('Firebase에서 바코드 데이터 업데이트:', Object.keys(AppState.barcodesData).length, '개');
     console.log('바코드 목록:', Object.keys(AppState.barcodesData));
+    migrateProductIndices();
     updateBarcodeTable();
     updateInventoryTable();
     updateProductionHistoryTable();
@@ -2038,7 +2100,17 @@ productForm.addEventListener('submit', async (e) => {
             productIndex = getNextProductIndex();
         }
 
-        // 수정 모드인 경우 기존 바코드 삭제 (인덱스 기반으로 해당 제품의 바코드만 삭제)
+        // 다른 제품과 인덱스 충돌 확인 및 해결
+        const allProducts = filterValidProducts(AppState.productsData);
+        const conflictProduct = allProducts.find(p =>
+            p.name !== oldProductName && p.name !== productName && p.productIndex === productIndex
+        );
+        if (conflictProduct) {
+            console.warn(`인덱스 충돌 감지: ${productIndex} (${conflictProduct.name}). 새 인덱스 부여.`);
+            productIndex = getNextProductIndex();
+        }
+
+        // 수정 모드인 경우 기존 바코드 삭제
         if (isEditMode) {
             const barcodes = filterValidBarcodes(AppState.barcodesData);
             const relatedBarcodes = barcodes.filter(b => b.productName === oldProductName);
@@ -2051,6 +2123,37 @@ productForm.addEventListener('submit', async (e) => {
             // 제품명이 변경된 경우 기존 제품 삭제
             if (productName !== oldProductName) {
                 await productsRef.child(oldProductName).remove();
+            }
+        }
+
+        // 새로 생성할 바코드 키와 충돌하는 다른 제품의 고아 바코드 정리
+        const indexPrefix = `P${productIndex}-`;
+        const orphanBarcodes = filterValidBarcodes(AppState.barcodesData).filter(b =>
+            b.barcode.startsWith(indexPrefix) &&
+            b.productName !== productName &&
+            b.productName !== oldProductName
+        );
+        if (orphanBarcodes.length > 0) {
+            console.warn(`고아 바코드 ${orphanBarcodes.length}개 정리 (인덱스 ${productIndex}에 다른 제품 바코드 존재)`);
+            for (const orphan of orphanBarcodes) {
+                // 해당 제품의 올바른 인덱스로 바코드 재생성
+                const orphanProduct = AppState.productsData[orphan.productName];
+                if (orphanProduct && orphanProduct.productIndex && orphanProduct.productIndex !== productIndex) {
+                    const newKey = orphan.barcode.replace(/^P\d{3}/, `P${orphanProduct.productIndex}`);
+                    await barcodesRef.child(orphan.barcode).remove();
+                    await barcodesRef.child(newKey).set({
+                        barcode: newKey,
+                        productName: orphan.productName,
+                        type: orphan.type,
+                        quantity: orphan.quantity,
+                        createdAt: orphan.createdAt || Date.now()
+                    });
+                    console.log(`  고아 바코드 이동: ${orphan.barcode} → ${newKey}`);
+                } else {
+                    // 올바른 인덱스를 모르면 그냥 삭제 (해당 제품 수정 시 재생성됨)
+                    await barcodesRef.child(orphan.barcode).remove();
+                    console.log(`  고아 바코드 삭제: ${orphan.barcode}`);
+                }
             }
         }
 
