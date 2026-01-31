@@ -1624,6 +1624,15 @@ function showScanResult(message, type) {
     scanResult.className = `scan-result ${type}`;
     scanResult.style.display = 'block';
 
+    // 화면 전체 깜빡임 효과
+    const flashOverlay = document.getElementById('scan-flash-overlay');
+    if (flashOverlay) {
+        flashOverlay.className = 'scan-flash-overlay';
+        // reflow 강제 트리거 (애니메이션 재시작용)
+        void flashOverlay.offsetWidth;
+        flashOverlay.className = `scan-flash-overlay flash-${type}`;
+    }
+
     // 소리/진동 피드백
     if (type === 'success') {
         AudioFeedback.playSuccess();
