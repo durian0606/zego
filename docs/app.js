@@ -145,6 +145,97 @@ function updateSortedProductNames() {
     sortedProductNames = products.map(p => p.name).sort();
 }
 
+// 기존 제품에 productIndex가 없으면 바코드에서 추출하여 저장 (마이그레이션)
+let migrationDone = false;
+function migrateProductIndices() {
+    if (migrationDone) return;
+    const products = filterValidProducts(AppState.productsData);
+    const barcodes = filterValidBarcodes(AppState.barcodesData);
+    let needsMigration = false;
+
+    for (const product of products) {
+        if (!product.productIndex) {
+            needsMigration = true;
+            break;
+        }
+    }
+
+    if (!needsMigration) {
+        migrationDone = true;
+        return;
+    }
+
+    // 바코드 데이터가 아직 로드되지 않았으면 대기
+    if (Object.keys(AppState.barcodesData).length === 0) return;
+
+    migrationDone = true;
+    const usedIndices = new Set();
+
+    for (const product of products) {
+        if (product.productIndex) {
+            usedIndices.add(product.productIndex);
+            continue;
+        }
+
+        // 바코드에서 인덱스 추출
+        const barcode = barcodes.find(b => b.productName === product.name);
+        let index = null;
+        if (barcode && barcode.barcode.startsWith('P')) {
+            index = barcode.barcode.substring(1, 4);
+        }
+
+        if (index && !usedIndices.has(index)) {
+            usedIndices.add(index);
+            // Firebase에 productIndex 저장
+            productsRef.child(product.name).update({ productIndex: index });
+            console.log(`마이그레이션: ${product.name} → 인덱스 ${index}`);
+        } else {
+            // 충돌하거나 바코드가 없으면 새 인덱스 부여
+            let maxIdx = 0;
+            for (const idx of usedIndices) {
+                const num = parseInt(idx, 10);
+                if (!isNaN(num) && num > maxIdx) maxIdx = num;
+            }
+            // 바코드 키에서도 최대 인덱스 확인
+            for (const key of Object.keys(AppState.barcodesData)) {
+                if (key.startsWith('P')) {
+                    const num = parseInt(key.substring(1, 4), 10);
+                    if (!isNaN(num) && num > maxIdx) maxIdx = num;
+                }
+            }
+            const newIndex = (maxIdx + 1).toString().padStart(3, '0');
+            usedIndices.add(newIndex);
+            productsRef.child(product.name).update({ productIndex: newIndex });
+            console.log(`마이그레이션: ${product.name} → 새 인덱스 ${newIndex} (충돌 방지)`);
+        }
+    }
+}
+
+// 다음 사용 가능한 제품 인덱스 계산 (기존 인덱스와 충돌하지 않는 값)
+function getNextProductIndex() {
+    let maxIndex = 0;
+
+    // 제품 레코드에 저장된 인덱스 확인
+    const products = Object.values(AppState.productsData || {});
+    for (const product of products) {
+        if (product && product.productIndex) {
+            const num = parseInt(product.productIndex, 10);
+            if (!isNaN(num) && num > maxIndex) maxIndex = num;
+        }
+    }
+
+    // 바코드 키에서 인덱스 추출하여 확인
+    const barcodes = Object.keys(AppState.barcodesData || {});
+    for (const key of barcodes) {
+        if (key.startsWith('P')) {
+            const num = parseInt(key.substring(1, 4), 10);
+            if (!isNaN(num) && num > maxIndex) maxIndex = num;
+        }
+    }
+
+    return (maxIndex + 1).toString().padStart(3, '0');
+}
+
 // 유효한 제품 데이터 필터링
 function filterValidProducts(productsObj) {
     return Object.entries(productsObj)
@@ -270,6 +361,7 @@ connectedRef.on('value', (snapshot) => {
 productsRef.on('value', (snapshot) => {
     AppState.productsData = snapshot.val() || {};
     updateSortedProductNames();
+    migrateProductIndices();
     updateInventoryTable();
     updateProductionHistoryTable();
     updateHistoryTable();
@@ -1924,20 +2016,29 @@ productForm.addEventListener('submit', async (e) => {
     const uniqueQuantitiesOut = [...new Set(quantitiesOut)].sort((a, b) => b - a);
 
     try {
-        // 제품 인덱스를 바코드 삭제 전에 먼저 추출 (삭제 후에는 찾을 수 없으므로)
+        // 제품 인덱스 계산 (제품 레코드에 저장하여 충돌 방지)
         let productIndex;
-        if (isEditMode) {
+        const existingProduct = isEditMode ? AppState.productsData[oldProductName] : null;
+
+        if (isEditMode && existingProduct && existingProduct.productIndex) {
+            // 제품 레코드에 저장된 인덱스 사용
+            productIndex = existingProduct.productIndex;
+        } else if (isEditMode) {
+            // 기존 제품에 인덱스가 없으면 바코드에서 추출 (마이그레이션)
             const oldBarcodes = filterValidBarcodes(AppState.barcodesData);
             const oldBarcode = oldBarcodes.find(b => b.productName === oldProductName || b.productName === productName);
             if (oldBarcode && oldBarcode.barcode.startsWith('P')) {
-                productIndex = oldBarcode.barcode.substring(1, 4); // P001 -> 001
+                productIndex = oldBarcode.barcode.substring(1, 4);
             } else {
-                const products = filterValidProducts(AppState.productsData);
-                productIndex = (products.length).toString().padStart(3, '0');
+                // 바코드도 없으면 새 인덱스 부여
+                productIndex = getNextProductIndex();
             }
+        } else {
+            // 신규 등록: 새 인덱스 부여
+            productIndex = getNextProductIndex();
         }
 
-        // 수정 모드인 경우 기존 바코드 삭제
+        // 수정 모드인 경우 기존 바코드 삭제 (인덱스 기반으로 해당 제품의 바코드만 삭제)
         if (isEditMode) {
             const barcodes = filterValidBarcodes(AppState.barcodesData);
             const relatedBarcodes = barcodes.filter(b => b.productName === oldProductName);
@@ -1953,21 +2054,20 @@ productForm.addEventListener('submit', async (e) => {
             }
         }
 
-        // 제품 생성 또는 업데이트
-        const existingProduct = isEditMode ? AppState.productsData[oldProductName] : null;
-        await productsRef.child(productName).set({
+        // 제품 생성 또는 업데이트 (productIndex 포함)
+        const productData = {
             name: productName,
+            productIndex: productIndex,
             minStock: existingProduct ? existingProduct.minStock : 0,
             currentStock: existingProduct ? existingProduct.currentStock : 0,
             createdAt: existingProduct ? existingProduct.createdAt : Date.now(),
             updatedAt: Date.now()
-        });
-
-        // 신규 등록인 경우 인덱스 계산
-        if (!isEditMode) {
-            const products = filterValidProducts(AppState.productsData);
-            productIndex = (products.length + 1).toString().padStart(3, '0');
+        };
+        // 기존 colorIndex 보존
+        if (existingProduct && existingProduct.colorIndex !== undefined) {
+            productData.colorIndex = existingProduct.colorIndex;
         }
+        await productsRef.child(productName).set(productData);
 
         // 바코드 자동 생성
         let barcodeCount = 0;
