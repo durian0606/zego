@@ -1924,6 +1924,19 @@ productForm.addEventListener('submit', async (e) => {
     const uniqueQuantitiesOut = [...new Set(quantitiesOut)].sort((a, b) => b - a);
 
     try {
+        // 제품 인덱스를 바코드 삭제 전에 먼저 추출 (삭제 후에는 찾을 수 없으므로)
+        let productIndex;
+        if (isEditMode) {
+            const oldBarcodes = filterValidBarcodes(AppState.barcodesData);
+            const oldBarcode = oldBarcodes.find(b => b.productName === oldProductName || b.productName === productName);
+            if (oldBarcode && oldBarcode.barcode.startsWith('P')) {
+                productIndex = oldBarcode.barcode.substring(1, 4); // P001 -> 001
+            } else {
+                const products = filterValidProducts(AppState.productsData);
+                productIndex = (products.length).toString().padStart(3, '0');
+            }
+        }
+
         // 수정 모드인 경우 기존 바코드 삭제
         if (isEditMode) {
             const barcodes = filterValidBarcodes(AppState.barcodesData);
@@ -1950,20 +1963,9 @@ productForm.addEventListener('submit', async (e) => {
             updatedAt: Date.now()
         });
 
-        // 제품 인덱스 계산
-        const products = filterValidProducts(AppState.productsData);
-        // 수정 모드인 경우 기존 인덱스 찾기, 신규 등록인 경우 새 인덱스 부여
-        let productIndex;
-        if (isEditMode) {
-            // 기존 바코드에서 인덱스 추출
-            const oldBarcodes = filterValidBarcodes(AppState.barcodesData);
-            const oldBarcode = oldBarcodes.find(b => b.productName === oldProductName || b.productName === productName);
-            if (oldBarcode && oldBarcode.barcode.startsWith('P')) {
-                productIndex = oldBarcode.barcode.substring(1, 4); // P001 -> 001
-            } else {
-                productIndex = (products.length).toString().padStart(3, '0');
-            }
-        } else {
+        // 신규 등록인 경우 인덱스 계산
+        if (!isEditMode) {
+            const products = filterValidProducts(AppState.productsData);
             productIndex = (products.length + 1).toString().padStart(3, '0');
         }
 
