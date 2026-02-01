@@ -3127,24 +3127,62 @@ function isDialogOpen() {
            (settings && settings.style.display !== 'none');
 }
 
+// 제품 선택 이동 함수
+function moveProductSelection(delta) {
+    const products = getSortedProductList();
+    if (products.length === 0) return;
+    AppState.selectedProductIndex = Math.max(0, Math.min(
+        AppState.selectedProductIndex + delta, products.length - 1
+    ));
+    updateSelectedProductHighlight();
+}
+
 // 마우스 휠로 제품 선택
 document.getElementById('inventory-table').addEventListener('wheel', (e) => {
     if (isEditing() || isDialogOpen()) return;
 
     e.preventDefault();
-    const products = getSortedProductList();
-    if (products.length === 0) return;
-
-    if (e.deltaY > 0) {
-        // 휠 아래 = 다음 제품
-        AppState.selectedProductIndex = Math.min(AppState.selectedProductIndex + 1, products.length - 1);
-    } else {
-        // 휠 위 = 이전 제품
-        AppState.selectedProductIndex = Math.max(AppState.selectedProductIndex - 1, 0);
-    }
-
-    updateSelectedProductHighlight();
+    moveProductSelection(e.deltaY > 0 ? 1 : -1);
 }, { passive: false });
+
+// 키보드/노브로 제품 선택 ([], PageUp/Down, Home/End)
+document.addEventListener('keydown', (e) => {
+    if (isEditing() || isDialogOpen()) return;
+
+    // 입력 필드에 포커스 중이면 무시 (바코드 입력 제외)
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.id !== 'barcode-input' && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) return;
+
+    const products = getSortedProductList();
+    switch (e.key) {
+        case '[':
+            e.preventDefault();
+            moveProductSelection(-1);
+            break;
+        case ']':
+            e.preventDefault();
+            moveProductSelection(1);
+            break;
+        case 'PageUp':
+            e.preventDefault();
+            moveProductSelection(-5);
+            break;
+        case 'PageDown':
+            e.preventDefault();
+            moveProductSelection(5);
+            break;
+        case 'Home':
+            e.preventDefault();
+            AppState.selectedProductIndex = 0;
+            updateSelectedProductHighlight();
+            break;
+        case 'End':
+            e.preventDefault();
+            AppState.selectedProductIndex = products.length - 1;
+            updateSelectedProductHighlight();
+            break;
+    }
+});
 
 // a~l 키보드 단축키 처리
 document.addEventListener('keydown', async (e) => {
@@ -3162,7 +3200,7 @@ document.addEventListener('keydown', async (e) => {
 
     const product = getSelectedProduct();
     if (!product) {
-        showScanResult('제품을 먼저 선택해주세요. (휠로 선택)', 'error');
+        showScanResult('제품을 먼저 선택해주세요. (휠 또는 [/] 키로 선택)', 'error');
         return;
     }
 
