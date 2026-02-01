@@ -2254,3 +2254,259 @@ tr.row-locked td:first-child::before {
     font-size: 0.85em;
 }
 
+/* ============================================
+   사용설명서 버튼
+   ============================================ */
+.btn-manual {
+    background: var(--color-primary);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    min-height: var(--touch-target);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-manual:hover {
+    background: var(--color-primary-hover);
+}
+
+/* ============================================
+   사용설명서 모달
+   ============================================ */
+.manual-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
+}
+
+.manual-modal {
+    background: white;
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.manual-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    background: white;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    z-index: 1;
+}
+
+.manual-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+}
+
+.manual-body {
+    padding: var(--spacing-lg);
+}
+
+.manual-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.manual-section:last-child {
+    margin-bottom: 0;
+}
+
+.manual-section h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid var(--color-primary);
+    display: inline-block;
+}
+
+/* 기본 사용법 스텝 */
+.manual-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.manual-step {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-light);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-primary);
+}
+
+.step-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+.manual-step strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--color-text-dark);
+    margin-bottom: 2px;
+}
+
+.manual-step p {
+    font-size: 0.825rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+/* 키보드 단축키 */
+.manual-key-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.manual-key-group:last-child {
+    margin-bottom: 0;
+}
+
+.key-group-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+.key-group-in {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.key-group-out {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.manual-key-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-xs);
+}
+
+.key-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 6px 10px;
+    background: var(--color-bg-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+}
+
+.key-item kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-bottom: 2px solid #d1d5db;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+}
+
+.key-item span {
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+/* 노브 조작 */
+.manual-knob-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.knob-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-light);
+    border-radius: var(--radius-md);
+}
+
+.knob-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.knob-row strong {
+    color: var(--color-text-dark);
+    font-size: 0.9rem;
+}
+
+.knob-row div {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.manual-text {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-light);
+    border-radius: var(--radius-md);
+}
+
+.manual-body kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 6px;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-bottom: 2px solid #d1d5db;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+

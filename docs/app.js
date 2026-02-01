@@ -3265,4 +3265,22 @@ setTimeout(() => {
     }
 }, 1000);
 
+// 사용설명서 모달
+document.getElementById('btn-manual').addEventListener('click', () => {
+    document.getElementById('manual-overlay').style.display = 'flex';
+    lucide.createIcons();
+});
+
+document.getElementById('btn-close-manual').addEventListener('click', () => {
+    document.getElementById('manual-overlay').style.display = 'none';
+    document.getElementById('barcode-input').focus();
+});
+
+document.getElementById('manual-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        document.getElementById('manual-overlay').style.display = 'none';
+        document.getElementById('barcode-input').focus();
+    }
+});
+
 console.log('우리곡간식품 재고관리 시스템이 시작되었습니다!');
