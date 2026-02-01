@@ -3214,7 +3214,7 @@ document.addEventListener('keydown', (e) => {
                 updateSelectedProductHighlight();
             }
             break;
-        case '\\':
+        case 'w':
             e.preventDefault();
             toggleProductLock();
             break;
