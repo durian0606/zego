@@ -105,7 +105,8 @@ const AppState = {
     isEditingCurrentStock: false,
     isEditingProduction: false,  // 생산현황 편집 중
     editingProduct: null,  // 수정 중인 제품명 (null이면 신규 등록 모드)
-    currentWorkingProduct: null  // 현재 작업 중인 제품 (강조 표시용)
+    currentWorkingProduct: null,  // 현재 작업 중인 제품 (강조 표시용)
+    selectedProductIndex: 0  // 키보드 단축키용 선택된 제품 인덱스
 };
 
 // ============================================
@@ -3034,5 +3035,177 @@ window.addEventListener('resize', () => {
         lastWidth = currentWidth;
     }, 250);
 });
+
+// ============================================
+// 키보드 단축키 수량 입력 시스템
+// F1~F6: 생산(+), F7~F12: 마이너스(-)
+// 마우스 휠: 제품 선택
+// ============================================
+
+// F키 수량 매핑
+const FKEY_MAPPINGS = {
+    'F1':  { quantity: 30, type: 'IN' },
+    'F2':  { quantity: 25, type: 'IN' },
+    'F3':  { quantity: 20, type: 'IN' },
+    'F4':  { quantity: 10, type: 'IN' },
+    'F5':  { quantity: 5,  type: 'IN' },
+    'F6':  { quantity: 1,  type: 'IN' },
+    'F7':  { quantity: 30, type: 'OUT' },
+    'F8':  { quantity: 25, type: 'OUT' },
+    'F9':  { quantity: 20, type: 'OUT' },
+    'F10': { quantity: 10, type: 'OUT' },
+    'F11': { quantity: 5,  type: 'OUT' },
+    'F12': { quantity: 1,  type: 'OUT' },
+};
+
+// 정렬된 제품 목록 가져오기 (재고 테이블과 동일한 순서)
+function getSortedProductList() {
+    const products = filterValidProducts(AppState.productsData);
+    if (products.length === 0) return [];
+
+    return products.sort((a, b) => {
+        const orderA = a.sortOrder;
+        const orderB = b.sortOrder;
+        if (orderA !== undefined && orderA !== null &&
+            orderB !== undefined && orderB !== null) {
+            return orderA - orderB;
+        }
+        if (orderA !== undefined && orderA !== null) return -1;
+        if (orderB !== undefined && orderB !== null) return 1;
+        const minStockA = a.minStock || 0;
+        const minStockB = b.minStock || 0;
+        if (minStockA === 0 && minStockB !== 0) return 1;
+        if (minStockA !== 0 && minStockB === 0) return -1;
+        if (minStockA === 0 && minStockB === 0) return 0;
+        const shortageA = minStockA - (a.currentStock || 0);
+        const shortageB = minStockB - (b.currentStock || 0);
+        return shortageB - shortageA;
+    });
+}
+
+// 현재 선택된 제품 가져오기
+function getSelectedProduct() {
+    const products = getSortedProductList();
+    if (products.length === 0) return null;
+    // 인덱스 범위 보정
+    if (AppState.selectedProductIndex >= products.length) {
+        AppState.selectedProductIndex = products.length - 1;
+    }
+    if (AppState.selectedProductIndex < 0) {
+        AppState.selectedProductIndex = 0;
+    }
+    return products[AppState.selectedProductIndex];
+}
+
+// 선택된 제품 하이라이트 갱신
+function updateSelectedProductHighlight() {
+    const product = getSelectedProduct();
+    if (product) {
+        highlightProductRow(product.name);
+        // 선택된 행이 보이도록 스크롤
+        const row = document.querySelector(`tr[data-product="${product.name}"]`);
+        if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        updateKeyboardShortcutIndicator(product.name);
+    }
+}
+
+// 단축키 안내 인디케이터 업데이트
+function updateKeyboardShortcutIndicator(productName) {
+    let indicator = document.getElementById('keyboard-shortcut-indicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'keyboard-shortcut-indicator';
+        indicator.className = 'keyboard-shortcut-indicator';
+        // 스캔 인디케이터 바로 아래에 삽입
+        const scanInd = document.getElementById('scan-indicator');
+        if (scanInd && scanInd.parentNode) {
+            scanInd.parentNode.insertBefore(indicator, scanInd.nextSibling);
+        } else {
+            document.querySelector('.main-content').prepend(indicator);
+        }
+    }
+    indicator.innerHTML = `
+        <div class="shortcut-selected-product">
+            <span class="shortcut-label">선택:</span>
+            <strong>${productName}</strong>
+            <span class="shortcut-hint">(휠로 변경)</span>
+        </div>
+        <div class="shortcut-keys">
+            <span class="shortcut-plus">F1<small>+30</small> F2<small>+25</small> F3<small>+20</small> F4<small>+10</small> F5<small>+5</small> F6<small>+1</small></span>
+            <span class="shortcut-minus">F7<small>-30</small> F8<small>-25</small> F9<small>-20</small> F10<small>-10</small> F11<small>-5</small> F12<small>-1</small></span>
+        </div>
+    `;
+    indicator.style.display = 'block';
+}
+
+// 편집 중인지 확인
+function isEditing() {
+    return AppState.isEditingMinStock ||
+           AppState.isEditingCurrentStock ||
+           AppState.isEditingProduction ||
+           AppState.editingProduct !== null;
+}
+
+// 다이얼로그/모달이 열려있는지 확인
+function isDialogOpen() {
+    const productRegister = document.getElementById('product-register-section');
+    const settings = document.getElementById('settings-section');
+    return (productRegister && productRegister.style.display !== 'none') ||
+           (settings && settings.style.display !== 'none');
+}
+
+// 마우스 휠로 제품 선택
+document.getElementById('inventory-table').addEventListener('wheel', (e) => {
+    if (isEditing() || isDialogOpen()) return;
+
+    e.preventDefault();
+    const products = getSortedProductList();
+    if (products.length === 0) return;
+
+    if (e.deltaY > 0) {
+        // 휠 아래 = 다음 제품
+        AppState.selectedProductIndex = Math.min(AppState.selectedProductIndex + 1, products.length - 1);
+    } else {
+        // 휠 위 = 이전 제품
+        AppState.selectedProductIndex = Math.max(AppState.selectedProductIndex - 1, 0);
+    }
+
+    updateSelectedProductHighlight();
+}, { passive: false });
+
+// F1~F12 키보드 단축키 처리
+document.addEventListener('keydown', async (e) => {
+    const mapping = FKEY_MAPPINGS[e.key];
+    if (!mapping) return;
+
+    // 편집 중이거나 다이얼로그 열려있으면 무시
+    if (isEditing() || isDialogOpen()) return;
+
+    e.preventDefault();
+
+    const product = getSelectedProduct();
+    if (!product) {
+        showScanResult('제품을 먼저 선택해주세요. (휠로 선택)', 'error');
+        return;
+    }
+
+    // updateStock 호출
+    await updateStock({
+        productName: product.name,
+        type: mapping.type,
+        quantity: mapping.quantity,
+        barcode: 'KEYBOARD'
+    });
+});
+
+// 앱 시작 시 첫 번째 제품 선택
+setTimeout(() => {
+    const products = getSortedProductList();
+    if (products.length > 0) {
+        updateSelectedProductHighlight();
+    }
+}, 1000);
 
 console.log('우리곡간식품 재고관리 시스템이 시작되었습니다!');
