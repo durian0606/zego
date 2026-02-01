@@ -2239,3 +2239,18 @@ tr.row-highlight td:first-child::before {
     font-size: 0.9em;
 }
 
+/* 제품 선택 고정 상태 (더 진한 배경 + 테두리) */
+tr.row-locked {
+    background-color: #fde047 !important;
+    box-shadow: inset 6px 0 0 #ca8a04;
+    outline: 2px solid #ca8a04;
+    outline-offset: -2px;
+}
+
+tr.row-locked td:first-child::before {
+    content: "🔒";
+    position: absolute;
+    left: -24px;
+    font-size: 0.85em;
+}
+

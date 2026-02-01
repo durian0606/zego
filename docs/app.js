@@ -106,7 +106,8 @@ const AppState = {
     isEditingProduction: false,  // 생산현황 편집 중
     editingProduct: null,  // 수정 중인 제품명 (null이면 신규 등록 모드)
     currentWorkingProduct: null,  // 현재 작업 중인 제품 (강조 표시용)
-    selectedProductIndex: 0  // 키보드 단축키용 선택된 제품 인덱스
+    selectedProductIndex: 0,  // 키보드 단축키용 선택된 제품 인덱스
+    isProductLocked: false  // 제품 선택 고정 상태
 };
 
 // ============================================
@@ -1681,6 +1682,9 @@ function restoreWorkingProductHighlight() {
         const rows = document.querySelectorAll(`tr[data-product="${AppState.currentWorkingProduct}"]`);
         rows.forEach(row => {
             row.classList.add('row-highlight');
+            if (AppState.isProductLocked) {
+                row.classList.add('row-locked');
+            }
         });
     }
 }
@@ -3101,13 +3105,37 @@ function getSelectedProduct() {
 // 선택된 제품 하이라이트 갱신
 function updateSelectedProductHighlight() {
     const product = getSelectedProduct();
+    // 고정 클래스 모두 제거
+    document.querySelectorAll('tr.row-locked').forEach(row => {
+        row.classList.remove('row-locked');
+    });
     if (product) {
         highlightProductRow(product.name);
+        // 고정 상태면 locked 클래스 추가
+        if (AppState.isProductLocked) {
+            const rows = document.querySelectorAll(`tr[data-product="${product.name}"]`);
+            rows.forEach(row => row.classList.add('row-locked'));
+        }
         // 선택된 행이 보이도록 스크롤
         const row = document.querySelector(`tr[data-product="${product.name}"]`);
         if (row) {
             row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
+    }
+}
+
+// 제품 선택 고정/해제 토글
+function toggleProductLock() {
+    const product = getSelectedProduct();
+    if (!product) return;
+
+    AppState.isProductLocked = !AppState.isProductLocked;
+    updateSelectedProductHighlight();
+
+    if (AppState.isProductLocked) {
+        showScanResult(`"${product.name}" 선택 고정됨 🔒`, 'success');
+    } else {
+        showScanResult(`선택 고정 해제됨 🔓`, 'success');
     }
 }
 
@@ -3129,6 +3157,7 @@ function isDialogOpen() {
 
 // 제품 선택 이동 함수
 function moveProductSelection(delta) {
+    if (AppState.isProductLocked) return;  // 고정 중에는 이동 불가
     const products = getSortedProductList();
     if (products.length === 0) return;
     AppState.selectedProductIndex = Math.max(0, Math.min(
@@ -3173,13 +3202,21 @@ document.addEventListener('keydown', (e) => {
             break;
         case 'Home':
             e.preventDefault();
-            AppState.selectedProductIndex = 0;
-            updateSelectedProductHighlight();
+            if (!AppState.isProductLocked) {
+                AppState.selectedProductIndex = 0;
+                updateSelectedProductHighlight();
+            }
             break;
         case 'End':
             e.preventDefault();
-            AppState.selectedProductIndex = products.length - 1;
-            updateSelectedProductHighlight();
+            if (!AppState.isProductLocked) {
+                AppState.selectedProductIndex = products.length - 1;
+                updateSelectedProductHighlight();
+            }
+            break;
+        case '\\':
+            e.preventDefault();
+            toggleProductLock();
             break;
     }
 });
