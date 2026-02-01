@@ -3107,37 +3107,7 @@ function updateSelectedProductHighlight() {
         if (row) {
             row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-        updateKeyboardShortcutIndicator(product.name);
     }
-}
-
-// 단축키 안내 인디케이터 업데이트
-function updateKeyboardShortcutIndicator(productName) {
-    let indicator = document.getElementById('keyboard-shortcut-indicator');
-    if (!indicator) {
-        indicator = document.createElement('div');
-        indicator.id = 'keyboard-shortcut-indicator';
-        indicator.className = 'keyboard-shortcut-indicator';
-        // 스캔 인디케이터 바로 아래에 삽입
-        const scanInd = document.getElementById('scan-indicator');
-        if (scanInd && scanInd.parentNode) {
-            scanInd.parentNode.insertBefore(indicator, scanInd.nextSibling);
-        } else {
-            document.querySelector('.main-content').prepend(indicator);
-        }
-    }
-    indicator.innerHTML = `
-        <div class="shortcut-selected-product">
-            <span class="shortcut-label">선택:</span>
-            <strong>${productName}</strong>
-            <span class="shortcut-hint">(휠로 변경)</span>
-        </div>
-        <div class="shortcut-keys">
-            <span class="shortcut-plus">F1<small>+30</small> F2<small>+25</small> F3<small>+20</small> F4<small>+10</small> F5<small>+5</small> F6<small>+1</small></span>
-            <span class="shortcut-minus">F7<small>-30</small> F8<small>-25</small> F9<small>-20</small> F10<small>-10</small> F11<small>-5</small> F12<small>-1</small></span>
-        </div>
-    `;
-    indicator.style.display = 'block';
 }
 
 // 편집 중인지 확인
