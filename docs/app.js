@@ -1032,6 +1032,7 @@ function editCurrentStock(element) {
 
 // 히스토리 테이블 업데이트 (어제/오늘만 표시, 제품별로 합치기)
 function updateHistoryTable() {
+    if (!historyTbody) return;
     const validHistory = filterValidHistory(AppState.historyData);
     const validProducts = filterValidProducts(AppState.productsData);
     const validProductNames = new Set(validProducts.map(p => p.name));
