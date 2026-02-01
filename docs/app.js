@@ -609,7 +609,7 @@ function updateWeeklyChart(closings) {
     chartContainer.innerHTML = dailyData.map(d => {
         const groupBars = categories.map(cat => {
             const value = d.categoryTotals[cat.keyword];
-            const height = (value / maxValue) * 120;
+            const height = (value / maxValue) * 100;
             return `<div class="bar-grouped" style="height: ${height}px; background: ${cat.color};" title="${cat.name}: ${value}"></div>`;
         }).join('');
 

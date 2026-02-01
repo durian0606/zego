@@ -537,6 +537,7 @@ section h2 {
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    height: 100%;
 }
 
 .bar {
@@ -572,6 +573,8 @@ section h2 {
     align-items: flex-end;
     gap: 2px;
     min-height: 4px;
+    flex: 1;
+    overflow: hidden;
 }
 
 .bar-grouped {
