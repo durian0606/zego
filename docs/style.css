@@ -500,7 +500,7 @@ section h2 {
     display: flex;
     justify-content: center;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
     flex-wrap: wrap;
 }
 
@@ -522,7 +522,7 @@ section h2 {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    height: 120px;
+    height: 160px;
     gap: var(--spacing-sm);
     padding-top: var(--spacing-sm);
 }
