@@ -3151,9 +3151,9 @@ document.addEventListener('keydown', async (e) => {
     const mapping = FKEY_MAPPINGS[e.key];
     if (!mapping) return;
 
-    // 입력 필드에 포커스 중이면 무시 (바코드 입력 등)
+    // 바코드 입력 필드 외의 입력 필드에 포커스 중이면 무시 (인라인 편집 등)
     const activeEl = document.activeElement;
-    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) return;
+    if (activeEl && activeEl.id !== 'barcode-input' && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) return;
 
     // 편집 중이거나 다이얼로그 열려있으면 무시
     if (isEditing() || isDialogOpen()) return;
