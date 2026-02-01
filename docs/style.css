@@ -529,7 +529,6 @@ section h2 {
     justify-content: space-between;
     height: 160px;
     gap: var(--spacing-sm);
-    overflow: hidden;
 }
 
 .bar-item {
