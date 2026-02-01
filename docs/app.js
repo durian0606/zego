@@ -3233,11 +3233,18 @@ document.addEventListener('keydown', async (e) => {
     // 편집 중이거나 다이얼로그 열려있으면 무시
     if (isEditing() || isDialogOpen()) return;
 
+    // 제품이 고정되지 않은 상태에서는 수량 변경 불가
+    if (!AppState.isProductLocked) {
+        e.preventDefault();
+        showScanResult('제품을 먼저 고정해주세요. (w 키로 고정)', 'error');
+        return;
+    }
+
     e.preventDefault();
 
     const product = getSelectedProduct();
     if (!product) {
-        showScanResult('제품을 먼저 선택해주세요. (휠 또는 [/] 키로 선택)', 'error');
+        showScanResult('제품을 먼저 선택해주세요. ([/] 키로 선택 후 w로 고정)', 'error');
         return;
     }
 
