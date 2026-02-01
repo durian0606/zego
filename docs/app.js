@@ -3039,24 +3039,24 @@ window.addEventListener('resize', () => {
 
 // ============================================
 // 키보드 단축키 수량 입력 시스템
-// F1~F6: 생산(+), F7~F12: 마이너스(-)
+// a~f: 생산(+), g~l: 마이너스(-)
 // 마우스 휠: 제품 선택
 // ============================================
 
-// F키 수량 매핑
+// 알파벳 키 수량 매핑
 const FKEY_MAPPINGS = {
-    'F1':  { quantity: 30, type: 'IN' },
-    'F2':  { quantity: 25, type: 'IN' },
-    'F3':  { quantity: 20, type: 'IN' },
-    'F4':  { quantity: 10, type: 'IN' },
-    'F5':  { quantity: 5,  type: 'IN' },
-    'F6':  { quantity: 1,  type: 'IN' },
-    'F7':  { quantity: 30, type: 'OUT' },
-    'F8':  { quantity: 25, type: 'OUT' },
-    'F9':  { quantity: 20, type: 'OUT' },
-    'F10': { quantity: 10, type: 'OUT' },
-    'F11': { quantity: 5,  type: 'OUT' },
-    'F12': { quantity: 1,  type: 'OUT' },
+    'a': { quantity: 30, type: 'IN' },
+    'b': { quantity: 25, type: 'IN' },
+    'c': { quantity: 20, type: 'IN' },
+    'd': { quantity: 10, type: 'IN' },
+    'e': { quantity: 5,  type: 'IN' },
+    'f': { quantity: 1,  type: 'IN' },
+    'g': { quantity: 30, type: 'OUT' },
+    'h': { quantity: 25, type: 'OUT' },
+    'i': { quantity: 20, type: 'OUT' },
+    'j': { quantity: 10, type: 'OUT' },
+    'k': { quantity: 5,  type: 'OUT' },
+    'l': { quantity: 1,  type: 'OUT' },
 };
 
 // 정렬된 제품 목록 가져오기 (재고 테이블과 동일한 순서)
@@ -3146,10 +3146,14 @@ document.getElementById('inventory-table').addEventListener('wheel', (e) => {
     updateSelectedProductHighlight();
 }, { passive: false });
 
-// F1~F12 키보드 단축키 처리
+// a~l 키보드 단축키 처리
 document.addEventListener('keydown', async (e) => {
     const mapping = FKEY_MAPPINGS[e.key];
     if (!mapping) return;
+
+    // 입력 필드에 포커스 중이면 무시 (바코드 입력 등)
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) return;
 
     // 편집 중이거나 다이얼로그 열려있으면 무시
     if (isEditing() || isDialogOpen()) return;
