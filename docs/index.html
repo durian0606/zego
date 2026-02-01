@@ -98,10 +98,16 @@
             <section class="inventory-section">
                 <div class="section-header-with-button">
                     <h2>금일 생산현황</h2>
-                    <button id="btn-reset-today" class="btn btn-reset" title="금일생산 리셋">
-                        <i data-lucide="refresh-cw" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
-                        리셋
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btn-close-today" class="btn btn-closing" title="금일 마감">
+                            <i data-lucide="check-circle" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            금일 마감
+                        </button>
+                        <button id="btn-reset-today" class="btn btn-reset" title="금일생산 리셋">
+                            <i data-lucide="refresh-cw" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            리셋
+                        </button>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <table id="inventory-table">
@@ -127,10 +133,6 @@
             <section class="production-history-section">
                 <div class="section-header-with-button">
                     <h2>전일 생산현황</h2>
-                    <button id="btn-close-today" class="btn btn-closing" title="금일 마감">
-                        <i data-lucide="check-circle" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
-                        금일 마감
-                    </button>
                 </div>
                 <div class="table-wrapper">
                     <table id="production-history-table">
