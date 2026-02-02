@@ -1095,16 +1095,17 @@ tbody tr:hover {
 
 .inventory-section table th:nth-child(2),
 .inventory-section table td:nth-child(2) {
-    width: 35%;
+    width: 30%;
     min-width: 100px;
 }
 
 .inventory-section table th:nth-child(3),
 .inventory-section table td:nth-child(3) {
-    width: 20%;
-    min-width: 100px;
-    text-align: right;
-    padding-right: 30px;
+    width: 60px;
+    min-width: 60px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
 }
 
 .inventory-section table th:nth-child(4),
@@ -1117,6 +1118,14 @@ tbody tr:hover {
 
 .inventory-section table th:nth-child(5),
 .inventory-section table td:nth-child(5) {
+    width: 20%;
+    min-width: 100px;
+    text-align: right;
+    padding-right: 30px;
+}
+
+.inventory-section table th:nth-child(6),
+.inventory-section table td:nth-child(6) {
     width: 20%;
     min-width: 80px;
     text-align: center;
@@ -1675,15 +1684,21 @@ tbody tr:hover {
     }
 
     .inventory-section table th:nth-child(3),
-    .inventory-section table td:nth-child(3),
+    .inventory-section table td:nth-child(3) {
+        min-width: 40px;
+        font-size: 1.2rem;
+    }
+
     .inventory-section table th:nth-child(4),
-    .inventory-section table td:nth-child(4) {
+    .inventory-section table td:nth-child(4),
+    .inventory-section table th:nth-child(5),
+    .inventory-section table td:nth-child(5) {
         min-width: 60px;
         padding-right: 8px;
     }
 
-    .inventory-section table th:nth-child(5),
-    .inventory-section table td:nth-child(5) {
+    .inventory-section table th:nth-child(6),
+    .inventory-section table td:nth-child(6) {
         min-width: 50px;
     }
 

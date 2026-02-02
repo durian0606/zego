@@ -630,7 +630,7 @@ function updateInventoryTable() {
     console.log('제품 데이터:', products);
 
     if (products.length === 0) {
-        inventoryTbody.innerHTML = '<tr><td colspan="5" class="no-data">제품이 없습니다.</td></tr>';
+        inventoryTbody.innerHTML = '<tr><td colspan="6" class="no-data">제품이 없습니다.</td></tr>';
         return;
     }
 
@@ -691,6 +691,7 @@ function updateInventoryTable() {
                     <i data-lucide="grip-vertical" style="width: 18px; height: 18px; opacity: 0.5;"></i>
                 </td>
                 <td><strong>${product.name}</strong></td>
+                <td class="rice-cooker-count" data-product="${product.name}">${product.riceCookerCount || 0}</td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td>
@@ -3102,6 +3103,26 @@ function getSelectedProduct() {
     return products[AppState.selectedProductIndex];
 }
 
+// 밥솥 카운터 증감 (메모리 + UI 즉시 반영)
+function updateRiceCookerCount(delta) {
+    const product = getSelectedProduct();
+    if (!product) return;
+    const current = product.riceCookerCount || 0;
+    const newCount = Math.max(0, current + delta);
+    AppState.productsData[product.name].riceCookerCount = newCount;
+    const cell = document.querySelector(`.rice-cooker-count[data-product="${product.name}"]`);
+    if (cell) cell.textContent = newCount;
+}
+
+// 밥솥 카운터 Firebase 저장
+function confirmRiceCookerCount() {
+    const product = getSelectedProduct();
+    if (!product) return;
+    const count = product.riceCookerCount || 0;
+    productsRef.child(product.name).update({ riceCookerCount: count });
+    showScanResult(`${product.name} 밥솥 ${count}회 저장`, 'success');
+}
+
 // 선택된 제품 하이라이트 갱신
 function updateSelectedProductHighlight() {
     const product = getSelectedProduct();
@@ -3217,6 +3238,18 @@ document.addEventListener('keydown', (e) => {
         case 'w':
             e.preventDefault();
             toggleProductLock();
+            break;
+        case ',':
+            e.preventDefault();
+            if (AppState.isProductLocked) updateRiceCookerCount(-1);
+            break;
+        case '.':
+            e.preventDefault();
+            if (AppState.isProductLocked) updateRiceCookerCount(1);
+            break;
+        case '/':
+            e.preventDefault();
+            if (AppState.isProductLocked) confirmRiceCookerCount();
             break;
     }
 });
