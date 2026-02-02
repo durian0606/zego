@@ -3103,7 +3103,7 @@ function getSelectedProduct() {
     return products[AppState.selectedProductIndex];
 }
 
-// 밥솥 카운터 증감 (메모리 + UI 즉시 반영)
+// 밥솥 카운터 증감 (메모리 + UI + Firebase 즉시 반영)
 function updateRiceCookerCount(delta) {
     const product = getSelectedProduct();
     if (!product) return;
@@ -3112,15 +3112,7 @@ function updateRiceCookerCount(delta) {
     AppState.productsData[product.name].riceCookerCount = newCount;
     const cell = document.querySelector(`.rice-cooker-count[data-product="${product.name}"]`);
     if (cell) cell.innerHTML = `<strong>${newCount}</strong>`;
-}
-
-// 밥솥 카운터 Firebase 저장
-function confirmRiceCookerCount() {
-    const product = getSelectedProduct();
-    if (!product) return;
-    const count = product.riceCookerCount || 0;
-    productsRef.child(product.name).update({ riceCookerCount: count });
-    showScanResult(`${product.name} 밥솥 ${count}회 저장`, 'success');
+    productsRef.child(product.name).update({ riceCookerCount: newCount });
 }
 
 // 선택된 제품 하이라이트 갱신
@@ -3239,10 +3231,6 @@ document.addEventListener('keydown', (e) => {
         case '.':
             e.preventDefault();
             if (AppState.isProductLocked) updateRiceCookerCount(1);
-            break;
-        case '/':
-            e.preventDefault();
-            if (AppState.isProductLocked) confirmRiceCookerCount();
             break;
     }
 });
