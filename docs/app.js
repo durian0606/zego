@@ -691,7 +691,7 @@ function updateInventoryTable() {
                     <i data-lucide="grip-vertical" style="width: 18px; height: 18px; opacity: 0.5;"></i>
                 </td>
                 <td><strong>${product.name}</strong></td>
-                <td class="rice-cooker-count" data-product="${product.name}">${product.riceCookerCount || 0}</td>
+                <td class="stock-number rice-cooker-count" data-product="${product.name}"><strong>${product.riceCookerCount || 0}</strong></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td>
@@ -3111,7 +3111,7 @@ function updateRiceCookerCount(delta) {
     const newCount = Math.max(0, current + delta);
     AppState.productsData[product.name].riceCookerCount = newCount;
     const cell = document.querySelector(`.rice-cooker-count[data-product="${product.name}"]`);
-    if (cell) cell.textContent = newCount;
+    if (cell) cell.innerHTML = `<strong>${newCount}</strong>`;
 }
 
 // 밥솥 카운터 Firebase 저장
