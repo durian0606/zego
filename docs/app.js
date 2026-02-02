@@ -2783,6 +2783,13 @@ async function closeTodayProduction() {
             products: productSummary
         });
 
+        // 생산밥솥 카운트 초기화
+        const updates = {};
+        Object.keys(productSummary).forEach(name => {
+            updates[`${name}/riceCookerCount`] = 0;
+        });
+        await productsRef.update(updates);
+
         // 7일 초과 기록 자동 삭제
         await cleanupOldClosings();
 
