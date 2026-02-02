@@ -264,7 +264,7 @@
                                     <span class="step-num">3</span>
                                     <div>
                                         <strong>수량 입력</strong>
-                                        <p>키보드 단축키로 생산/출하 수량을 입력합니다.</p>
+                                        <p>키보드 단축키로 생산/출하 수량을 입력하거나, 바코드를 스캔합니다.</p>
                                     </div>
                                 </div>
                                 <div class="manual-step">
@@ -278,29 +278,13 @@
                         </div>
 
                         <div class="manual-section">
-                            <h3>키보드 단축키</h3>
-                            <div class="manual-key-group">
-                                <h4 class="key-group-title key-group-in">생산 (+)</h4>
-                                <div class="manual-key-grid">
-                                    <div class="key-item"><kbd>A</kbd> <span>+30</span></div>
-                                    <div class="key-item"><kbd>B</kbd> <span>+25</span></div>
-                                    <div class="key-item"><kbd>C</kbd> <span>+20</span></div>
-                                    <div class="key-item"><kbd>D</kbd> <span>+10</span></div>
-                                    <div class="key-item"><kbd>E</kbd> <span>+5</span></div>
-                                    <div class="key-item"><kbd>F</kbd> <span>+1</span></div>
-                                </div>
-                            </div>
-                            <div class="manual-key-group">
-                                <h4 class="key-group-title key-group-out">출하 (-)</h4>
-                                <div class="manual-key-grid">
-                                    <div class="key-item"><kbd>G</kbd> <span>-30</span></div>
-                                    <div class="key-item"><kbd>H</kbd> <span>-25</span></div>
-                                    <div class="key-item"><kbd>I</kbd> <span>-20</span></div>
-                                    <div class="key-item"><kbd>J</kbd> <span>-10</span></div>
-                                    <div class="key-item"><kbd>K</kbd> <span>-5</span></div>
-                                    <div class="key-item"><kbd>L</kbd> <span>-1</span></div>
-                                </div>
-                            </div>
+                            <h3>생산밥솥 카운터</h3>
+                            <p class="manual-text">제품 고정 후 <kbd>,</kbd> 키로 -1, <kbd>.</kbd> 키로 +1 조절합니다. 변경 즉시 저장됩니다.</p>
+                        </div>
+
+                        <div class="manual-section">
+                            <h3>금일생산 수량 미세조정</h3>
+                            <p class="manual-text">제품 고정 후 <kbd>;</kbd> 키로 -1, <kbd>'</kbd> 키로 +1 조절합니다.</p>
                         </div>
 
                         <div class="manual-section">
@@ -324,6 +308,16 @@
                         <div class="manual-section">
                             <h3>바코드 스캔</h3>
                             <p class="manual-text">바코드 스캐너로 제품 바코드를 스캔하면 자동으로 수량이 반영됩니다.</p>
+                        </div>
+
+                        <div class="manual-section">
+                            <h3>인라인 수정</h3>
+                            <p class="manual-text">재고표에서 금일생산, 생산목표 수치를 클릭하면 직접 수정할 수 있습니다. <kbd>Enter</kbd>로 저장, <kbd>ESC</kbd>로 취소합니다.</p>
+                        </div>
+
+                        <div class="manual-section">
+                            <h3>금일 마감</h3>
+                            <p class="manual-text">하루 작업이 끝나면 금일마감 버튼을 눌러 당일 생산/출하 실적을 저장합니다. 최근 7일간의 마감 기록을 확인할 수 있습니다.</p>
                         </div>
 
                     </div>
