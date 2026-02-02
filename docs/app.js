@@ -2731,6 +2731,41 @@ document.addEventListener('click', (e) => {
 // ============================================
 
 // 금일 마감 실행
+// 마감 실행 (확인 대화상자 없이 - 자동마감/수동마감 공용)
+async function executeClosing(dateKey) {
+    const productSummary = {};
+    const inventoryRows = document.querySelectorAll('#inventory-table tbody tr[data-product]');
+
+    inventoryRows.forEach(row => {
+        const productName = row.getAttribute('data-product');
+        const stockCell = row.querySelector('[data-stock]');
+        const currentStock = stockCell ? parseInt(stockCell.getAttribute('data-stock')) || 0 : 0;
+
+        productSummary[productName] = {
+            production: currentStock,
+            shipment: 0
+        };
+    });
+
+    if (Object.keys(productSummary).length === 0) return false;
+
+    await dailyClosingsRef.child(dateKey).set({
+        date: dateKey,
+        closedAt: Date.now(),
+        products: productSummary
+    });
+
+    // 생산밥솥 카운트 초기화
+    const updates = {};
+    Object.keys(productSummary).forEach(name => {
+        updates[`${name}/riceCookerCount`] = 0;
+    });
+    await productsRef.update(updates);
+
+    await cleanupOldClosings();
+    return true;
+}
+
 async function closeTodayProduction() {
     const today = new Date();
     const dateKey = formatDateKey(today);
@@ -2776,29 +2811,45 @@ async function closeTodayProduction() {
 
         if (!confirmed) return;
 
-        // Firebase에 마감 기록 저장
-        await dailyClosingsRef.child(dateKey).set({
-            date: dateKey,
-            closedAt: Date.now(),
-            products: productSummary
-        });
-
-        // 생산밥솥 카운트 초기화
-        const updates = {};
-        Object.keys(productSummary).forEach(name => {
-            updates[`${name}/riceCookerCount`] = 0;
-        });
-        await productsRef.update(updates);
-
-        // 7일 초과 기록 자동 삭제
-        await cleanupOldClosings();
-
+        await executeClosing(dateKey);
         showScanResult(`${formatDisplayDate(today)} 마감이 완료되었습니다.`, 'success');
     } catch (error) {
         console.error('마감 저장 오류:', error);
         showScanResult('마감 저장 중 오류가 발생했습니다.', 'error');
     }
 }
+
+// 자정 자동 마감
+function scheduleMidnightClosing() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const msUntilMidnight = midnight.getTime() - now.getTime();
+
+    setTimeout(async () => {
+        try {
+            // 어제 날짜로 마감 (자정 직전 데이터이므로)
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const dateKey = formatDateKey(yesterday);
+
+            // 이미 마감되지 않은 경우에만 자동 마감
+            if (!AppState.dailyClosingsData[dateKey]) {
+                const result = await executeClosing(dateKey);
+                if (result) {
+                    showScanResult(`자동 마감 완료 (${dateKey})`, 'success');
+                }
+            }
+        } catch (error) {
+            console.error('자동 마감 오류:', error);
+        }
+        // 다음 자정 타이머 재설정
+        scheduleMidnightClosing();
+    }, msUntilMidnight);
+}
+
+// 자정 자동 마감 타이머 시작
+scheduleMidnightClosing();
 
 // 7일 초과 마감 기록 자동 삭제
 async function cleanupOldClosings() {
