@@ -1148,8 +1148,30 @@ tbody tr:hover {
 
 .production-history-section table th:not(:nth-child(1)),
 .production-history-section table td:not(:nth-child(1)) {
-    width: 80px;
+    width: 50px;
     text-align: center;
+}
+
+.production-history-section .sub-header {
+    font-size: 0.75rem;
+    padding: 4px 6px;
+    color: var(--color-text-light);
+    font-weight: 500;
+}
+
+.production-history-section .rice-cooker-cell {
+    font-size: 0.85rem;
+    padding: 8px 4px;
+}
+
+.production-history-section .rice-cooker-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85em;
+    font-weight: 600;
+    background: rgba(234, 179, 8, 0.15);
+    color: #b45309;
 }
 
 .production-history-section th {
@@ -1776,8 +1798,8 @@ tbody tr:hover {
 
     .production-history-section table {
         width: 100%;
-        min-width: 320px;
-        table-layout: fixed;
+        min-width: 400px;
+        table-layout: auto;
     }
 
     .production-history-section table thead {
@@ -1811,10 +1833,10 @@ tbody tr:hover {
     /* 날짜 컬럼들 */
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        width: 60px;
-        min-width: 60px;
-        max-width: 72px;
-        padding: 6px 4px;
+        width: 40px;
+        min-width: 36px;
+        max-width: 52px;
+        padding: 4px 2px;
     }
 
     .production-history-section table th {
@@ -2003,9 +2025,9 @@ tbody tr:hover {
     /* 전일 생산현황 - 400px */
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        width: 52px;
-        min-width: 52px;
-        max-width: 64px;
+        width: 36px;
+        min-width: 32px;
+        max-width: 48px;
     }
 
     .inventory-section .product-name {
@@ -2188,8 +2210,8 @@ tbody tr:hover {
 
     .production-history-section table th:not(:first-child),
     .production-history-section table td:not(:first-child) {
-        width: 44px;
-        min-width: 44px;
+        width: 32px;
+        min-width: 28px;
         max-width: 56px;
     }
 

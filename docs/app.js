@@ -573,24 +573,41 @@ function updateWeeklyChart(closings) {
         });
     }
 
+    // 오늘 날짜 키
+    const todayKey = formatDateKey(new Date());
+
     // 각 날짜별 카테고리별 생산량 계산
     const dailyData = dates.map(d => {
-        const closing = closings[d.key];
         const categoryTotals = {};
 
         categories.forEach(cat => {
             categoryTotals[cat.keyword] = 0;
         });
 
-        if (closing && closing.products) {
-            Object.entries(closing.products).forEach(([productName, data]) => {
-                const production = data.production || 0;
+        if (d.key === todayKey) {
+            // 오늘은 실시간 데이터 사용
+            const products = filterValidProducts(AppState.productsData);
+            products.forEach(product => {
+                const production = product.currentStock || 0;
                 categories.forEach(cat => {
-                    if (productName.includes(cat.keyword)) {
+                    if (product.name.includes(cat.keyword)) {
                         categoryTotals[cat.keyword] += production;
                     }
                 });
             });
+        } else {
+            // 과거 날짜는 마감 데이터 사용
+            const closing = closings[d.key];
+            if (closing && closing.products) {
+                Object.entries(closing.products).forEach(([productName, data]) => {
+                    const production = data.production || 0;
+                    categories.forEach(cat => {
+                        if (productName.includes(cat.keyword)) {
+                            categoryTotals[cat.keyword] += production;
+                        }
+                    });
+                });
+            }
         }
 
         const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
@@ -1191,19 +1208,26 @@ function updateProductionHistoryTable() {
         });
     }
 
-    // 테이블 헤더 생성
-    let theadHtml = '<tr><th>제품명</th>';
+    // 테이블 헤더 생성 (각 날짜에 밥솥/생산 서브헤더)
+    let theadHtml = '<tr><th rowspan="2">제품명</th>';
     dates.forEach(d => {
-        theadHtml += `<th>${d.displayDate}${d.isToday ? '<br>(오늘)' : ''}</th>`;
+        theadHtml += `<th colspan="2">${d.displayDate}${d.isToday ? '<br>(오늘)' : ''}</th>`;
+    });
+    theadHtml += '</tr><tr>';
+    dates.forEach(() => {
+        theadHtml += '<th class="sub-header">밥솥</th><th class="sub-header">생산</th>';
     });
     theadHtml += '</tr>';
     productionHistoryThead.innerHTML = theadHtml;
 
     // 제품이 없으면 빈 메시지 표시
     if (sortedProducts.length === 0) {
-        productionHistoryTbody.innerHTML = `<tr><td colspan="${daysToShow + 1}" class="no-data">등록된 제품이 없습니다.</td></tr>`;
+        productionHistoryTbody.innerHTML = `<tr><td colspan="${daysToShow * 2 + 1}" class="no-data">등록된 제품이 없습니다.</td></tr>`;
         return;
     }
+
+    // 오늘 날짜 키
+    const todayKey = formatDateKey(new Date());
 
     // 테이블 바디 생성
     let tbodyHtml = '';
@@ -1215,14 +1239,30 @@ function updateProductionHistoryTable() {
         tbodyHtml += `<tr class="${colorClass}"><td><strong>${productName}</strong></td>`;
 
         dates.forEach(d => {
-            const closing = closings[d.dateKey];
+            let riceCookerCount = 0;
             let production = 0;
 
-            if (closing && closing.products && closing.products[productName]) {
-                production = closing.products[productName].production || 0;
+            if (d.dateKey === todayKey) {
+                // 오늘은 실시간 데이터 사용
+                riceCookerCount = product.riceCookerCount || 0;
+                production = product.currentStock || 0;
+            } else {
+                // 과거 날짜는 마감 데이터 사용
+                const closing = closings[d.dateKey];
+                if (closing && closing.products && closing.products[productName]) {
+                    riceCookerCount = closing.products[productName].riceCookerCount || 0;
+                    production = closing.products[productName].production || 0;
+                }
             }
 
-            // 클릭하면 편집 가능하도록 설정
+            // 생산밥솥 셀
+            if (riceCookerCount > 0) {
+                tbodyHtml += `<td class="rice-cooker-cell"><span class="rice-cooker-badge">${riceCookerCount}</span></td>`;
+            } else {
+                tbodyHtml += `<td class="rice-cooker-cell no-data-cell">-</td>`;
+            }
+
+            // 금일생산 셀 (클릭하면 편집 가능)
             const cellClass = 'production-editable';
             const cellData = `data-date="${d.dateKey}" data-product="${productName}" onclick="editProductionValue(this)"`;
 
@@ -2740,10 +2780,13 @@ async function executeClosing(dateKey) {
         const productName = row.getAttribute('data-product');
         const stockCell = row.querySelector('[data-stock]');
         const currentStock = stockCell ? parseInt(stockCell.getAttribute('data-stock')) || 0 : 0;
+        const product = AppState.productsData[productName];
+        const riceCookerCount = product ? (product.riceCookerCount || 0) : 0;
 
         productSummary[productName] = {
             production: currentStock,
-            shipment: 0
+            shipment: 0,
+            riceCookerCount: riceCookerCount
         };
     });
 
