@@ -1059,8 +1059,7 @@ tbody tr:hover {
 .history-section tr.product-color-20,
 .barcode-management-section tr.product-color-20 { background: white; border-left: 4px solid #22c55e; }
 
-/* 호버 시 배경색 변경 */
-.inventory-section tr[class*="product-color"]:hover,
+/* 호버 시 배경색 변경 (금일 생산현황 제외) */
 .production-history-section tr[class*="product-color"]:hover,
 .history-section tr[class*="product-color"]:hover,
 .barcode-management-section tr[class*="product-color"]:hover {
