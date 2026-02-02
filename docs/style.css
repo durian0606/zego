@@ -1099,13 +1099,16 @@ tbody tr:hover {
     min-width: 100px;
 }
 
-.inventory-section table th:nth-child(3),
-.inventory-section table td:nth-child(3) {
-    width: 60px;
-    min-width: 60px;
+.inventory-section table th:nth-child(3) {
+    width: 100px;
+    min-width: 80px;
     text-align: center;
-    font-size: 1.8rem;
-    font-weight: 700;
+}
+
+.inventory-section table td:nth-child(3) {
+    width: 100px;
+    min-width: 80px;
+    text-align: center;
 }
 
 .inventory-section table th:nth-child(4),
@@ -1685,8 +1688,7 @@ tbody tr:hover {
 
     .inventory-section table th:nth-child(3),
     .inventory-section table td:nth-child(3) {
-        min-width: 40px;
-        font-size: 1.2rem;
+        min-width: 50px;
     }
 
     .inventory-section table th:nth-child(4),
