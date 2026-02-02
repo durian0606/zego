@@ -1161,6 +1161,17 @@ tbody tr:hover {
 .production-history-section .rice-cooker-cell {
     font-size: 0.85rem;
     padding: 8px 4px;
+    border-left: 2px solid #d1d5db;
+}
+
+/* 날짜 그룹 구분선 - 헤더의 밥솥 서브헤더에도 적용 */
+.production-history-section thead tr:nth-child(2) th:nth-child(odd) {
+    border-left: 2px solid #d1d5db;
+}
+
+/* 날짜 헤더(colspan=2)에도 구분선 */
+.production-history-section thead tr:first-child th:not(:first-child) {
+    border-left: 2px solid #d1d5db;
 }
 
 .production-history-section .rice-cooker-badge {
