@@ -3232,6 +3232,20 @@ document.addEventListener('keydown', (e) => {
             e.preventDefault();
             if (AppState.isProductLocked) updateRiceCookerCount(1);
             break;
+        case ';':
+            e.preventDefault();
+            if (AppState.isProductLocked) {
+                const prodForDec = getSelectedProduct();
+                if (prodForDec) updateStock({ productName: prodForDec.name, barcode: 'KEY-OUT-1', type: 'OUT', quantity: 1 });
+            }
+            break;
+        case "'":
+            e.preventDefault();
+            if (AppState.isProductLocked) {
+                const prodForInc = getSelectedProduct();
+                if (prodForInc) updateStock({ productName: prodForInc.name, barcode: 'KEY-IN-1', type: 'IN', quantity: 1 });
+            }
+            break;
     }
 });
 
