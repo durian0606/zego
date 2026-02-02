@@ -3187,13 +3187,6 @@ function moveProductSelection(delta) {
     updateSelectedProductHighlight();
 }
 
-// 마우스 휠로 제품 선택
-document.getElementById('inventory-table').addEventListener('wheel', (e) => {
-    if (isEditing() || isDialogOpen()) return;
-
-    e.preventDefault();
-    moveProductSelection(e.deltaY > 0 ? 1 : -1);
-}, { passive: false });
 
 // 키보드/노브로 제품 선택 ([], PageUp/Down, Home/End)
 document.addEventListener('keydown', (e) => {
