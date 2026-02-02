@@ -1761,6 +1761,12 @@ async function updateStock(barcodeInfo) {
             showScanResult('재고가 부족합니다!', 'error');
             return;
         }
+    } else if (type === 'ADJUST') {
+        afterStock = beforeStock - quantity;
+        if (afterStock < 0) {
+            showScanResult('재고가 부족합니다!', 'error');
+            return;
+        }
     } else {
         // VIEW 타입 - 조회만
         showScanResult(`${productName} - 현재 재고: ${beforeStock}개`, 'success');
@@ -1786,7 +1792,7 @@ async function updateStock(barcodeInfo) {
             timestamp: Date.now()
         });
 
-        const typeText = type === 'IN' ? '생산' : '출고';
+        const typeText = type === 'IN' ? '생산' : type === 'ADJUST' ? '수정' : '출고';
         showScanResult(`${productName} ${typeText} 완료! (${beforeStock} → ${afterStock})`, 'success');
 
         // 해당 제품 행 강조
@@ -3145,7 +3151,7 @@ window.addEventListener('resize', () => {
 
 // ============================================
 // 키보드 단축키 수량 입력 시스템
-// a~f: 생산(+), g~l: 마이너스(-)
+// a~f: 생산(+), g~l: 생산 수정(-)
 // 마우스 휠: 제품 선택
 // ============================================
 
@@ -3157,12 +3163,12 @@ const FKEY_MAPPINGS = {
     'd': { quantity: 10, type: 'IN' },
     'e': { quantity: 5,  type: 'IN' },
     'f': { quantity: 1,  type: 'IN' },
-    'g': { quantity: 30, type: 'OUT' },
-    'h': { quantity: 25, type: 'OUT' },
-    'i': { quantity: 20, type: 'OUT' },
-    'j': { quantity: 10, type: 'OUT' },
-    'k': { quantity: 5,  type: 'OUT' },
-    'l': { quantity: 1,  type: 'OUT' },
+    'g': { quantity: 30, type: 'ADJUST' },
+    'h': { quantity: 25, type: 'ADJUST' },
+    'i': { quantity: 20, type: 'ADJUST' },
+    'j': { quantity: 10, type: 'ADJUST' },
+    'k': { quantity: 5,  type: 'ADJUST' },
+    'l': { quantity: 1,  type: 'ADJUST' },
 };
 
 // 정렬된 제품 목록 가져오기 (재고 테이블과 동일한 순서)
@@ -3337,7 +3343,7 @@ document.addEventListener('keydown', (e) => {
             e.preventDefault();
             if (AppState.isProductLocked) {
                 const prodForDec = getSelectedProduct();
-                if (prodForDec) updateStock({ productName: prodForDec.name, barcode: 'KEY-OUT-1', type: 'OUT', quantity: 1 });
+                if (prodForDec) updateStock({ productName: prodForDec.name, barcode: 'KEY-ADJUST-1', type: 'ADJUST', quantity: 1 });
             }
             break;
         case "'":
