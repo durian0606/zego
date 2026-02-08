@@ -107,7 +107,8 @@ const AppState = {
     editingProduct: null,  // 수정 중인 제품명 (null이면 신규 등록 모드)
     currentWorkingProduct: null,  // 현재 작업 중인 제품 (강조 표시용)
     selectedProductIndex: 0,  // 키보드 단축키용 선택된 제품 인덱스
-    isProductLocked: false  // 제품 선택 고정 상태
+    isProductLocked: false,  // 제품 선택 고정 상태
+    choolgoSummary: { channels: {}, products: {} }  // 오늘 출고 요약 (choolgo-watcher)
 };
 
 // ============================================
@@ -463,6 +464,15 @@ dailyClosingsRef.orderByKey().limitToLast(7).on('value', (snapshot) => {
     updateDashboard();
 });
 
+// 오늘 출고 요약 실시간 감지 (choolgo-watcher)
+const choolgoTodayKey = formatDateKey(new Date());
+const choolgoSummaryRef = database.ref(`choolgoLogs/${choolgoTodayKey}/summary`);
+choolgoSummaryRef.on('value', (snapshot) => {
+    AppState.choolgoSummary = snapshot.val() || { channels: {}, products: {} };
+    updateInventoryTable();
+    updateDashboard();
+});
+
 // ============================================
 // 대시보드 업데이트
 // ============================================
@@ -485,36 +495,41 @@ function updateDashboard() {
         else if (product.name.includes('뻥튀기')) catPpungtwigi += stock;
     });
 
-    // 출고량 계산 (히스토리 기반, dailyClosings 수정값 반영)
-    const validProductNames = new Set(products.map(p => p.name));
-    const todayHistory = history.filter(item =>
-        item.timestamp >= todayTimestamp &&
-        item.type !== 'ADJUST' &&
-        validProductNames.has(item.productName)
-    );
-
-    const todayKey = formatDateKey(new Date());
-    const todayClosing = closings[todayKey];
-    const editedProducts = todayClosing?.products || {};
-
-    const groupedShipment = {};
-    todayHistory.forEach(item => {
-        if (item.type === 'OUT') {
-            const key = item.productName;
-            if (!groupedShipment[key]) groupedShipment[key] = { totalQuantity: 0 };
-            groupedShipment[key].totalQuantity += item.quantity;
-        }
-    });
-
+    // 출고량 계산 (choolgo-watcher 요약 데이터 우선, 없으면 히스토리 기반)
+    const choolgoProducts = AppState.choolgoSummary.products || {};
     let todayShipment = 0;
-    Object.entries(groupedShipment).forEach(([productName, data]) => {
-        const editedData = editedProducts[productName];
-        let displayQuantity = data.totalQuantity;
-        if (editedData && editedData.editedAt && editedData.shipment !== undefined) {
-            displayQuantity = editedData.shipment;
-        }
-        todayShipment += displayQuantity;
-    });
+    if (Object.keys(choolgoProducts).length > 0) {
+        todayShipment = Object.values(choolgoProducts).reduce((sum, qty) => sum + qty, 0);
+    } else {
+        const validProductNames = new Set(products.map(p => p.name));
+        const todayHistory = history.filter(item =>
+            item.timestamp >= todayTimestamp &&
+            item.type !== 'ADJUST' &&
+            validProductNames.has(item.productName)
+        );
+
+        const todayKey = formatDateKey(new Date());
+        const todayClosing = closings[todayKey];
+        const editedProducts = todayClosing?.products || {};
+
+        const groupedShipment = {};
+        todayHistory.forEach(item => {
+            if (item.type === 'OUT') {
+                const key = item.productName;
+                if (!groupedShipment[key]) groupedShipment[key] = { totalQuantity: 0 };
+                groupedShipment[key].totalQuantity += item.quantity;
+            }
+        });
+
+        Object.entries(groupedShipment).forEach(([productName, data]) => {
+            const editedData = editedProducts[productName];
+            let displayQuantity = data.totalQuantity;
+            if (editedData && editedData.editedAt && editedData.shipment !== undefined) {
+                displayQuantity = editedData.shipment;
+            }
+            todayShipment += displayQuantity;
+        });
+    }
 
     // 총 재고 계산
     let totalStock = 0;
@@ -647,7 +662,7 @@ function updateInventoryTable() {
     console.log('제품 데이터:', products);
 
     if (products.length === 0) {
-        inventoryTbody.innerHTML = '<tr><td colspan="6" class="no-data">제품이 없습니다.</td></tr>';
+        inventoryTbody.innerHTML = '<tr><td colspan="7" class="no-data">제품이 없습니다.</td></tr>';
         return;
     }
 
@@ -702,6 +717,13 @@ function updateInventoryTable() {
         const colorIndex = getProductColorIndex(product.name) + 1;
         const colorClass = `product-color-${colorIndex}`;
 
+        // 출고량 조회 (choolgo-watcher 데이터)
+        const choolgoProducts = AppState.choolgoSummary.products || {};
+        const shipmentQty = choolgoProducts[product.name] || 0;
+        const shipmentDisplay = shipmentQty > 0
+            ? `<span class="choolgo-shipment-value" onclick="showChannelDetail(event)" title="클릭하여 채널별 상세">${shipmentQty}</span>`
+            : '<span class="choolgo-shipment-zero">-</span>';
+
         return `
             <tr class="${colorClass}" data-product="${product.name}">
                 <td class="drag-handle" title="드래그하여 순서 변경">
@@ -710,6 +732,7 @@ function updateInventoryTable() {
                 <td><strong>${product.name}</strong></td>
                 <td class="stock-number rice-cooker-count" data-product="${product.name}"><strong>${product.riceCookerCount || 0}</strong></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
+                <td class="stock-number choolgo-shipment-cell">${shipmentDisplay}</td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td>
                     <span class="stock-status ${stockStatus}">${stockText}</span>
@@ -733,6 +756,46 @@ function updateInventoryTable() {
 
     // 현재 작업 제품 강조 복원
     restoreWorkingProductHighlight();
+}
+
+// 채널별 출고 상세 툴팁 표시
+function showChannelDetail(event) {
+    event.stopPropagation();
+
+    // 기존 툴팁 제거
+    const existing = document.querySelector('.channel-tooltip');
+    if (existing) existing.remove();
+
+    const channels = AppState.choolgoSummary.channels || {};
+    if (Object.keys(channels).length === 0) return;
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'channel-tooltip';
+    tooltip.innerHTML = '<div class="channel-tooltip-title">채널별 출고</div>' +
+        Object.entries(channels)
+            .sort((a, b) => b[1] - a[1])
+            .map(([ch, qty]) => `<div class="channel-tooltip-row"><span>${ch}</span><span>${qty}봉</span></div>`)
+            .join('');
+
+    document.body.appendChild(tooltip);
+
+    // 클릭한 요소 위치 기준으로 배치
+    const rect = event.target.getBoundingClientRect();
+    tooltip.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    tooltip.style.left = `${rect.left + window.scrollX}px`;
+
+    // 화면 밖으로 나가면 조정
+    const tooltipRect = tooltip.getBoundingClientRect();
+    if (tooltipRect.right > window.innerWidth) {
+        tooltip.style.left = `${window.innerWidth - tooltipRect.width - 8}px`;
+    }
+
+    // 다른 곳 클릭 시 닫기
+    const closeHandler = () => {
+        tooltip.remove();
+        document.removeEventListener('click', closeHandler);
+    };
+    setTimeout(() => document.addEventListener('click', closeHandler), 0);
 }
 
 // 목표 재고 수정 함수

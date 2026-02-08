@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>우리곡간식품 재고관리 시스템</title>
-    <link rel="stylesheet" href="style.css?v=2.0.0">
+    <link rel="stylesheet" href="style.css?v=2.1.0">
 </head>
 <body>
     <div class="container">
@@ -14,6 +14,7 @@
                 <button id="btn-toggle-register" class="btn btn-register"><i data-lucide="plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>제품 등록</button>
                 <button id="btn-print-barcode" class="btn btn-print" title="바코드 인쇄"><i data-lucide="printer" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 인쇄</button>
                 <button id="btn-toggle-barcode-management" class="btn btn-barcode-mgmt" title="바코드 관리"><i data-lucide="list" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 관리</button>
+                <button id="btn-toggle-choolgo" class="btn btn-choolgo" title="출고현황"><i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>출고현황</button>
                 <button id="btn-settings" class="btn btn-settings" title="설정"><i data-lucide="settings" style="width: 18px; height: 18px;"></i></button>
                 <span id="connection-status" class="status-badge disconnected">연결 중...</span>
             </div>
@@ -123,13 +124,14 @@
                                 <th>제품명</th>
                                 <th>생산밥솥</th>
                                 <th>금일생산</th>
+                                <th>금일출고</th>
                                 <th>생산목표</th>
                                 <th>상태</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-tbody">
                             <tr>
-                                <td colspan="6" class="no-data">제품이 없습니다.</td>
+                                <td colspan="7" class="no-data">제품이 없습니다.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -175,6 +177,74 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- 출고파일 현황 섹션 (토글) -->
+            <section class="choolgo-section" id="choolgo-section" style="display: none;">
+                <div class="section-header">
+                    <h2>출고파일 현황</h2>
+                    <button id="btn-close-choolgo" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+                </div>
+                <div class="choolgo-date-selector">
+                    <button id="btn-choolgo-prev" class="btn btn-sm">&larr;</button>
+                    <span id="choolgo-date-label"></span>
+                    <button id="btn-choolgo-next" class="btn btn-sm">&rarr;</button>
+                </div>
+                <div class="choolgo-summary-cards" id="choolgo-summary-cards">
+                    <!-- JS에서 동적으로 생성 -->
+                </div>
+                <div class="choolgo-tables">
+                    <div class="choolgo-table-block">
+                        <h3>채널별 출고</h3>
+                        <div class="table-wrapper">
+                            <table id="choolgo-channel-table">
+                                <thead>
+                                    <tr>
+                                        <th>채널</th>
+                                        <th>수량 (봉)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="choolgo-channel-tbody">
+                                    <tr><td colspan="2" class="no-data">데이터 없음</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="choolgo-table-block">
+                        <h3>제품별 출고</h3>
+                        <div class="table-wrapper">
+                            <table id="choolgo-product-table">
+                                <thead>
+                                    <tr>
+                                        <th>제품명</th>
+                                        <th>수량 (봉)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="choolgo-product-tbody">
+                                    <tr><td colspan="2" class="no-data">데이터 없음</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="choolgo-files-block">
+                    <h3>처리된 파일</h3>
+                    <div class="table-wrapper">
+                        <table id="choolgo-files-table">
+                            <thead>
+                                <tr>
+                                    <th>파일명</th>
+                                    <th>채널</th>
+                                    <th>수량</th>
+                                    <th>처리시각</th>
+                                </tr>
+                            </thead>
+                            <tbody id="choolgo-files-tbody">
+                                <tr><td colspan="4" class="no-data">데이터 없음</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
