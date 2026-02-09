@@ -82,11 +82,46 @@ function readExistingRows(filePath) {
 }
 
 /**
+ * 파일이 다른 프로그램에서 열려있는지 확인 (Excel ~$ 임시파일)
+ */
+function isFileLocked(filePath) {
+    const dir = path.dirname(filePath);
+    const base = path.basename(filePath);
+    const lockFile = path.join(dir, `~$${base}`);
+    return fs.existsSync(lockFile);
+}
+
+/**
  * 배송 행들을 택배양식 파일에 추가
  * @param {Array} newRows - extractShippingRows()의 반환값
  */
 async function appendShippingRows(newRows) {
     const outputPath = getOutputPath();
+
+    // 파일 잠금 확인 (Excel에서 열려있으면 .pending에 저장)
+    if (isFileLocked(outputPath)) {
+        const pendingPath = outputPath.replace('.xlsx', '.pending.json');
+        const existing = fs.existsSync(pendingPath)
+            ? JSON.parse(fs.readFileSync(pendingPath, 'utf8'))
+            : [];
+        existing.push(...newRows);
+        fs.writeFileSync(pendingPath, JSON.stringify(existing, null, 2));
+        console.log(`  [택배양식] 파일이 열려있어 ${path.basename(pendingPath)}에 ${newRows.length}행 임시 저장`);
+        return;
+    }
+
+    // pending 파일이 있으면 함께 병합
+    const pendingPath = outputPath.replace('.xlsx', '.pending.json');
+    if (fs.existsSync(pendingPath)) {
+        try {
+            const pendingRows = JSON.parse(fs.readFileSync(pendingPath, 'utf8'));
+            newRows = [...pendingRows, ...newRows];
+            fs.unlinkSync(pendingPath);
+            console.log(`  [택배양식] pending 파일 ${pendingRows.length}행 병합`);
+        } catch (e) {
+            console.error(`  [택배양식] pending 파일 읽기 실패: ${e.message}`);
+        }
+    }
 
     // 기존 데이터 로드
     const existingRows = readExistingRows(outputPath);

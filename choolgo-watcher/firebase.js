@@ -1,9 +1,12 @@
 const https = require('https');
 const { FIREBASE_URL } = require('./config/config');
 
-function firebaseRequest(method, path, data) {
+const MAX_RETRIES = 3;
+const BASE_DELAY = 1000; // 1초
+
+function firebaseRequest(method, reqPath, data) {
     return new Promise((resolve, reject) => {
-        const fullUrl = `${FIREBASE_URL}${path}`;
+        const fullUrl = `${FIREBASE_URL}${reqPath}`;
         const parsed = new URL(fullUrl);
         const options = {
             hostname: parsed.hostname,
@@ -16,6 +19,10 @@ function firebaseRequest(method, path, data) {
             let body = '';
             res.on('data', chunk => body += chunk);
             res.on('end', () => {
+                if (res.statusCode >= 500) {
+                    reject(new Error(`Firebase ${res.statusCode}: ${body}`));
+                    return;
+                }
                 try {
                     resolve(JSON.parse(body));
                 } catch (e) {
@@ -30,21 +37,37 @@ function firebaseRequest(method, path, data) {
     });
 }
 
+async function firebaseRequestWithRetry(method, reqPath, data) {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            return await firebaseRequest(method, reqPath, data);
+        } catch (err) {
+            if (attempt === MAX_RETRIES) {
+                console.error(`  [Firebase] ${MAX_RETRIES}회 재시도 실패: ${method} ${reqPath}`);
+                throw err;
+            }
+            const delay = BASE_DELAY * Math.pow(2, attempt);
+            console.log(`  [Firebase] 재시도 ${attempt + 1}/${MAX_RETRIES} (${delay}ms 후): ${err.message}`);
+            await new Promise(r => setTimeout(r, delay));
+        }
+    }
+}
+
 async function getProduct(productName) {
     const encoded = encodeURIComponent(productName);
-    return firebaseRequest('GET', `/products/${encoded}.json`);
+    return firebaseRequestWithRetry('GET', `/products/${encoded}.json`);
 }
 
 async function updateProductStock(productName, newStock) {
     const encoded = encodeURIComponent(productName);
-    return firebaseRequest('PATCH', `/products/${encoded}.json`, {
+    return firebaseRequestWithRetry('PATCH', `/products/${encoded}.json`, {
         currentStock: newStock,
         updatedAt: Date.now()
     });
 }
 
 async function addHistory(entry) {
-    return firebaseRequest('POST', '/history.json', entry);
+    return firebaseRequestWithRetry('POST', '/history.json', entry);
 }
 
 async function deductStock(productName, quantity, channel) {
@@ -61,9 +84,13 @@ async function deductStock(productName, quantity, channel) {
         console.log(`  [경고] 재고 부족: ${productName} (현재: ${beforeStock}, 차감: ${quantity})`);
     }
 
-    await updateProductStock(productName, afterStock);
-
-    await addHistory({
+    // 재고 차감 + 이력 기록을 multi-path update로 원자적 수행
+    const historyKey = `AUTO_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const encodedProduct = encodeURIComponent(productName);
+    const multiUpdate = {};
+    multiUpdate[`products/${encodedProduct}/currentStock`] = afterStock;
+    multiUpdate[`products/${encodedProduct}/updatedAt`] = Date.now();
+    multiUpdate[`history/${historyKey}`] = {
         productName: productName,
         barcode: `AUTO-CHOOLGO-${channel}`,
         type: 'OUT',
@@ -71,7 +98,9 @@ async function deductStock(productName, quantity, channel) {
         beforeStock: beforeStock,
         afterStock: afterStock,
         timestamp: Date.now()
-    });
+    };
+
+    await firebaseRequestWithRetry('PATCH', '/.json', multiUpdate);
 
     console.log(`  [차감] ${productName}: ${beforeStock} → ${afterStock} (-${quantity}) [${channel}]`);
     return { beforeStock, afterStock, quantity };
@@ -87,7 +116,7 @@ async function addChoolgoLog(date, filename, channel, items) {
         totalQuantity: items.reduce((sum, i) => sum + i.quantity, 0),
         processedAt: Date.now()
     };
-    return firebaseRequest('POST', `/choolgoLogs/${encodedDate}/files.json`, logEntry);
+    return firebaseRequestWithRetry('POST', `/choolgoLogs/${encodedDate}/files.json`, logEntry);
 }
 
 // 출고파일 일별 요약 업데이트
@@ -95,7 +124,7 @@ async function updateChoolgoSummary(date, items, channel) {
     const encodedDate = encodeURIComponent(date);
 
     // 기존 요약 가져오기
-    const existing = await firebaseRequest('GET', `/choolgoLogs/${encodedDate}/summary.json`) || {};
+    const existing = await firebaseRequestWithRetry('GET', `/choolgoLogs/${encodedDate}/summary.json`) || {};
 
     // 채널별 합계
     const channels = existing.channels || {};
@@ -107,7 +136,7 @@ async function updateChoolgoSummary(date, items, channel) {
         products[item.product] = (products[item.product] || 0) + item.quantity;
     }
 
-    return firebaseRequest('PUT', `/choolgoLogs/${encodedDate}/summary.json`, {
+    return firebaseRequestWithRetry('PUT', `/choolgoLogs/${encodedDate}/summary.json`, {
         channels,
         products,
         lastUpdated: Date.now()

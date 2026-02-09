@@ -2,16 +2,13 @@ const chokidar = require('chokidar');
 const path = require('path');
 const fs = require('fs');
 const { deductStock, addChoolgoLog, updateChoolgoSummary } = require('./firebase');
-const iwonParser = require('./parsers/iwon');
-const naverParser = require('./parsers/naver');
-const kakaoParser = require('./parsers/kakao');
-const paldogamParser = require('./parsers/paldogam');
-const genericParser = require('./parsers/generic');
+const { detectChannel } = require('./config/channels');
 const { extractShippingRows } = require('./shipping/extract-shipping');
 const { appendShippingRows } = require('./shipping/courier-writer');
 const { START_DATE, WATCH_PATHS, PROCESSED_FILE } = require('./config/config');
 
 const DRY_RUN = process.argv.includes('--dry-run'); // 테스트 모드 (Firebase 차감 안 함)
+const REPROCESS_ARG = process.argv.indexOf('--reprocess');
 
 // 처리 완료 파일 목록 로드
 function loadProcessed() {
@@ -37,127 +34,39 @@ function isRecentFile(filePath) {
     }
 }
 
-// 파일 경로로 채널 판별
-function detectChannel(filePath) {
-    const normalized = filePath.replace(/\\/g, '/');
-
-    if (normalized.includes('/카카오/')) {
-        return 'kakao';
-    }
-
-    if (normalized.includes('/팔도감/')) {
-        if (normalized.includes('/네이버/')) {
-            return 'paldogam-naver';
-        }
-        return 'paldogam';
-    }
-
-    if (normalized.includes('/직택배/')) {
-        const filename = path.basename(filePath);
-
-        // 엑셀 임시 파일 무시
-        if (filename.startsWith('~$')) return null;
-
-        // 아이원 발주서
-        if (filename.includes('아이원') || filename.includes('발주서')) {
-            return 'iwon';
-        }
-        // 네이버/스마트스토어
-        if (filename.includes('네이버') || filename.includes('스마트스토어')) {
-            return 'jiktaebae-naver';
-        }
-        // J우리곡간 (두브로 등)
-        if (filename.match(/^\d{8}_J우리곡간/)) {
-            return 'jiktaebae-generic';
-        }
-        // 크레이지아지트
-        if (filename.includes('크레이지')) {
-            return 'jiktaebae-generic';
-        }
-        // 잇템커머스
-        if (filename.includes('잇템커머스')) {
-            return 'jiktaebae-generic';
-        }
-        // 브랜딩리드
-        if (filename.includes('브랜딩리드')) {
-            return 'jiktaebae-generic';
-        }
-        // 기타 xlsx 파일 → 제네릭 파서로 시도
-        return 'jiktaebae-generic';
-    }
-
-    return null;
-}
-
-// 채널별 파서 선택
-function getParser(channel) {
-    switch (channel) {
-        case 'iwon':
-            return iwonParser;
-        case 'jiktaebae-naver':
-        case 'paldogam-naver':
-            return naverParser;
-        case 'kakao':
-            return kakaoParser;
-        case 'paldogam':
-            return paldogamParser;
-        case 'jiktaebae-generic':
-            return genericParser;
-        default:
-            return null;
-    }
-}
-
-// 채널 한글명
-function getChannelName(channel) {
-    const names = {
-        'iwon': '직택배/아이원',
-        'jiktaebae-naver': '직택배/네이버',
-        'jiktaebae-generic': '직택배/기타',
-        'paldogam-naver': '팔도감/네이버',
-        'kakao': '카카오',
-        'paldogam': '팔도감'
-    };
-    return names[channel] || channel;
-}
-
-// 파일 처리
-async function processFile(filePath) {
+// 파일 처리 (skipChecks: 중복/날짜 체크 건너뛰기 - 재처리용)
+async function processFile(filePath, skipChecks = false) {
     const processed = loadProcessed();
     const absPath = path.resolve(filePath);
 
-    // 중복 체크
-    if (processed[absPath]) {
-        return;
-    }
+    if (!skipChecks) {
+        // 중복 체크
+        if (processed[absPath]) {
+            return;
+        }
 
-    // xlsx/xls 파일만 처리
-    const ext = path.extname(filePath).toLowerCase();
-    if (ext !== '.xlsx' && ext !== '.xls') {
-        return;
-    }
+        // xlsx/xls 파일만 처리
+        const ext = path.extname(filePath).toLowerCase();
+        if (ext !== '.xlsx' && ext !== '.xls') {
+            return;
+        }
 
-    // 날짜 필터
-    if (!isRecentFile(filePath)) {
-        return;
-    }
+        // 날짜 필터
+        if (!isRecentFile(filePath)) {
+            return;
+        }
 
-    // 파일이 아직 쓰기 중일 수 있으므로 잠시 대기
-    await new Promise(resolve => setTimeout(resolve, 2000));
+        // 파일이 아직 쓰기 중일 수 있으므로 잠시 대기
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
 
     // 채널 판별
-    const channel = detectChannel(filePath);
-    if (!channel) {
+    const ch = detectChannel(filePath);
+    if (!ch) {
         return;
     }
 
-    // 파서 선택
-    const parser = getParser(channel);
-    if (!parser) {
-        return;
-    }
-
-    const channelName = getChannelName(channel);
+    const { id: channel, name: channelName, parser } = ch;
     const filename = path.basename(filePath);
     console.log(`\n${'='.repeat(60)}`);
     console.log(`[처리] ${filename} (${channelName})`);
@@ -309,4 +218,35 @@ function startWatcher() {
     });
 }
 
-startWatcher();
+// 재처리 모드
+async function reprocessFile(targetPath) {
+    const absPath = path.resolve(targetPath);
+    if (!fs.existsSync(absPath)) {
+        console.error(`파일 없음: ${absPath}`);
+        process.exit(1);
+    }
+
+    // processed.json에서 해당 항목 삭제
+    const processed = loadProcessed();
+    if (processed[absPath]) {
+        delete processed[absPath];
+        saveProcessed(processed);
+        console.log(`[재처리] processed.json에서 제거: ${path.basename(absPath)}`);
+    }
+
+    await processFile(absPath, true);
+    console.log('\n재처리 완료.');
+    process.exit(0);
+}
+
+// 진입점 분기
+if (REPROCESS_ARG !== -1) {
+    const targetPath = process.argv[REPROCESS_ARG + 1];
+    if (!targetPath) {
+        console.error('사용법: node index.js --reprocess <파일경로>');
+        process.exit(1);
+    }
+    reprocessFile(targetPath);
+} else {
+    startWatcher();
+}
