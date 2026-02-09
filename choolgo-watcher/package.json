@@ -1,0 +1,19 @@
+{
+  "name": "choolgo-watcher",
+  "version": "1.0.0",
+  "description": "출고 파일 자동 감지 → Firebase 재고 차감 서비스",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop choolgo-watcher",
+    "pm2:restart": "pm2 restart choolgo-watcher",
+    "pm2:logs": "pm2 logs choolgo-watcher",
+    "pm2:status": "pm2 status"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "officecrypto-tool": "^0.0.19",
+    "xlsx": "^0.18.5"
+  }
+}

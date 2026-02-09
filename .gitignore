@@ -12,9 +12,16 @@ Thumbs.db
 *.swp
 *.swo
 
+# Dependencies
+node_modules/
+
 # Logs
 *.log
+logs/
 
 # Environment variables (if any)
 .env
 .env.local
+
+# choolgo-watcher runtime
+choolgo-watcher/processed.json

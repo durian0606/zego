@@ -1,0 +1,68 @@
+{
+  "firebaseProducts": {
+    "우리곡간 현미누룽지": "P012",
+    "우리곡간 현미뻥튀기": "P013",
+    "우리곡간 서리태": "P009",
+    "@온도감 현미누룽지": "P008",
+    "우리곡간 강황누룽지": "P014",
+    "두브로 뻥튀기": "P010",
+    "우리곡간 검정깨누룽지": "P005",
+    "우리곡간 귀리누룽지": "P003",
+    "우리곡간 코코넛누룽지": "P011"
+  },
+
+  "종합누룽지": [
+    "우리곡간 현미누룽지",
+    "우리곡간 코코넛누룽지",
+    "우리곡간 귀리누룽지",
+    "우리곡간 강황누룽지",
+    "우리곡간 검정깨누룽지"
+  ],
+
+  "iwon": {
+    "column": { "productName": "D", "quantity": "E" },
+    "rules": [
+      { "pattern": "현미.*뻥튀기", "product": "우리곡간 현미뻥튀기", "packRegex": "(\\d+)팩" },
+      { "pattern": "현미누룽지", "product": "우리곡간 현미누룽지", "packRegex": "(\\d+)팩" },
+      { "pattern": "구운서리태|서리태", "product": "우리곡간 서리태", "packRegex": "(\\d+)팩" },
+      { "pattern": "강황누룽지", "product": "우리곡간 강황누룽지", "packRegex": "(\\d+)팩" },
+      { "pattern": "귀리누룽지", "product": "우리곡간 귀리누룽지", "packRegex": "(\\d+)팩" },
+      { "pattern": "코코넛누룽지", "product": "우리곡간 코코넛누룽지", "packRegex": "(\\d+)팩" },
+      { "pattern": "검정깨누룽지", "product": "우리곡간 검정깨누룽지", "packRegex": "(\\d+)팩" }
+    ]
+  },
+
+  "naver": {
+    "column": { "productName": "D", "option": "E", "quantity": "F" },
+    "rules": [
+      { "pattern": "현미뻥튀기", "product": "우리곡간 현미뻥튀기", "packRegex": "(\\d+)(?:개입|봉|팩)" },
+      { "pattern": "현미누룽지|수제현미누룽지", "product": "우리곡간 현미누룽지", "packRegex": "(\\d+)(?:개입|봉|팩)" },
+      { "pattern": "서리태", "product": "우리곡간 서리태", "packRegex": "(\\d+)(?:개입|봉|팩)" },
+      { "pattern": "강황누룽지", "product": "우리곡간 강황누룽지", "packRegex": "(\\d+)(?:개입|봉|팩)" },
+      { "pattern": "귀리누룽지", "product": "우리곡간 귀리누룽지", "packRegex": "(\\d+)(?:개입|봉|팩)" },
+      { "pattern": "코코넛누룽지", "product": "우리곡간 코코넛누룽지", "packRegex": "(\\d+)(?:개입|봉|팩)" },
+      { "pattern": "검정깨누룽지", "product": "우리곡간 검정깨누룽지", "packRegex": "(\\d+)(?:개입|봉|팩)" }
+    ]
+  },
+
+  "kakao": {
+    "column": { "product": "E", "option": "F", "quantity": "G" },
+    "rules": [
+      { "pattern": "현미뻥튀기쌀과자(\\d+)봉", "product": "우리곡간 현미뻥튀기" },
+      { "pattern": "현미누룽지(\\d+)봉", "product": "우리곡간 현미누룽지" },
+      { "pattern": "귀리누룽지(\\d+)봉", "product": "우리곡간 귀리누룽지" },
+      { "pattern": "강황누룽지(\\d+)봉", "product": "우리곡간 강황누룽지" },
+      { "pattern": "검정깨누룽지(\\d+)봉", "product": "우리곡간 검정깨누룽지" },
+      { "pattern": "코코넛누룽지(\\d+)봉", "product": "우리곡간 코코넛누룽지" },
+      { "pattern": "종합누룽지(\\d+)봉", "product": "종합" },
+      { "pattern": "서리태\\s*(\\d+)봉", "product": "우리곡간 서리태" }
+    ]
+  },
+
+  "paldogam": {
+    "column": { "productName": "J", "option": "L", "quantity": "N" },
+    "rules": [
+      { "pattern": "현미누룽지", "product": "@온도감 현미누룽지", "defaultPack": 5 }
+    ]
+  }
+}

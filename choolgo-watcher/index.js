@@ -9,19 +9,9 @@ const paldogamParser = require('./parsers/paldogam');
 const genericParser = require('./parsers/generic');
 const { extractShippingRows } = require('./shipping/extract-shipping');
 const { appendShippingRows } = require('./shipping/courier-writer');
+const { START_DATE, WATCH_PATHS, PROCESSED_FILE } = require('./config/config');
 
-// 설정
-const CHOOLGO_DIR = path.resolve(__dirname, '../choolgo');
-const PROCESSED_FILE = path.join(__dirname, 'processed.json');
-const START_DATE = '2026-02-08'; // 이 날짜 이후 파일만 처리
 const DRY_RUN = process.argv.includes('--dry-run'); // 테스트 모드 (Firebase 차감 안 함)
-
-// 감시 대상 폴더
-const WATCH_PATHS = [
-    path.join(CHOOLGO_DIR, '직택배'),
-    path.join(CHOOLGO_DIR, '카카오'),
-    path.join(CHOOLGO_DIR, '팔도감'),
-];
 
 // 처리 완료 파일 목록 로드
 function loadProcessed() {
@@ -306,6 +296,16 @@ function startWatcher() {
         console.log('\n서비스 종료...');
         watcher.close();
         process.exit(0);
+    });
+
+    process.on('uncaughtException', (err) => {
+        console.error('[치명적 오류]', err);
+        // pm2가 자동 재시작하도록 종료
+        process.exit(1);
+    });
+
+    process.on('unhandledRejection', (reason) => {
+        console.error('[미처리 Promise 오류]', reason);
     });
 }
 

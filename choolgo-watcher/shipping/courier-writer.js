@@ -1,8 +1,7 @@
 const XLSX = require('xlsx');
 const path = require('path');
 const fs = require('fs');
-
-const CHOOLGO_DIR = path.resolve(__dirname, '../../choolgo');
+const { CHOOLGO_DIR } = require('../config/config');
 
 // 대한통운 택배양식 헤더
 const HEADERS = [
