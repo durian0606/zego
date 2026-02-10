@@ -2766,6 +2766,49 @@ tr.row-locked td:first-child::before {
 }
 
 /* ============================================
+   메인 탭 네비게이션
+   ============================================ */
+.main-tabs {
+    display: flex;
+    gap: 0;
+    background: white;
+    border-bottom: 2px solid var(--color-border);
+    padding: 0 var(--spacing-md);
+    margin: 0 calc(-1 * var(--spacing-lg));
+}
+
+.main-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: -2px;
+}
+
+.main-tab:hover {
+    color: var(--color-text-dark);
+    background: var(--color-bg-light);
+}
+
+.main-tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: 600;
+}
+
+.header-action-group {
+    display: contents;
+}
+
+/* ============================================
    출하관리 섹션
    ============================================ */
 .btn-chulha {

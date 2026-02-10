@@ -3336,10 +3336,10 @@ function isEditing() {
 function isDialogOpen() {
     const productRegister = document.getElementById('product-register-section');
     const settings = document.getElementById('settings-section');
-    const chulha = document.getElementById('chulha-section');
+    const shippingPage = document.getElementById('page-shipping');
     return (productRegister && productRegister.style.display !== 'none') ||
            (settings && settings.style.display !== 'none') ||
-           (chulha && chulha.style.display !== 'none');
+           (shippingPage && shippingPage.style.display !== 'none');
 }
 
 // 제품 선택 이동 함수
@@ -3497,27 +3497,35 @@ productNameMappingsRef.on('value', (snapshot) => {
     updateMappingTable();
 });
 
-// 출하관리 섹션 토글
-const btnToggleChulha = document.getElementById('btn-toggle-chulha');
-const btnCloseChulha = document.getElementById('btn-close-chulha');
-const chulhaSection = document.getElementById('chulha-section');
+// ============================================
+// 메인 탭 전환 (생산관리 / 출하관리)
+// ============================================
+const pageProduction = document.getElementById('page-production');
+const pageShipping = document.getElementById('page-shipping');
+const productionActions = document.getElementById('production-actions');
 
-btnToggleChulha.addEventListener('click', () => {
-    if (chulhaSection.style.display === 'none') {
-        chulhaSection.style.display = 'block';
-        chulhaSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        scanIndicator.style.display = 'none';
-        lucide.createIcons();
-    } else {
-        chulhaSection.style.display = 'none';
-        scanIndicator.style.display = 'flex';
-    }
-});
+document.querySelectorAll('.main-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const page = tab.dataset.page;
 
-btnCloseChulha.addEventListener('click', () => {
-    chulhaSection.style.display = 'none';
-    scanIndicator.style.display = 'flex';
-    document.getElementById('barcode-input').focus();
+        // 탭 활성화 상태
+        document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        if (page === 'production') {
+            pageProduction.style.display = '';
+            pageShipping.style.display = 'none';
+            productionActions.style.display = '';
+            scanIndicator.style.display = 'flex';
+            document.getElementById('barcode-input').focus();
+        } else {
+            pageProduction.style.display = 'none';
+            pageShipping.style.display = '';
+            productionActions.style.display = 'none';
+            scanIndicator.style.display = 'none';
+            lucide.createIcons();
+        }
+    });
 });
 
 // 매핑 테이블 렌더링

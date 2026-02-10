@@ -11,19 +11,32 @@
         <header>
             <h1><i data-lucide="package" style="display: inline-block; vertical-align: middle; margin-right: 10px;"></i>우리곡간식품 재고관리 시스템</h1>
             <div class="header-actions">
-                <button id="btn-toggle-register" class="btn btn-register"><i data-lucide="plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>제품 등록</button>
-                <button id="btn-print-barcode" class="btn btn-print" title="바코드 인쇄"><i data-lucide="printer" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 인쇄</button>
-                <button id="btn-toggle-barcode-management" class="btn btn-barcode-mgmt" title="바코드 관리"><i data-lucide="list" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 관리</button>
-                <button id="btn-toggle-choolgo" class="btn btn-choolgo" title="출고현황"><i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>출고현황</button>
-                <button id="btn-toggle-chulha" class="btn btn-chulha" title="출하관리"><i data-lucide="truck" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>출하관리</button>
-                <button id="btn-settings" class="btn btn-settings" title="설정"><i data-lucide="settings" style="width: 18px; height: 18px;"></i></button>
+                <div id="production-actions" class="header-action-group">
+                    <button id="btn-toggle-register" class="btn btn-register"><i data-lucide="plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>제품 등록</button>
+                    <button id="btn-print-barcode" class="btn btn-print" title="바코드 인쇄"><i data-lucide="printer" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 인쇄</button>
+                    <button id="btn-toggle-barcode-management" class="btn btn-barcode-mgmt" title="바코드 관리"><i data-lucide="list" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 관리</button>
+                    <button id="btn-settings" class="btn btn-settings" title="설정"><i data-lucide="settings" style="width: 18px; height: 18px;"></i></button>
+                </div>
                 <span id="connection-status" class="status-badge disconnected">연결 중...</span>
             </div>
         </header>
 
+        <!-- 메인 탭 네비게이션 -->
+        <nav class="main-tabs" id="main-tabs">
+            <button class="main-tab active" data-page="production">
+                <i data-lucide="factory" style="width: 16px; height: 16px;"></i>생산관리
+            </button>
+            <button class="main-tab" data-page="shipping">
+                <i data-lucide="truck" style="width: 16px; height: 16px;"></i>출하관리
+            </button>
+        </nav>
+
         <div class="main-content">
             <!-- 숨겨진 바코드 입력 -->
             <input type="text" id="barcode-input" class="hidden-input" autofocus lang="en" autocomplete="off" inputmode="latin">
+
+            <!-- ===== 생산관리 페이지 ===== -->
+            <div id="page-production" class="page-content">
 
             <!-- 스캔 준비 상태 표시 -->
             <div id="scan-indicator" class="scan-indicator">
@@ -181,11 +194,15 @@
                 </div>
             </section>
 
-            <!-- 출고파일 현황 섹션 (토글) -->
-            <section class="choolgo-section" id="choolgo-section" style="display: none;">
+            </div><!-- /page-production -->
+
+            <!-- ===== 출하관리 페이지 ===== -->
+            <div id="page-shipping" class="page-content" style="display: none;">
+
+            <!-- 출고파일 현황 섹션 -->
+            <section class="choolgo-section" id="choolgo-section">
                 <div class="section-header">
                     <h2>출고파일 현황</h2>
-                    <button id="btn-close-choolgo" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
                 </div>
                 <div class="choolgo-date-selector">
                     <button id="btn-choolgo-prev" class="btn btn-sm">&larr;</button>
@@ -249,11 +266,10 @@
                 </div>
             </section>
 
-            <!-- 출하관리 섹션 (토글) -->
-            <section class="chulha-section" id="chulha-section" style="display: none;">
+            <!-- 출하관리 섹션 -->
+            <section class="chulha-section" id="chulha-section">
                 <div class="section-header">
-                    <h2>출하관리</h2>
-                    <button id="btn-close-chulha" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+                    <h2>택배양식 생성</h2>
                 </div>
 
                 <!-- 작업시작 블록 -->
@@ -297,6 +313,8 @@
                     </div>
                 </div>
             </section>
+
+            </div><!-- /page-shipping -->
 
             <!-- 설정 섹션 (토글) -->
             <section class="settings-section" id="settings-section" style="display: none;">
