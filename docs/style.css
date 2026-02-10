@@ -2933,6 +2933,23 @@ tr.row-locked td:first-child::before {
     background: #fee2e2;
 }
 
+/* 매핑 인라인 수정 */
+.mapping-editable {
+    cursor: pointer;
+}
+.mapping-editable:hover {
+    background: #eff6ff;
+}
+.mapping-edit-input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    outline: none;
+    box-sizing: border-box;
+}
+
 /* 모바일 대응 */
 @media (max-width: 600px) {
     .mapping-form {

@@ -3546,8 +3546,8 @@ function updateMappingTable() {
 
     tbody.innerHTML = entries.map(([id, m]) => `
         <tr>
-            <td>${m.pattern}</td>
-            <td>${m.shortName}</td>
+            <td class="mapping-editable" onclick="editMappingCell('${id}', 'pattern', this)">${m.pattern}</td>
+            <td class="mapping-editable" onclick="editMappingCell('${id}', 'shortName', this)">${m.shortName}</td>
             <td style="text-align: center;">
                 <button class="btn-mapping-delete" onclick="deleteMapping('${id}')" title="삭제">
                     <i data-lucide="trash-2" style="width: 14px; height: 14px; color: #ef4444;"></i>
@@ -3558,6 +3558,42 @@ function updateMappingTable() {
 
     lucide.createIcons();
 }
+
+// 매핑 셀 인라인 수정
+window.editMappingCell = function(id, field, td) {
+    if (td.querySelector('input')) return;
+
+    const currentValue = td.textContent.trim();
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentValue;
+    input.className = 'mapping-edit-input';
+
+    td.textContent = '';
+    td.appendChild(input);
+    input.focus();
+    input.select();
+
+    let saved = false;
+    async function save() {
+        if (saved) return;
+        saved = true;
+        const newValue = input.value.trim();
+        if (!newValue || newValue === currentValue) {
+            td.textContent = currentValue;
+            td.classList.remove('editing');
+            return;
+        }
+        await productNameMappingsRef.child(id).update({ [field]: newValue, updatedAt: Date.now() });
+    }
+
+    td.classList.add('editing');
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); save(); }
+        if (e.key === 'Escape') { saved = true; td.textContent = currentValue; td.classList.remove('editing'); }
+    });
+    input.addEventListener('blur', save);
+};
 
 // 매핑 추가
 document.getElementById('btn-add-mapping').addEventListener('click', async () => {
