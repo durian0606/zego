@@ -2813,26 +2813,27 @@ window.addEventListener('load', () => {
 });
 
 // 포커스 항상 유지 (바코드 스캐너 입력 받기 위해)
-// 단, 제품 등록 섹션/설정 섹션이 열려있거나 편집 중일 때는 제외
+// 단, 제품 등록 섹션/설정 섹션이 열려있거나 편집 중이거나 출하관리 페이지일 때는 제외
+function shouldAutoFocusBarcode() {
+    const shippingPage = document.getElementById('page-shipping');
+    if (shippingPage && shippingPage.style.display !== 'none') return false;
+    if (productRegisterSection.style.display !== 'none') return false;
+    if (settingsSection.style.display !== 'none') return false;
+    if (AppState.isEditingMinStock || AppState.isEditingCurrentStock || AppState.isEditingProduction) return false;
+    return true;
+}
+
 barcodeInput.addEventListener('blur', () => {
     setTimeout(() => {
-        if (productRegisterSection.style.display === 'none' &&
-            settingsSection.style.display === 'none' &&
-            !AppState.isEditingMinStock &&
-            !AppState.isEditingCurrentStock &&
-            !AppState.isEditingProduction) {
+        if (shouldAutoFocusBarcode()) {
             barcodeInput.focus();
         }
     }, 100);
 });
 
-// 화면 클릭 시에도 포커스 유지 (제품 등록/설정 섹션이 닫혀있고 편집 중이 아닐 때만)
+// 화면 클릭 시에도 포커스 유지
 document.addEventListener('click', (e) => {
-    if (productRegisterSection.style.display === 'none' &&
-        settingsSection.style.display === 'none' &&
-        !AppState.isEditingMinStock &&
-        !AppState.isEditingCurrentStock &&
-        !AppState.isEditingProduction) {
+    if (shouldAutoFocusBarcode()) {
         barcodeInput.focus();
     }
 });
