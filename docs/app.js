@@ -108,7 +108,9 @@ const AppState = {
     currentWorkingProduct: null,  // 현재 작업 중인 제품 (강조 표시용)
     selectedProductIndex: 0,  // 키보드 단축키용 선택된 제품 인덱스
     isProductLocked: false,  // 제품 선택 고정 상태
-    choolgoSummary: { channels: {}, products: {} }  // 오늘 출고 요약 (choolgo-watcher)
+    choolgoSummary: { channels: {}, products: {} },  // 오늘 출고 요약 (choolgo-watcher)
+    productNameMappings: {},  // 품목명 매핑 (출하관리)
+    chulhaProcessing: false,  // 출하 처리 중 플래그
 };
 
 // ============================================
@@ -3334,8 +3336,10 @@ function isEditing() {
 function isDialogOpen() {
     const productRegister = document.getElementById('product-register-section');
     const settings = document.getElementById('settings-section');
+    const chulha = document.getElementById('chulha-section');
     return (productRegister && productRegister.style.display !== 'none') ||
-           (settings && settings.style.display !== 'none');
+           (settings && settings.style.display !== 'none') ||
+           (chulha && chulha.style.display !== 'none');
 }
 
 // 제품 선택 이동 함수
@@ -3480,5 +3484,166 @@ document.getElementById('manual-overlay').addEventListener('click', (e) => {
         document.getElementById('barcode-input').focus();
     }
 });
+
+// ============================================
+// 출하관리 (합배송 + 품목명 매핑 + 수동 트리거)
+// ============================================
+
+const productNameMappingsRef = database.ref('productNameMappings');
+
+// 매핑 데이터 실시간 리스너
+productNameMappingsRef.on('value', (snapshot) => {
+    AppState.productNameMappings = snapshot.val() || {};
+    updateMappingTable();
+});
+
+// 출하관리 섹션 토글
+const btnToggleChulha = document.getElementById('btn-toggle-chulha');
+const btnCloseChulha = document.getElementById('btn-close-chulha');
+const chulhaSection = document.getElementById('chulha-section');
+const scanIndicator = document.getElementById('scan-indicator');
+
+btnToggleChulha.addEventListener('click', () => {
+    if (chulhaSection.style.display === 'none') {
+        chulhaSection.style.display = 'block';
+        chulhaSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        scanIndicator.style.display = 'none';
+        lucide.createIcons();
+    } else {
+        chulhaSection.style.display = 'none';
+        scanIndicator.style.display = 'flex';
+    }
+});
+
+btnCloseChulha.addEventListener('click', () => {
+    chulhaSection.style.display = 'none';
+    scanIndicator.style.display = 'flex';
+    document.getElementById('barcode-input').focus();
+});
+
+// 매핑 테이블 렌더링
+function updateMappingTable() {
+    const tbody = document.getElementById('mapping-tbody');
+    if (!tbody) return;
+
+    const mappings = AppState.productNameMappings;
+    const entries = Object.entries(mappings).filter(([, v]) => v && v.pattern);
+
+    if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="no-data">매핑이 없습니다.</td></tr>';
+        return;
+    }
+
+    entries.sort((a, b) => (b[1].priority || 0) - (a[1].priority || 0) || a[1].pattern.localeCompare(b[1].pattern));
+
+    tbody.innerHTML = entries.map(([id, m]) => `
+        <tr>
+            <td>${m.pattern}</td>
+            <td>${m.shortName}</td>
+            <td style="text-align: center;">
+                <button class="btn-mapping-delete" onclick="deleteMapping('${id}')" title="삭제">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px; color: #ef4444;"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    lucide.createIcons();
+}
+
+// 매핑 추가
+document.getElementById('btn-add-mapping').addEventListener('click', async () => {
+    const patternInput = document.getElementById('mapping-pattern');
+    const shortnameInput = document.getElementById('mapping-shortname');
+    const pattern = patternInput.value.trim();
+    const shortName = shortnameInput.value.trim();
+
+    if (!pattern || !shortName) {
+        showScanResult('패턴과 단축명을 모두 입력해주세요.', 'error');
+        return;
+    }
+
+    await productNameMappingsRef.push({
+        pattern,
+        shortName,
+        priority: 10,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+    });
+
+    patternInput.value = '';
+    shortnameInput.value = '';
+    showScanResult(`매핑 추가: "${pattern}" → "${shortName}"`, 'success');
+});
+
+// 매핑 삭제
+window.deleteMapping = async function(id) {
+    if (!confirm('이 매핑을 삭제하시겠습니까?')) return;
+    await productNameMappingsRef.child(id).remove();
+    showScanResult('매핑이 삭제되었습니다.', 'success');
+};
+
+// 작업시작 버튼
+document.getElementById('btn-chulha-process').addEventListener('click', async () => {
+    if (AppState.chulhaProcessing) return;
+    AppState.chulhaProcessing = true;
+
+    const btn = document.getElementById('btn-chulha-process');
+    const statusEl = document.getElementById('chulha-status');
+    const resultsDiv = document.getElementById('chulha-results');
+    const resultsBody = document.getElementById('chulha-results-body');
+
+    btn.disabled = true;
+    statusEl.textContent = '처리 중...';
+    statusEl.className = 'chulha-status processing';
+    resultsDiv.style.display = 'none';
+
+    try {
+        const res = await fetch(`${CHULHA_API_URL}/api/process`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            const s = data.summary;
+            if (s.filesProcessed === 0) {
+                statusEl.textContent = '처리할 새 파일이 없습니다.';
+                statusEl.className = 'chulha-status success';
+            } else {
+                statusEl.textContent = `완료: ${s.filesProcessed}개 파일, 택배양식 ${s.totalShippingRows}행 → ${s.consolidatedRows}행 (합배송)`;
+                statusEl.className = 'chulha-status success';
+            }
+            renderProcessResults(data.results, resultsBody);
+            resultsDiv.style.display = 'block';
+        } else {
+            statusEl.textContent = `오류: ${data.error}`;
+            statusEl.className = 'chulha-status error';
+        }
+    } catch (err) {
+        statusEl.textContent = `서버 연결 실패: ${err.message}`;
+        statusEl.className = 'chulha-status error';
+    }
+
+    btn.disabled = false;
+    AppState.chulhaProcessing = false;
+});
+
+function renderProcessResults(results, container) {
+    if (!results || results.length === 0) {
+        container.innerHTML = '<p class="no-data">처리할 새 파일이 없습니다.</p>';
+        return;
+    }
+    let html = '<table class="chulha-result-table"><thead><tr><th>파일명</th><th>채널</th><th>제품수</th><th>택배행</th><th>상태</th></tr></thead><tbody>';
+    for (const r of results) {
+        const status = r.error
+            ? `<span class="text-danger">${r.error}</span>`
+            : '<span class="text-success">완료</span>';
+        html += `<tr><td>${r.filename}</td><td>${r.channel || '-'}</td><td>${r.items || 0}</td><td>${r.shippingRows || 0}</td><td>${status}</td></tr>`;
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
 
 console.log('우리곡간식품 재고관리 시스템이 시작되었습니다!');

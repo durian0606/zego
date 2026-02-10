@@ -18,10 +18,14 @@ const WATCH_PATHS = WATCH_SUBDIRS.map(d => path.join(CHOOLGO_DIR, d));
 // 처리 완료 기록 파일
 const PROCESSED_FILE = path.join(__dirname, '..', 'processed.json');
 
+// Express API 서버 포트
+const API_PORT = process.env.API_PORT || 3100;
+
 module.exports = {
     CHOOLGO_DIR,
     START_DATE,
     FIREBASE_URL,
     WATCH_PATHS,
     PROCESSED_FILE,
+    API_PORT,
 };

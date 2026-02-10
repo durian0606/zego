@@ -14,6 +14,7 @@ const HEADERS = [
     '내품수량',
     '운송장',
     '택배사',
+    '채널',
 ];
 
 // 컬럼 너비 설정
@@ -27,6 +28,7 @@ const COL_WIDTHS = [
     { wch: 8 },   // 내품수량
     { wch: 15 },  // 운송장
     { wch: 10 },  // 택배사
+    { wch: 14 },  // 채널
 ];
 
 /**
@@ -40,7 +42,7 @@ function getOutputPath() {
 }
 
 /**
- * 행의 fingerprint 생성 (중복 방지용)
+ * 행의 fingerprint 생성 (중복 방지용 - 개별 행)
  */
 function fingerprint(row) {
     return [
@@ -49,6 +51,17 @@ function fingerprint(row) {
         row.address || '',
         row.productName || '',
         String(row.quantity || ''),
+    ].join('|');
+}
+
+/**
+ * 합배송 후 fingerprint (수령인 단위 중복 방지)
+ */
+function consolidatedFingerprint(row) {
+    return [
+        row.recipientName || '',
+        row.phone || '',
+        row.address || '',
     ].join('|');
 }
 
@@ -78,6 +91,7 @@ function readExistingRows(filePath) {
         quantity: r[6] != null ? r[6] : '',
         invoice: String(r[7] || ''),
         courier: String(r[8] || ''),
+        channel: String(r[9] || ''),
     }));
 }
 
@@ -160,6 +174,7 @@ async function appendShippingRows(newRows) {
             row.quantity,
             row.invoice || '',
             row.courier || '',
+            row.channel || '',
         ]);
     }
 
@@ -178,4 +193,4 @@ async function appendShippingRows(newRows) {
     console.log(`  [택배양식] ${path.basename(outputPath)}에 ${addedCount}행 추가 (총 ${allRows.length}행)`);
 }
 
-module.exports = { appendShippingRows, getOutputPath };
+module.exports = { appendShippingRows, getOutputPath, readExistingRows, fingerprint, consolidatedFingerprint };

@@ -143,4 +143,19 @@ async function updateChoolgoSummary(date, items, channel) {
     });
 }
 
-module.exports = { getProduct, updateProductStock, addHistory, deductStock, addChoolgoLog, updateChoolgoSummary };
+// 품목명 매핑 전체 조회
+async function getProductNameMappings() {
+    const data = await firebaseRequestWithRetry('GET', '/productNameMappings.json');
+    if (!data) return [];
+    return Object.entries(data)
+        .filter(([, v]) => v && v.pattern)
+        .map(([id, m]) => ({
+            id,
+            pattern: m.pattern,
+            shortName: m.shortName,
+            priority: m.priority || 0,
+        }))
+        .sort((a, b) => b.priority - a.priority);
+}
+
+module.exports = { getProduct, updateProductStock, addHistory, deductStock, addChoolgoLog, updateChoolgoSummary, getProductNameMappings };

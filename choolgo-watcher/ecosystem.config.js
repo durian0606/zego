@@ -1,7 +1,7 @@
 module.exports = {
     apps: [{
         name: 'choolgo-watcher',
-        script: 'index.js',
+        script: 'server.js',
         cwd: __dirname,
         watch: false,
         autorestart: true,

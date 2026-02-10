@@ -13,4 +13,7 @@ const firebaseConfig = {
 // Firebase 초기화
 firebase.initializeApp(firebaseConfig);
 
+// 출하관리 API 서버 URL (NAS에서 Express 서버 실행)
+const CHULHA_API_URL = `http://${window.location.hostname}:3100`;
+
 console.log('Firebase 연결됨!');

@@ -15,6 +15,7 @@
                 <button id="btn-print-barcode" class="btn btn-print" title="바코드 인쇄"><i data-lucide="printer" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 인쇄</button>
                 <button id="btn-toggle-barcode-management" class="btn btn-barcode-mgmt" title="바코드 관리"><i data-lucide="list" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 관리</button>
                 <button id="btn-toggle-choolgo" class="btn btn-choolgo" title="출고현황"><i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>출고현황</button>
+                <button id="btn-toggle-chulha" class="btn btn-chulha" title="출하관리"><i data-lucide="truck" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>출하관리</button>
                 <button id="btn-settings" class="btn btn-settings" title="설정"><i data-lucide="settings" style="width: 18px; height: 18px;"></i></button>
                 <span id="connection-status" class="status-badge disconnected">연결 중...</span>
             </div>
@@ -242,6 +243,55 @@
                             </thead>
                             <tbody id="choolgo-files-tbody">
                                 <tr><td colspan="4" class="no-data">데이터 없음</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 출하관리 섹션 (토글) -->
+            <section class="chulha-section" id="chulha-section" style="display: none;">
+                <div class="section-header">
+                    <h2>출하관리</h2>
+                    <button id="btn-close-chulha" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+                </div>
+
+                <!-- 작업시작 블록 -->
+                <div class="chulha-block">
+                    <h3>출고 파일 처리</h3>
+                    <p class="chulha-desc">감시 폴더의 미처리 주문 파일을 스캔하고 합배송 택배양식을 생성합니다.</p>
+                    <div class="chulha-trigger-actions">
+                        <button id="btn-chulha-process" class="btn btn-primary" style="width: auto;">
+                            <i data-lucide="play" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>작업시작
+                        </button>
+                        <span id="chulha-status" class="chulha-status"></span>
+                    </div>
+                    <div id="chulha-results" class="chulha-results" style="display: none;">
+                        <h4>처리 결과</h4>
+                        <div id="chulha-results-body"></div>
+                    </div>
+                </div>
+
+                <!-- 품목명 매핑 블록 -->
+                <div class="chulha-block">
+                    <h3>품목명 매핑</h3>
+                    <p class="chulha-desc">주문서의 긴 품목명을 택배 송장용 단축명으로 변환합니다.</p>
+                    <div class="mapping-form">
+                        <input type="text" id="mapping-pattern" placeholder="포함 패턴 (예: 현미뻥튀기)">
+                        <input type="text" id="mapping-shortname" placeholder="단축명 (예: 현미뻥)">
+                        <button id="btn-add-mapping" class="btn btn-primary" style="width: auto; white-space: nowrap;">추가</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="mapping-table">
+                            <thead>
+                                <tr>
+                                    <th>포함 패턴</th>
+                                    <th>단축명</th>
+                                    <th style="width: 60px;">삭제</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mapping-tbody">
+                                <tr><td colspan="3" class="no-data">매핑이 없습니다.</td></tr>
                             </tbody>
                         </table>
                     </div>

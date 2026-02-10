@@ -2765,3 +2765,136 @@ tr.row-locked td:first-child::before {
     font-weight: 600;
 }
 
+/* ============================================
+   출하관리 섹션
+   ============================================ */
+.btn-chulha {
+    background: #0891b2;
+    color: white;
+    border: none;
+}
+.btn-chulha:hover {
+    background: #0e7490;
+}
+
+.chulha-section {
+    animation: slideDown 0.2s ease-out;
+}
+
+.chulha-block {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: var(--color-bg-light);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.chulha-block h3 {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text-dark);
+}
+
+.chulha-desc {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.chulha-trigger-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.chulha-status {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.chulha-status.processing { color: var(--color-warning); }
+.chulha-status.success { color: var(--color-success); }
+.chulha-status.error { color: var(--color-danger); }
+
+.chulha-results {
+    margin-top: var(--spacing-lg);
+}
+.chulha-results h4 {
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.9rem;
+}
+
+.chulha-result-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.chulha-result-table th,
+.chulha-result-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.85rem;
+    text-align: left;
+}
+.chulha-result-table th {
+    background: white;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.text-success { color: var(--color-success); font-weight: 600; }
+.text-danger { color: var(--color-danger); font-weight: 600; }
+
+/* 매핑 폼 */
+.mapping-form {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+.mapping-form input {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    min-height: var(--touch-target);
+}
+.mapping-form input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+/* 매핑 테이블 */
+#mapping-table th,
+#mapping-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.85rem;
+}
+#mapping-table th {
+    background: var(--color-bg-light);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.btn-mapping-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+}
+.btn-mapping-delete:hover {
+    background: #fee2e2;
+}
+
+/* 모바일 대응 */
+@media (max-width: 600px) {
+    .mapping-form {
+        flex-direction: column;
+    }
+    .chulha-trigger-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
