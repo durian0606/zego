@@ -3501,7 +3501,6 @@ productNameMappingsRef.on('value', (snapshot) => {
 const btnToggleChulha = document.getElementById('btn-toggle-chulha');
 const btnCloseChulha = document.getElementById('btn-close-chulha');
 const chulhaSection = document.getElementById('chulha-section');
-const scanIndicator = document.getElementById('scan-indicator');
 
 btnToggleChulha.addEventListener('click', () => {
     if (chulhaSection.style.display === 'none') {
