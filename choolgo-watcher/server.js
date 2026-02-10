@@ -1,11 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { scanAndProcess } = require('./index');
 const { API_PORT, WATCH_PATHS, START_DATE } = require('./config/config');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// 웹앱 정적 파일 서빙 (docs/ 폴더)
+app.use(express.static(path.join(__dirname, '..', 'docs')));
 
 // 동시 처리 방지
 let isProcessing = false;

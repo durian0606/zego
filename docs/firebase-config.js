@@ -13,7 +13,11 @@ const firebaseConfig = {
 // Firebase 초기화
 firebase.initializeApp(firebaseConfig);
 
-// 출하관리 API 서버 URL (NAS에서 Express 서버 실행)
-const CHULHA_API_URL = `http://${window.location.hostname}:3100`;
+// 출하관리 API 서버 URL
+// Express 서버에서 웹앱도 서빙하므로 같은 origin 사용 (http://NAS_IP:3100)
+// Vercel 등 외부 호스팅에서는 NAS에 접근 불가 → http://NAS_IP:3100 으로 직접 접속 필요
+const CHULHA_API_URL = window.location.port === '3100'
+    ? ''  // 같은 origin (Express 서버에서 접속 시)
+    : `http://${window.location.hostname}:3100`;  // 다른 서버에서 접속 시
 
 console.log('Firebase 연결됨!');
