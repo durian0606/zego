@@ -393,6 +393,69 @@ Always filter out invalid/undefined entries:
 - Firebase summary update: `updateChoolgoSummary()` in firebase.js
 - Express API server (port 3100): Serves `/api/process-chulha` endpoint for browser-based processing
 
+## Agent Usage Guidelines
+
+Claude Code provides specialized agents for different types of tasks. Use them proactively to improve code quality and development efficiency.
+
+### When to Use Agents
+
+**UI Designer (ui-designer)**
+- Automatically invoked for: UI/UX improvements, styling changes, design system updates, accessibility fixes
+- Use for:
+  - "금일생산현황 테이블 스타일 개선"
+  - "모바일 반응형 레이아웃 수정"
+  - "색상 접근성 개선"
+  - "다크모드 색상 조정"
+- Tips: Be specific about design goals (e.g., "버튼 크기를 44x44px 이상으로")
+
+**Explore (codebase explorer)**
+- Use for: Quick file search, keyword search, understanding codebase structure
+- Use when:
+  - "AudioFeedback 함수 어디 있어?"
+  - "Firebase 리스너 어떻게 설정했지?"
+  - "바코드 스캔 로직 찾아줘"
+- Thoroughness levels: "quick" (basic), "medium" (moderate), "very thorough" (comprehensive)
+- Tips: Use instead of manual Grep when you're not sure what to search for
+
+**Plan (implementation architect)**
+- Use for: Designing implementation strategy before coding
+- Use when:
+  - Adding new major features (e.g., "신규 채널 추가")
+  - Architectural changes (e.g., "Firebase 구조 변경")
+  - Multi-file refactoring (e.g., "바코드 시스템 재설계")
+- Tips: Use EnterPlanMode tool to enter plan mode, then ExitPlanMode when done
+
+**General-purpose (multi-step task handler)**
+- Use for: Complex tasks requiring search + analysis + implementation
+- Use when:
+  - "이 버그 원인 찾아서 고쳐줘"
+  - "재고 추세 분석 기능 추가"
+  - "테스트 케이스 작성 및 실행"
+- Tips: Clearly describe the goal, not the steps
+
+**Bash (command specialist)**
+- Use for: Git operations, npm/yarn, PM2, file system operations
+- Automatically invoked for: Git commands, package management, process management
+- Tips: Let Claude handle git commits and PR creation
+
+### Agent Best Practices
+
+1. **Trust the agent**: Agents have full context and will use appropriate tools
+2. **Be specific about goals**: "버튼 크기 개선" > "UI 개선"
+3. **Let agents run to completion**: Don't interrupt unless necessary
+4. **Review agent output**: Check results before committing
+5. **Use parallel agents**: Multiple independent tasks can run simultaneously
+
+### Custom Agent Ideas (Future)
+
+If frequently repeating patterns emerge, consider creating custom agents:
+- **Code Reviewer**: Automated code review (security, performance, best practices)
+- **Firebase Validator**: Validate Firebase data structure consistency
+- **Test Generator**: Generate test cases for barcode/inventory logic
+- **Performance Analyzer**: Profile and optimize slow operations
+
+To create custom agents, use Claude Agent SDK (see Agent SDK documentation).
+
 ## Common Development Patterns
 
 ### Adding a New UI Section
