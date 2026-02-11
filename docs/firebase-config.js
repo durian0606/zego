@@ -14,14 +14,20 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 // 출하관리 API 서버 URL
-// Express 서버가 웹앱 + API를 모두 서빙하므로 같은 origin 사용
+// Express 서버: http://192.168.0.67:3100
 // 접속 시나리오:
-//   http://192.168.0.67:3100             → port=3100 → same origin
-//   https://durian0606.iptime.org:6443   → port=6443 → same origin (역방향 프록시)
-//   https://zego-gules.vercel.app        → 외부 → DDNS URL로 API 호출
+//   http://192.168.0.67:3100             → same origin (Express 직접)
+//   로컬 네트워크(192.168.x.x, file://) → http://192.168.0.67:3100
+//   외부(Vercel 등)                      → https://durian0606.iptime.org:6443 (역방향 프록시 필요)
 const CHULHA_API_URL = (() => {
-    const port = window.location.port;
+    const { port, hostname, protocol } = window.location;
+    // Express 서버에서 직접 서빙하는 경우
     if (port === '3100' || port === '6443') return '';
+    // 로컬 네트워크 또는 file:// 접속
+    if (protocol === 'file:' || hostname.startsWith('192.168.') || hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://192.168.0.67:3100';
+    }
+    // 외부 접속 (Vercel 등)
     return 'https://durian0606.iptime.org:6443';
 })();
 
