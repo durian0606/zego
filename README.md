@@ -25,14 +25,14 @@
 1. [Firebase Console](https://console.firebase.google.com/)에서 프로젝트 생성
 2. Realtime Database 활성화 (테스트 모드)
 3. 웹 앱 등록 후 설정값 복사
-4. `public/firebase-config.js`에 설정값 붙여넣기
+4. `docs/firebase-config.js`에 설정값 붙여넣기
 
 ### 2. 실행
 
 ```bash
-# public 폴더의 index.html을 더블클릭하여 브라우저로 열기
+# docs 폴더의 index.html을 더블클릭하여 브라우저로 열기
 # 또는
-cd public
+cd docs
 python3 -m http.server 8000
 # 브라우저에서 http://localhost:8000 접속
 ```
@@ -74,18 +74,15 @@ firebase deploy
 
 ```
 zego/
-├── public/                    # 웹 앱 (이 폴더만 있으면 됨!)
+├── docs/                      # 웹 앱 (이 폴더만 있으면 됨!)
 │   ├── index.html            # 메인 페이지
 │   ├── app.js                # Firebase 연동 로직
+│   ├── chulha-browser.js     # 택배양식 생성
 │   ├── style.css             # 스타일
 │   └── firebase-config.js    # Firebase 설정 (수정 필요!)
+├── choolgo-watcher/          # 출하관리 파일 감시 서비스
 ├── FIREBASE_SETUP.md         # Firebase 설정 가이드
 └── README.md                 # 이 파일
-
-# 참고: Python 버전 (레거시)
-├── app.py                    # Flask 서버 (사용 안 함)
-├── database.py               # SQLite DB (사용 안 함)
-└── templates/                # 구버전 템플릿 (사용 안 함)
 ```
 
 ## 🎨 화면 구성
@@ -95,17 +92,6 @@ zego/
 - **제품 등록**: 새 제품 추가 폼
 - **재고 현황**: 전체 제품 재고 현황 테이블
 - **변동 히스토리**: 최근 50개 입출고 기록
-
-## 🔥 Firebase vs Python 버전 비교
-
-| 기능 | Firebase 버전 | Python 버전 |
-|------|--------------|------------|
-| 서버 실행 | 불필요 | 필요 |
-| 외부 접속 | 쉬움 (Firebase Hosting) | 어려움 (포트포워딩 필요) |
-| 실시간 동기화 | 자동 | WebSocket 구현 필요 |
-| 데이터베이스 | Firebase Realtime DB | SQLite |
-| 배포 | HTML 파일만 | 서버 필요 |
-| 비용 | 무료 | 호스팅 비용 발생 가능 |
 
 ## 💡 사용 팁
 
