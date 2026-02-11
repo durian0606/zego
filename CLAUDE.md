@@ -456,6 +456,252 @@ If frequently repeating patterns emerge, consider creating custom agents:
 
 To create custom agents, use Claude Agent SDK (see Agent SDK documentation).
 
+## Role-Based Development Patterns
+
+When Claude receives a task, you can request it to assume a specific role for specialized expertise. This ensures consistent, high-quality results aligned with best practices.
+
+### Code Reviewer Role
+
+**사용 시기:**
+- 코드 커밋 전 리뷰 필요 시
+- 보안 취약점 체크
+- 성능 문제 발견
+- 리팩토링 후 검증
+
+**프롬프트 예시:**
+```
+Code Reviewer로서 다음 파일을 리뷰해줘:
+- docs/app.js의 바코드 스캔 로직
+- choolgo-watcher/parsers/generic.js
+
+다음을 중점적으로 검토:
+1. 보안 취약점 (XSS, Command Injection, Path Traversal)
+2. 성능 문제 (메모리 누수, 불필요한 반복, 비효율적 쿼리)
+3. 에러 처리 누락
+4. Firebase 보안 규칙 위반 가능성
+```
+
+**체크리스트:**
+- ✅ 보안: SQL Injection, XSS, CSRF, Command Injection
+- ✅ 성능: O(n²) 알고리즘, 메모리 누수, 불필요한 렌더링
+- ✅ 에러 처리: try-catch, null 체크, 예외 상황
+- ✅ 베스트 프랙티스: DRY, SOLID, 네이밍 컨벤션
+- ✅ Firebase: 보안 규칙, 쿼리 효율성, 리스너 정리
+- ✅ 코드 품질: 가독성, 주석, 복잡도
+
+**리뷰 결과 형식:**
+- 🔴 Critical: 즉시 수정 필요 (보안, 치명적 버그)
+- 🟡 Warning: 개선 권장 (성능, 유지보수성)
+- 🟢 Good: 잘 작성됨
+- 💡 Suggestion: 선택적 개선 아이디어
+
+---
+
+### Frontend Developer Role
+
+**사용 시기:**
+- 새로운 UI 기능 구현
+- 기존 UI 개선 및 리팩토링
+- 사용자 인터랙션 추가
+- 반응형 디자인 적용
+
+**프롬프트 예시:**
+```
+Frontend Developer로서 다음 기능을 구현해줘:
+
+요구사항:
+- 금일생산현황 테이블에 "주간 평균" 컬럼 추가
+- 최근 7일 평균 생산량 자동 계산
+- 평균보다 낮으면 🔻, 높으면 🔺 표시
+- 모바일에서도 잘 보이도록 반응형 적용
+
+기술 스택:
+- Vanilla JavaScript (ES6+)
+- Firebase Realtime Database
+- 기존 style.css 스타일 시스템 사용
+```
+
+**체크리스트:**
+- ✅ DOM 조작: 효율적인 쿼리, 불필요한 리플로우 방지
+- ✅ 이벤트: 디바운싱/쓰로틀링, 이벤트 위임, 리스너 정리
+- ✅ 상태 관리: AppState 일관성, 불변성 유지
+- ✅ Firebase 연동: 실시간 리스너, 에러 처리, 메모리 누수 방지
+- ✅ 반응형: 모바일 우선, 미디어 쿼리, 터치 친화적
+- ✅ 접근성: 키보드 내비게이션, ARIA 속성, 색상 대비
+- ✅ 성능: 레이지 로딩, 가상 스크롤, 렌더링 최적화
+
+**코드 스타일:**
+- camelCase 네이밍
+- 한글 UI 텍스트
+- 간결한 주석 (왜에 집중)
+- 기존 패턴 준수
+
+---
+
+### Backend Developer Role
+
+**사용 시기:**
+- API 엔드포인트 설계 및 구현
+- Firebase 데이터 구조 설계
+- 데이터 검증 로직 추가
+- 서버 로직 최적화
+
+**프롬프트 예시:**
+```
+Backend Developer로서 다음 API를 구현해줘:
+
+요구사항:
+- choolgo-watcher에 새로운 채널 "쿠팡" 파서 추가
+- Excel 파일 형식: A=주문번호, B=수령인, C=전화번호, D=주소, E=품목명, F=수량
+- Firebase choolgoLogs에 요약 데이터 저장
+- 중복 제거 로직 적용 (fingerprint 기반)
+
+기술 스택:
+- Node.js
+- xlsx 라이브러리
+- Firebase Admin SDK
+```
+
+**체크리스트:**
+- ✅ 데이터 검증: 입력 검증, 타입 체크, 범위 확인
+- ✅ 에러 처리: try-catch, 의미 있는 에러 메시지, 롤백
+- ✅ 보안: 입력 새니타이징, SQL/Command Injection 방지, 권한 확인
+- ✅ Firebase: 트랜잭션, 보안 규칙, 쿼리 최적화
+- ✅ 성능: 캐싱, 배치 처리, 비동기 처리
+- ✅ 로깅: 디버깅 정보, 에러 추적, 성능 메트릭
+- ✅ 테스트 가능성: 모듈화, 의존성 주입, 순수 함수
+
+**코드 원칙:**
+- 명확한 함수명
+- 한 함수는 한 가지 역할
+- 에러는 상위로 전파
+- 로그는 구조화
+
+---
+
+### Tester Role
+
+**사용 시기:**
+- 새 기능 테스트 케이스 작성
+- 엣지 케이스 발견
+- 버그 재현 시나리오 작성
+- 통합 테스트 설계
+
+**프롬프트 예시:**
+```
+Tester로서 다음 기능을 테스트해줘:
+
+기능: 바코드 스캔 → 재고 업데이트
+테스트 범위:
+1. 정상 시나리오 (IN, OUT, VIEW 타입)
+2. 엣지 케이스 (존재하지 않는 바코드, 재고 부족, 중복 스캔)
+3. 성능 테스트 (100개 연속 스캔)
+4. Firebase 동기화 확인
+
+테스트 결과를 표로 정리해줘.
+```
+
+**체크리스트:**
+- ✅ 기능 테스트: 정상 시나리오, 엣지 케이스, 경계값
+- ✅ 통합 테스트: Firebase 연동, API 호출, 파일 처리
+- ✅ 성능 테스트: 응답 시간, 메모리 사용량, 동시 사용자
+- ✅ 보안 테스트: 입력 검증, 권한 확인, XSS/Injection
+- ✅ 회귀 테스트: 기존 기능 영향 확인
+- ✅ 사용성 테스트: 모바일, 키보드, 스크린 리더
+
+**테스트 시나리오 형식:**
+```markdown
+## Test Case: 바코드 스캔 - 입고 처리
+
+**Given**: 제품 "우리곡간식" 재고 100개
+**When**: "P001-IN-80" 바코드 스캔
+**Then**:
+- 재고 100 → 180
+- history에 IN 기록 추가
+- Firebase 업데이트 확인
+- UI에 실시간 반영
+```
+
+---
+
+### Performance Optimizer Role
+
+**사용 시기:**
+- 로딩 시간이 느릴 때
+- 메모리 사용량이 높을 때
+- 렌더링이 느릴 때
+- Firebase 읽기/쓰기 비용이 높을 때
+
+**프롬프트 예시:**
+```
+Performance Optimizer로서 다음을 최적화해줘:
+
+문제:
+- 제품 목록 1000개일 때 테이블 렌더링이 느림 (3초 이상)
+- Firebase 리스너가 너무 자주 트리거됨
+
+목표:
+- 렌더링 1초 이내
+- Firebase 읽기 횟수 50% 감소
+```
+
+**체크리스트:**
+- ✅ 렌더링: 가상 스크롤, 디바운싱, 불필요한 리플로우 제거
+- ✅ Firebase: 쿼리 최적화, 리스너 범위 축소, 캐싱
+- ✅ 네트워크: 배치 요청, 압축, CDN
+- ✅ 메모리: 리스너 정리, 대용량 객체 제거, WeakMap 활용
+- ✅ 번들: 코드 분할, Tree shaking, 미사용 코드 제거
+
+---
+
+### Database Architect Role
+
+**사용 시기:**
+- Firebase 데이터 구조 설계
+- 데이터 마이그레이션
+- 쿼리 최적화
+- 보안 규칙 설계
+
+**프롬프트 예시:**
+```
+Database Architect로서 다음을 설계해줘:
+
+요구사항:
+- 제품별 일별 생산/출고 이력 저장 (90일 보관)
+- 주간/월간 통계 빠르게 조회
+- Firebase 읽기 비용 최소화
+
+제약사항:
+- Firebase Realtime Database 사용
+- 무료 플랜 (동시 연결 100, 1GB 저장)
+```
+
+**체크리스트:**
+- ✅ 정규화 vs 비정규화: 읽기/쓰기 패턴 분석
+- ✅ 인덱싱: 자주 쿼리하는 필드
+- ✅ 데이터 중복: 읽기 최적화를 위한 전략적 중복
+- ✅ 보안 규칙: 최소 권한 원칙
+- ✅ 데이터 보존: 자동 정리, 아카이빙
+
+---
+
+## Using Roles Effectively
+
+**팁:**
+1. **역할을 명시적으로 요청**: "Code Reviewer로서..." 명확히 작성
+2. **컨텍스트 제공**: 파일 경로, 요구사항, 제약사항 명시
+3. **체크리스트 활용**: 특정 항목 중점 검토 요청
+4. **결과 형식 지정**: 표, 보고서, 코드 등 원하는 형식 명시
+5. **반복 개선**: 첫 결과에서 추가 요청으로 정교화
+
+**예시 워크플로우:**
+```
+1. Frontend Developer로서 기능 구현
+2. Code Reviewer로서 구현된 코드 리뷰
+3. Performance Optimizer로서 성능 개선
+4. Tester로서 테스트 케이스 작성 및 실행
+```
+
 ## Common Development Patterns
 
 ### Adding a New UI Section
