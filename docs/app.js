@@ -3580,26 +3580,18 @@ function updateMappingTable() {
 
 // 매핑 셀 인라인 수정
 window.editMappingCell = function(id, field, td) {
-    if (td.querySelector('input')) return;
+    if (td.querySelector('input') || td.querySelector('select')) return;
 
     const rawText = td.textContent.trim();
     const currentValue = (field === 'channel' && rawText === '-') ? '' : rawText;
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = currentValue;
-    input.className = 'mapping-edit-input';
-    if (field === 'channel') input.placeholder = '채널명';
 
     td.textContent = '';
-    td.appendChild(input);
-    input.focus();
-    input.select();
+    td.classList.add('editing');
 
     let saved = false;
-    async function save() {
+    async function save(newValue) {
         if (saved) return;
         saved = true;
-        const newValue = input.value.trim();
         if (newValue === currentValue) {
             updateMappingTable();
             return;
@@ -3607,12 +3599,77 @@ window.editMappingCell = function(id, field, td) {
         await productNameMappingsRef.child(id).update({ [field]: newValue, updatedAt: Date.now() });
     }
 
-    td.classList.add('editing');
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); save(); }
-        if (e.key === 'Escape') { saved = true; updateMappingTable(); }
-    });
-    input.addEventListener('blur', save);
+    if (field === 'channel') {
+        // 채널은 드롭다운 + 기타 입력
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex;gap:4px;align-items:center;';
+
+        const select = document.createElement('select');
+        select.className = 'mapping-edit-input';
+        const channels = ['', '네이버', '카카오', '아이원', '팔도감', '__other__'];
+        const labels = ['선택 안함', '네이버', '카카오', '아이원', '팔도감', '기타 (직접입력)'];
+        channels.forEach((v, i) => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = labels[i];
+            select.appendChild(opt);
+        });
+
+        const otherInput = document.createElement('input');
+        otherInput.type = 'text';
+        otherInput.className = 'mapping-edit-input';
+        otherInput.placeholder = '채널명';
+        otherInput.style.display = 'none';
+
+        // 현재값이 프리셋에 있으면 선택, 아니면 기타
+        if (currentValue && !channels.includes(currentValue)) {
+            select.value = '__other__';
+            otherInput.style.display = '';
+            otherInput.value = currentValue;
+        } else {
+            select.value = currentValue;
+        }
+
+        select.addEventListener('change', () => {
+            if (select.value === '__other__') {
+                otherInput.style.display = '';
+                otherInput.focus();
+            } else {
+                otherInput.style.display = 'none';
+                otherInput.value = '';
+                save(select.value);
+            }
+        });
+
+        otherInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); save(otherInput.value.trim()); }
+            if (e.key === 'Escape') { saved = true; updateMappingTable(); }
+        });
+        otherInput.addEventListener('blur', () => {
+            if (select.value === '__other__') save(otherInput.value.trim());
+        });
+
+        wrap.appendChild(select);
+        wrap.appendChild(otherInput);
+        td.appendChild(wrap);
+        select.focus();
+    } else {
+        // 패턴/단축명은 텍스트 입력
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentValue;
+        input.className = 'mapping-edit-input';
+
+        td.appendChild(input);
+        input.focus();
+        input.select();
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); save(input.value.trim()); }
+            if (e.key === 'Escape') { saved = true; updateMappingTable(); }
+        });
+        input.addEventListener('blur', () => save(input.value.trim()));
+    }
 };
 
 // 매핑 추가
