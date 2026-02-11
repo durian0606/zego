@@ -3714,67 +3714,150 @@ window.deleteMapping = async function(id) {
     showScanResult('매핑이 삭제되었습니다.', 'success');
 };
 
-// 작업시작 버튼
+// ============================================
+// 출하관리: 브라우저 기반 파일 처리
+// ============================================
+
+// 선택된 파일 및 결과 저장
+let chulhaSelectedFiles = [];
+let chulhaCourierWorkbook = null;
+
+// 폴더 선택 버튼
+document.getElementById('btn-chulha-folder').addEventListener('click', () => {
+    document.getElementById('chulha-folder-input').click();
+});
+
+// 파일 선택 버튼
+document.getElementById('btn-chulha-files').addEventListener('click', () => {
+    document.getElementById('chulha-file-input').click();
+});
+
+// 폴더 input 변경
+document.getElementById('chulha-folder-input').addEventListener('change', (e) => {
+    handleChulhaFileSelection(e.target.files);
+    e.target.value = ''; // 같은 폴더 재선택 허용
+});
+
+// 파일 input 변경
+document.getElementById('chulha-file-input').addEventListener('change', (e) => {
+    handleChulhaFileSelection(e.target.files);
+    e.target.value = '';
+});
+
+function handleChulhaFileSelection(fileList) {
+    // 엑셀 파일만 필터링
+    const files = Array.from(fileList).filter(f =>
+        f.name.match(/\.xlsx?$/i) && !f.name.startsWith('~$')
+    );
+
+    if (files.length === 0) {
+        alert('처리할 엑셀 파일이 없습니다.');
+        return;
+    }
+
+    chulhaSelectedFiles = files;
+
+    // 미리보기 표시
+    const previewDiv = document.getElementById('chulha-file-preview');
+    const fileListDiv = document.getElementById('chulha-file-list');
+    const resultsDiv = document.getElementById('chulha-results');
+    const statusEl = document.getElementById('chulha-status');
+
+    resultsDiv.style.display = 'none';
+    statusEl.textContent = '';
+    statusEl.className = 'chulha-status';
+
+    let html = '<table class="chulha-result-table"><thead><tr><th>파일명</th><th>채널(예상)</th><th>크기</th></tr></thead><tbody>';
+    for (const f of files) {
+        const channel = detectChannelBrowser(f);
+        const size = f.size < 1024 ? `${f.size}B` : `${Math.round(f.size / 1024)}KB`;
+        html += `<tr><td>${f.name}</td><td>${channel ? channel.name : '-'}</td><td>${size}</td></tr>`;
+    }
+    html += '</tbody></table>';
+    fileListDiv.innerHTML = html;
+    previewDiv.style.display = 'block';
+
+    // Lucide 아이콘 갱신
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// 취소 버튼
+document.getElementById('btn-chulha-cancel').addEventListener('click', () => {
+    chulhaSelectedFiles = [];
+    chulhaCourierWorkbook = null;
+    document.getElementById('chulha-file-preview').style.display = 'none';
+    document.getElementById('chulha-results').style.display = 'none';
+    document.getElementById('btn-chulha-download').style.display = 'none';
+});
+
+// 택배양식 생성 버튼
 document.getElementById('btn-chulha-process').addEventListener('click', async () => {
-    if (AppState.chulhaProcessing) return;
+    if (AppState.chulhaProcessing || chulhaSelectedFiles.length === 0) return;
     AppState.chulhaProcessing = true;
 
     const btn = document.getElementById('btn-chulha-process');
     const statusEl = document.getElementById('chulha-status');
     const resultsDiv = document.getElementById('chulha-results');
     const resultsBody = document.getElementById('chulha-results-body');
+    const downloadBtn = document.getElementById('btn-chulha-download');
 
     btn.disabled = true;
     statusEl.textContent = '처리 중...';
     statusEl.className = 'chulha-status processing';
     resultsDiv.style.display = 'none';
+    downloadBtn.style.display = 'none';
 
     try {
-        const res = await fetch(`${CHULHA_API_URL}/api/process`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-        });
-        const data = await res.json();
+        const data = await processSelectedFiles(chulhaSelectedFiles);
 
-        if (data.success) {
-            const s = data.summary;
-            if (s.filesProcessed === 0) {
-                statusEl.textContent = '처리할 새 파일이 없습니다.';
-                statusEl.className = 'chulha-status success';
-            } else {
-                statusEl.textContent = `완료: ${s.filesProcessed}개 파일, 택배양식 ${s.totalShippingRows}행 → ${s.consolidatedRows}행 (합배송)`;
-                statusEl.className = 'chulha-status success';
-            }
-            renderProcessResults(data.results, resultsBody);
-            resultsDiv.style.display = 'block';
-        } else {
-            statusEl.textContent = `오류: ${data.error}`;
+        // 결과 표시
+        const totalRows = data.allRows.length;
+        const consolidatedRows = data.consolidated.length;
+
+        if (totalRows === 0) {
+            statusEl.textContent = '추출된 배송 행이 없습니다. 파일 형식을 확인해주세요.';
             statusEl.className = 'chulha-status error';
+        } else {
+            statusEl.textContent = `완료: ${data.results.length}개 파일, 택배양식 ${totalRows}행 → ${consolidatedRows}행 (합배송)`;
+            statusEl.className = 'chulha-status success';
+        }
+
+        renderProcessResults(data.results, resultsBody);
+        resultsDiv.style.display = 'block';
+
+        // 다운로드 버튼 활성화
+        if (data.workbook) {
+            chulhaCourierWorkbook = data.workbook;
+            downloadBtn.style.display = 'inline-flex';
         }
     } catch (err) {
-        const hint = CHULHA_API_URL
-            ? `API 서버에 연결할 수 없습니다. ${CHULHA_API_URL} 으로 직접 접속해주세요.`
-            : `서버 연결 실패: ${err.message}`;
-        statusEl.textContent = hint;
+        statusEl.textContent = `처리 오류: ${err.message}`;
         statusEl.className = 'chulha-status error';
     }
 
     btn.disabled = false;
     AppState.chulhaProcessing = false;
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+
+// 다운로드 버튼
+document.getElementById('btn-chulha-download').addEventListener('click', () => {
+    if (!chulhaCourierWorkbook) return;
+    downloadCourierXlsx(chulhaCourierWorkbook);
 });
 
 function renderProcessResults(results, container) {
     if (!results || results.length === 0) {
-        container.innerHTML = '<p class="no-data">처리할 새 파일이 없습니다.</p>';
+        container.innerHTML = '<p class="no-data">처리할 파일이 없습니다.</p>';
         return;
     }
-    let html = '<table class="chulha-result-table"><thead><tr><th>파일명</th><th>채널</th><th>제품수</th><th>택배행</th><th>상태</th></tr></thead><tbody>';
+    let html = '<table class="chulha-result-table"><thead><tr><th>파일명</th><th>채널</th><th>택배행</th><th>상태</th></tr></thead><tbody>';
     for (const r of results) {
         const status = r.error
             ? `<span class="text-danger">${r.error}</span>`
-            : '<span class="text-success">완료</span>';
-        html += `<tr><td>${r.filename}</td><td>${r.channel || '-'}</td><td>${r.items || 0}</td><td>${r.shippingRows || 0}</td><td>${status}</td></tr>`;
+            : `<span class="text-success">${r.shippingRows}행</span>`;
+        html += `<tr><td>${r.filename}</td><td>${r.channel || '-'}</td><td>${r.shippingRows || 0}</td><td>${status}</td></tr>`;
     }
     html += '</tbody></table>';
     container.innerHTML = html;

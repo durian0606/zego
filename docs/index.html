@@ -272,19 +272,39 @@
                     <h2>택배양식 생성</h2>
                 </div>
 
-                <!-- 작업시작 블록 -->
+                <!-- 파일 선택 + 택배양식 생성 블록 -->
                 <div class="chulha-block">
                     <h3>출고 파일 처리</h3>
-                    <p class="chulha-desc">감시 폴더의 미처리 주문 파일을 스캔하고 합배송 택배양식을 생성합니다.</p>
-                    <div class="chulha-trigger-actions">
-                        <button id="btn-chulha-process" class="btn btn-primary" style="width: auto;">
-                            <i data-lucide="play" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>작업시작
+                    <p class="chulha-desc">PC에서 주문 파일을 선택하여 합배송 택배양식을 생성합니다.</p>
+                    <div class="chulha-file-actions">
+                        <button id="btn-chulha-folder" class="btn btn-primary" style="width: auto;">
+                            <i data-lucide="folder-open" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>폴더 선택
                         </button>
-                        <span id="chulha-status" class="chulha-status"></span>
+                        <button id="btn-chulha-files" class="btn btn-secondary" style="width: auto;">
+                            <i data-lucide="file-plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>파일 선택
+                        </button>
+                        <input type="file" id="chulha-folder-input" webkitdirectory style="display:none;" accept=".xlsx,.xls">
+                        <input type="file" id="chulha-file-input" multiple style="display:none;" accept=".xlsx,.xls">
+                    </div>
+                    <div id="chulha-file-preview" class="chulha-file-preview" style="display: none;">
+                        <h4>선택된 파일</h4>
+                        <div id="chulha-file-list"></div>
+                        <div class="chulha-preview-actions">
+                            <button id="btn-chulha-process" class="btn btn-primary" style="width: auto;">
+                                <i data-lucide="play" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>택배양식 생성
+                            </button>
+                            <button id="btn-chulha-cancel" class="btn btn-secondary" style="width: auto;">취소</button>
+                            <span id="chulha-status" class="chulha-status"></span>
+                        </div>
                     </div>
                     <div id="chulha-results" class="chulha-results" style="display: none;">
                         <h4>처리 결과</h4>
                         <div id="chulha-results-body"></div>
+                        <div class="chulha-download-actions">
+                            <button id="btn-chulha-download" class="btn btn-primary" style="width: auto; display: none;">
+                                <i data-lucide="download" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>택배양식 다운로드
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -491,6 +511,12 @@
 
     <!-- SortableJS 라이브러리 (드래그앤드롭 정렬) -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <!-- SheetJS (엑셀 읽기/쓰기) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+    <!-- 브라우저 택배양식 생성 -->
+    <script src="chulha-browser.js"></script>
 
     <!-- 앱 로직 -->
     <script src="app.js"></script>
