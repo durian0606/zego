@@ -3666,7 +3666,10 @@ document.getElementById('btn-chulha-process').addEventListener('click', async ()
             statusEl.className = 'chulha-status error';
         }
     } catch (err) {
-        statusEl.textContent = `서버 연결 실패: ${err.message}`;
+        const hint = CHULHA_API_URL
+            ? `API 서버에 연결할 수 없습니다. ${CHULHA_API_URL} 으로 직접 접속해주세요.`
+            : `서버 연결 실패: ${err.message}`;
+        statusEl.textContent = hint;
         statusEl.className = 'chulha-status error';
     }
 
