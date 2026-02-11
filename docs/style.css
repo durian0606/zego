@@ -2894,8 +2894,10 @@ tr.row-locked td:first-child::before {
     display: flex;
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
+    align-items: center;
 }
-.mapping-form input {
+.mapping-form input,
+.mapping-form select {
     flex: 1;
     padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--color-border);
@@ -2903,9 +2905,34 @@ tr.row-locked td:first-child::before {
     font-size: 0.875rem;
     min-height: var(--touch-target);
 }
-.mapping-form input:focus {
+.mapping-form input:focus,
+.mapping-form select:focus {
     border-color: var(--color-primary);
     outline: none;
+}
+.mapping-channel-wrap {
+    display: flex;
+    gap: 4px;
+    flex: 0.8;
+    min-width: 0;
+}
+.mapping-channel-wrap select {
+    flex: 1;
+    min-width: 0;
+}
+.mapping-channel-other {
+    flex: 1;
+    min-width: 0;
+}
+.mapping-channel-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #e0f2fe;
+    color: #0369a1;
+    white-space: nowrap;
 }
 
 /* 매핑 테이블 */
@@ -2954,6 +2981,10 @@ tr.row-locked td:first-child::before {
 @media (max-width: 600px) {
     .mapping-form {
         flex-direction: column;
+    }
+    .mapping-channel-wrap {
+        flex: unset;
+        width: 100%;
     }
     .chulha-trigger-actions {
         flex-direction: column;

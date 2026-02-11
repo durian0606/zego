@@ -3529,6 +3529,18 @@ document.querySelectorAll('.main-tab').forEach(tab => {
     });
 });
 
+// 채널 드롭다운 "기타" 선택 시 직접 입력란 표시
+document.getElementById('mapping-channel').addEventListener('change', function() {
+    const otherInput = document.getElementById('mapping-channel-other');
+    if (this.value === '__other__') {
+        otherInput.style.display = '';
+        otherInput.focus();
+    } else {
+        otherInput.style.display = 'none';
+        otherInput.value = '';
+    }
+});
+
 // 매핑 테이블 렌더링
 function updateMappingTable() {
     const tbody = document.getElementById('mapping-tbody');
@@ -3538,14 +3550,21 @@ function updateMappingTable() {
     const entries = Object.entries(mappings).filter(([, v]) => v && v.pattern);
 
     if (entries.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="no-data">매핑이 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="no-data">매핑이 없습니다.</td></tr>';
         return;
     }
 
-    entries.sort((a, b) => (b[1].priority || 0) - (a[1].priority || 0) || a[1].pattern.localeCompare(b[1].pattern));
+    entries.sort((a, b) => {
+        const chA = (a[1].channel || '').localeCompare(b[1].channel || '');
+        if (chA !== 0) return chA;
+        return (b[1].priority || 0) - (a[1].priority || 0) || a[1].pattern.localeCompare(b[1].pattern);
+    });
 
     tbody.innerHTML = entries.map(([id, m]) => `
         <tr>
+            <td class="mapping-editable" onclick="editMappingCell('${id}', 'channel', this)">
+                ${m.channel ? `<span class="mapping-channel-badge">${m.channel}</span>` : '<span style="color:#aaa">-</span>'}
+            </td>
             <td class="mapping-editable" onclick="editMappingCell('${id}', 'pattern', this)">${m.pattern}</td>
             <td class="mapping-editable" onclick="editMappingCell('${id}', 'shortName', this)">${m.shortName}</td>
             <td style="text-align: center;">
@@ -3563,11 +3582,13 @@ function updateMappingTable() {
 window.editMappingCell = function(id, field, td) {
     if (td.querySelector('input')) return;
 
-    const currentValue = td.textContent.trim();
+    const rawText = td.textContent.trim();
+    const currentValue = (field === 'channel' && rawText === '-') ? '' : rawText;
     const input = document.createElement('input');
     input.type = 'text';
     input.value = currentValue;
     input.className = 'mapping-edit-input';
+    if (field === 'channel') input.placeholder = '채널명';
 
     td.textContent = '';
     td.appendChild(input);
@@ -3579,9 +3600,8 @@ window.editMappingCell = function(id, field, td) {
         if (saved) return;
         saved = true;
         const newValue = input.value.trim();
-        if (!newValue || newValue === currentValue) {
-            td.textContent = currentValue;
-            td.classList.remove('editing');
+        if (newValue === currentValue) {
+            updateMappingTable();
             return;
         }
         await productNameMappingsRef.child(id).update({ [field]: newValue, updatedAt: Date.now() });
@@ -3590,15 +3610,21 @@ window.editMappingCell = function(id, field, td) {
     td.classList.add('editing');
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); save(); }
-        if (e.key === 'Escape') { saved = true; td.textContent = currentValue; td.classList.remove('editing'); }
+        if (e.key === 'Escape') { saved = true; updateMappingTable(); }
     });
     input.addEventListener('blur', save);
 };
 
 // 매핑 추가
 document.getElementById('btn-add-mapping').addEventListener('click', async () => {
+    const channelSelect = document.getElementById('mapping-channel');
+    const channelOther = document.getElementById('mapping-channel-other');
     const patternInput = document.getElementById('mapping-pattern');
     const shortnameInput = document.getElementById('mapping-shortname');
+
+    const channel = channelSelect.value === '__other__'
+        ? channelOther.value.trim()
+        : channelSelect.value;
     const pattern = patternInput.value.trim();
     const shortName = shortnameInput.value.trim();
 
@@ -3610,6 +3636,7 @@ document.getElementById('btn-add-mapping').addEventListener('click', async () =>
     await productNameMappingsRef.push({
         pattern,
         shortName,
+        channel: channel || '',
         priority: 10,
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -3617,7 +3644,10 @@ document.getElementById('btn-add-mapping').addEventListener('click', async () =>
 
     patternInput.value = '';
     shortnameInput.value = '';
-    showScanResult(`매핑 추가: "${pattern}" → "${shortName}"`, 'success');
+    channelSelect.value = '';
+    channelOther.style.display = 'none';
+    channelOther.value = '';
+    showScanResult(`매핑 추가: [${channel || '전체'}] "${pattern}" → "${shortName}"`, 'success');
 });
 
 // 매핑 삭제
