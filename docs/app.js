@@ -5,6 +5,17 @@ const barcodesRef = database.ref('barcodes');
 const historyRef = database.ref('history');
 const dailyClosingsRef = database.ref('dailyClosings');
 
+// HTML 이스케이프 (XSS 방지)
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // ============================================
 // 스캔 피드백 (소리/진동)
 // ============================================
@@ -3561,12 +3572,12 @@ function updateMappingTable() {
     });
 
     tbody.innerHTML = entries.map(([id, m]) => `
-        <tr>
+        <tr data-mapping-id="${escapeHtml(id)}">
             <td class="mapping-editable" onclick="editMappingCell('${id}', 'channel', this)">
-                ${m.channel ? `<span class="mapping-channel-badge">${m.channel}</span>` : '<span style="color:#aaa">-</span>'}
+                ${m.channel ? `<span class="mapping-channel-badge">${escapeHtml(m.channel)}</span>` : '<span style="color:#aaa">-</span>'}
             </td>
-            <td class="mapping-editable" onclick="editMappingCell('${id}', 'pattern', this)">${m.pattern}</td>
-            <td class="mapping-editable" onclick="editMappingCell('${id}', 'shortName', this)">${m.shortName}</td>
+            <td class="mapping-editable" onclick="editMappingCell('${id}', 'pattern', this)">${escapeHtml(m.pattern)}</td>
+            <td class="mapping-editable" onclick="editMappingCell('${id}', 'shortName', this)">${escapeHtml(m.shortName)}</td>
             <td class="mapping-actions-cell">
                 <button class="btn-mapping-edit" onclick="editMappingRow('${id}')" title="수정">
                     <i data-lucide="pencil" style="width: 14px; height: 14px; color: #3b82f6;"></i>
@@ -3720,12 +3731,7 @@ window.editMappingRow = function(id) {
     if (!tbody) return;
 
     // 해당 행 찾기
-    const rows = tbody.querySelectorAll('tr');
-    let targetRow = null;
-    for (const row of rows) {
-        const editBtn = row.querySelector(`[onclick="editMappingRow('${id}')"]`);
-        if (editBtn) { targetRow = row; break; }
-    }
+    const targetRow = tbody.querySelector(`tr[data-mapping-id="${id}"]`);
     if (!targetRow) return;
 
     targetRow.classList.add('editing-row');
@@ -3765,13 +3771,13 @@ window.editMappingRow = function(id) {
     const patternCell = cells[1];
     patternCell.className = '';
     patternCell.removeAttribute('onclick');
-    patternCell.innerHTML = `<input type="text" class="mapping-edit-input" id="edit-pattern-${id}" value="${m.pattern}">`;
+    patternCell.innerHTML = `<input type="text" class="mapping-edit-input" id="edit-pattern-${id}" value="${escapeHtml(m.pattern)}">`;
 
     // 단축명 셀 → input
     const shortNameCell = cells[2];
     shortNameCell.className = '';
     shortNameCell.removeAttribute('onclick');
-    shortNameCell.innerHTML = `<input type="text" class="mapping-edit-input" id="edit-shortname-${id}" value="${m.shortName}">`;
+    shortNameCell.innerHTML = `<input type="text" class="mapping-edit-input" id="edit-shortname-${id}" value="${escapeHtml(m.shortName)}">`;
 
     // 관리 셀 → 저장/취소
     const actionCell = cells[3];
@@ -3817,14 +3823,17 @@ window.saveMappingRow = async function(id) {
         return;
     }
 
-    await productNameMappingsRef.child(id).update({
-        channel: channel || '',
-        pattern,
-        shortName,
-        updatedAt: Date.now()
-    });
-
-    showScanResult(`매핑 수정: [${channel || '전체'}] "${pattern}" → "${shortName}"`, 'success');
+    try {
+        await productNameMappingsRef.child(id).update({
+            channel: channel || '',
+            pattern,
+            shortName,
+            updatedAt: Date.now()
+        });
+        showScanResult(`매핑 수정: [${channel || '전체'}] "${pattern}" → "${shortName}"`, 'success');
+    } catch (err) {
+        showScanResult(`매핑 수정 오류: ${err.message}`, 'error');
+    }
 };
 
 // 매핑 행 수정 취소
@@ -3988,7 +3997,7 @@ function showUnmappedModal(unmappedProducts) {
 
     tbody.innerHTML = unmappedProducts.map((item, i) => `
         <tr>
-            <td>${item.originalName}</td>
+            <td>${escapeHtml(item.originalName)}</td>
             <td>${item.count}</td>
             <td><input type="text" id="unmapped-input-${i}" data-original="${encodeURIComponent(item.originalName)}" placeholder="단축명 입력"></td>
         </tr>
@@ -4019,7 +4028,11 @@ document.getElementById('unmapped-overlay').addEventListener('click', (e) => {
 });
 
 // 저장 후 재생성 버튼
+let unmappedSaving = false;
 document.getElementById('btn-unmapped-save').addEventListener('click', async () => {
+    if (unmappedSaving) return;
+    unmappedSaving = true;
+
     const inputs = document.querySelectorAll('#unmapped-tbody input[type="text"]');
     const newMappings = [];
 
@@ -4031,6 +4044,7 @@ document.getElementById('btn-unmapped-save').addEventListener('click', async () 
     }
 
     if (newMappings.length === 0) {
+        unmappedSaving = false;
         hideUnmappedModal();
         return;
     }
@@ -4091,6 +4105,7 @@ document.getElementById('btn-unmapped-save').addEventListener('click', async () 
 
     saveBtn.disabled = false;
     saveBtn.textContent = '저장 후 재생성';
+    unmappedSaving = false;
 });
 
 function renderProcessResults(results, container) {
