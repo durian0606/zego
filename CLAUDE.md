@@ -702,6 +702,22 @@ Database Architect로서 다음을 설계해줘:
 4. Tester로서 테스트 케이스 작성 및 실행
 ```
 
+### choolgo-watcher Error Recovery
+
+**실패 추적 시스템**:
+- `failed.json`: 처리 실패한 파일 목록 (에러 메시지, 코드, 타임스탬프, 재시도 횟수)
+- `processed.json`: 성공한 파일만 기록
+- API: `GET /api/failed` (실패 목록), `POST /api/retry-failed` (재처리), `POST /api/flush-pending` (pending 택배양식 처리)
+
+**재고 음수 방지**:
+- `deductStock()`: 재고 부족 시 `INSUFFICIENT_STOCK` 에러 발생 (음수 차감 불가)
+- 파일 처리 중단 → `failed.json` 기록
+- 관리자가 재고 조정 후 `/api/retry-failed`로 재처리
+
+**processQueue 에러 복구**:
+- try-finally로 `processing` 플래그 항상 복구
+- 에러 발생해도 다음 파일 처리 가능 (큐 영구 blocked 방지)
+
 ## Common Development Patterns
 
 ### Adding a New UI Section

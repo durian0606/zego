@@ -81,7 +81,10 @@ async function deductStock(productName, quantity, channel) {
     const afterStock = beforeStock - quantity;
 
     if (afterStock < 0) {
-        console.log(`  [경고] 재고 부족: ${productName} (현재: ${beforeStock}, 차감: ${quantity})`);
+        const error = new Error(`재고 부족: ${productName} (현재: ${beforeStock}, 차감: ${quantity})`);
+        error.code = 'INSUFFICIENT_STOCK';
+        error.details = { productName, beforeStock, quantity };
+        throw error;
     }
 
     // 재고 차감 + 이력 기록을 multi-path update로 원자적 수행

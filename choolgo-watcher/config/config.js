@@ -18,6 +18,9 @@ const WATCH_PATHS = WATCH_SUBDIRS.map(d => path.join(CHOOLGO_DIR, d));
 // 처리 완료 기록 파일
 const PROCESSED_FILE = path.join(__dirname, '..', 'processed.json');
 
+// 처리 실패 기록 파일
+const FAILED_FILE = path.join(__dirname, '..', 'failed.json');
+
 // Express API 서버 포트
 const API_PORT = process.env.API_PORT || 3100;
 
@@ -27,5 +30,6 @@ module.exports = {
     FIREBASE_URL,
     WATCH_PATHS,
     PROCESSED_FILE,
+    FAILED_FILE,
     API_PORT,
 };

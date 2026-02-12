@@ -1733,7 +1733,7 @@ tbody tr:hover {
     .inventory-section table {
         display: table;
         width: 100%;
-        min-width: 460px;
+        min-width: 380px;
     }
 
     .inventory-section thead {
@@ -1794,6 +1794,12 @@ tbody tr:hover {
     .inventory-section table td:nth-child(6) {
         min-width: 50px;
         padding-right: 8px;
+    }
+
+    /* 금일출고 컬럼 숨김 (768px 이하) */
+    .inventory-section table th:nth-child(5),
+    .inventory-section table td:nth-child(5) {
+        display: none;
     }
 
     .inventory-section table th:nth-child(7),
@@ -2047,6 +2053,20 @@ tbody tr:hover {
 }
 
 /* ============================================
+   작은 화면 (600px 이하) - 드래그 핸들 숨김
+   ============================================ */
+@media (max-width: 600px) {
+    .inventory-section table th:nth-child(1),
+    .inventory-section table td:nth-child(1) {
+        display: none;
+    }
+
+    .inventory-section table {
+        min-width: 340px;
+    }
+}
+
+/* ============================================
    매우 작은 화면 (400px 이하)
    ============================================ */
 @media (max-width: 400px) {
@@ -2094,15 +2114,15 @@ tbody tr:hover {
         font-size: 0.8rem;
     }
 
-    /* 금일생산현황 - 더 작은 폰트 */
+    /* 금일생산현황 - 읽기 쉬운 폰트 크기 */
     .inventory-section th,
     .inventory-section td {
-        font-size: 0.7rem;
-        padding: 4px 2px;
+        font-size: 0.875rem;
+        padding: 6px 4px;
     }
 
     .inventory-section .stock-number {
-        font-size: 0.9rem !important;
+        font-size: 1rem !important;
     }
 
     /* 전일 생산현황 - 400px */
@@ -2121,11 +2141,11 @@ tbody tr:hover {
     }
 
     .inventory-section .product-name {
-        font-size: 0.7rem;
+        font-size: 0.875rem;
     }
 
     .inventory-section table {
-        min-width: 400px;
+        min-width: 320px;
     }
 
     .scan-indicator {

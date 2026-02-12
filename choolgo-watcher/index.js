@@ -6,7 +6,7 @@ const { detectChannel } = require('./config/channels');
 const { extractShippingRows } = require('./shipping/extract-shipping');
 const { appendShippingRows } = require('./shipping/courier-writer');
 const { consolidateShipping } = require('./shipping/consolidate');
-const { START_DATE, WATCH_PATHS, PROCESSED_FILE } = require('./config/config');
+const { START_DATE, WATCH_PATHS, PROCESSED_FILE, FAILED_FILE } = require('./config/config');
 
 const DRY_RUN = process.argv.includes('--dry-run'); // 테스트 모드 (Firebase 차감 안 함)
 const REPROCESS_ARG = process.argv.indexOf('--reprocess');
@@ -22,6 +22,39 @@ function loadProcessed() {
 
 function saveProcessed(data) {
     fs.writeFileSync(PROCESSED_FILE, JSON.stringify(data, null, 2));
+}
+
+// 처리 실패 파일 목록 관리
+function loadFailed() {
+    try {
+        return JSON.parse(fs.readFileSync(FAILED_FILE, 'utf8'));
+    } catch {
+        return {};
+    }
+}
+
+function saveFailed(data) {
+    fs.writeFileSync(FAILED_FILE, JSON.stringify(data, null, 2));
+}
+
+function addFailed(filePath, error, details) {
+    const failed = loadFailed();
+    const absPath = path.resolve(filePath);
+    failed[absPath] = {
+        error: error.message,
+        code: error.code || 'UNKNOWN',
+        timestamp: new Date().toISOString(),
+        details: details || {},
+        retryCount: (failed[absPath]?.retryCount || 0) + 1
+    };
+    saveFailed(failed);
+}
+
+function clearFailed(filePath) {
+    const failed = loadFailed();
+    const absPath = path.resolve(filePath);
+    delete failed[absPath];
+    saveFailed(failed);
 }
 
 // 파일 날짜 필터 (START_DATE 이후만 처리)
@@ -123,6 +156,9 @@ async function processFile(filePath, options = {}) {
             };
             saveProcessed(processed);
 
+            // 성공 시 failed.json에서 제거
+            clearFailed(filePath);
+
             // Firebase 로그 기록
             if (!dryRun) {
                 const today = new Date().toISOString().slice(0, 10);
@@ -134,7 +170,9 @@ async function processFile(filePath, options = {}) {
         }
     } catch (err) {
         console.error(`  [오류] ${filename}: ${err.message}`);
+        addFailed(filePath, err, { channel: channelName, items: result.items });
         result.error = err.message;
+        return result;
     }
 
     // 택배양식 추출 (재고 파싱과 독립적으로 실행)
@@ -284,12 +322,16 @@ function startWatcher() {
         if (processing || queue.length === 0) return;
         processing = true;
 
-        while (queue.length > 0) {
-            const filePath = queue.shift();
-            await processFile(filePath);
+        try {
+            while (queue.length > 0) {
+                const filePath = queue.shift();
+                await processFile(filePath);
+            }
+        } catch (err) {
+            console.error('[processQueue 오류]', err.message);
+        } finally {
+            processing = false;
         }
-
-        processing = false;
     }
 
     watcher.on('add', (filePath) => {
@@ -364,4 +406,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { processFile, scanAndProcess, loadProcessed, saveProcessed };
+module.exports = { processFile, scanAndProcess, loadProcessed, saveProcessed, loadFailed, saveFailed, addFailed, clearFailed };
