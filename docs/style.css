@@ -3037,6 +3037,91 @@ tr.row-locked td:first-child::before {
     box-sizing: border-box;
 }
 
+/* 매핑 테이블 관리 버튼 */
+.mapping-actions-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+.mapping-actions-cell button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    vertical-align: middle;
+}
+.mapping-actions-cell button:hover {
+    background: #f3f4f6;
+}
+.btn-mapping-edit,
+.btn-mapping-save,
+.btn-mapping-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+tr.editing-row {
+    background: #eff6ff !important;
+}
+tr.editing-row td {
+    padding: 6px 8px;
+}
+
+/* 미매핑 상품 모달 */
+.unmapped-desc {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-md);
+    line-height: 1.5;
+}
+.unmapped-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.unmapped-table th {
+    background: #f9fafb;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-border);
+}
+.unmapped-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+.unmapped-table td:first-child {
+    font-size: 0.8rem;
+    color: #374151;
+    word-break: break-all;
+}
+.unmapped-table td:nth-child(2) {
+    text-align: center;
+    color: #6b7280;
+}
+.unmapped-table input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+.unmapped-table input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+.unmapped-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+}
+
 /* 모바일 대응 */
 @media (max-width: 600px) {
     .mapping-form {
@@ -3053,5 +3138,8 @@ tr.row-locked td:first-child::before {
     .chulha-preview-actions {
         flex-direction: column;
         align-items: stretch;
+    }
+    .unmapped-actions {
+        flex-direction: column;
     }
 }

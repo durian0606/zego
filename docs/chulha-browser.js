@@ -317,6 +317,25 @@ function applyNameMapping(originalName, mappings) {
     return originalName;
 }
 
+function findUnmappedProducts(rows, mappings) {
+    if (!rows || rows.length === 0) return [];
+    if (!mappings) mappings = [];
+
+    const counts = new Map();
+    for (const row of rows) {
+        const original = row.productName;
+        if (!original) continue;
+        const mapped = applyNameMapping(original, mappings);
+        if (mapped === original) {
+            counts.set(original, (counts.get(original) || 0) + 1);
+        }
+    }
+
+    return Array.from(counts.entries())
+        .map(([originalName, count]) => ({ originalName, count }))
+        .sort((a, b) => b.count - a.count);
+}
+
 function recipientKey(row) {
     return [
         (row.recipientName || '').trim(),
@@ -502,6 +521,9 @@ async function processSelectedFiles(fileList) {
         }
     }
 
+    // 미매핑 상품 탐지
+    const unmappedProducts = findUnmappedProducts(allRows, mappings);
+
     // 합배송 처리
     const consolidated = consolidateShipping(allRows, mappings);
 
@@ -511,5 +533,5 @@ async function processSelectedFiles(fileList) {
         courierWorkbook = generateCourierXlsx(consolidated);
     }
 
-    return { results, allRows, consolidated, workbook: courierWorkbook };
+    return { results, allRows, consolidated, workbook: courierWorkbook, unmappedProducts };
 }

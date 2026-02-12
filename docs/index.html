@@ -335,7 +335,7 @@
                                     <th style="width: 80px;">채널</th>
                                     <th>포함 패턴</th>
                                     <th>단축명</th>
-                                    <th style="width: 60px;">삭제</th>
+                                    <th style="width: 80px;">관리</th>
                                 </tr>
                             </thead>
                             <tbody id="mapping-tbody">
@@ -491,6 +491,35 @@
                         </div>
 
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 미매핑 상품 모달 -->
+    <div id="unmapped-overlay" class="manual-overlay" style="display:none;">
+        <div class="manual-modal" style="max-width: 600px;">
+            <div class="manual-header">
+                <h2>미매핑 상품 발견</h2>
+                <button id="btn-close-unmapped" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+            </div>
+            <div class="manual-body">
+                <p class="unmapped-desc">아래 상품명에 매핑이 없어 원본 그대로 출력됩니다. 단축명을 입력하면 매핑이 자동 저장되고 택배양식이 재생성됩니다.</p>
+                <div class="table-wrapper">
+                    <table class="unmapped-table">
+                        <thead>
+                            <tr>
+                                <th>원본 상품명</th>
+                                <th style="width: 60px;">건수</th>
+                                <th style="width: 120px;">단축명</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unmapped-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="unmapped-actions">
+                    <button id="btn-unmapped-save" class="btn btn-primary" style="width: auto;">저장 후 재생성</button>
+                    <button id="btn-unmapped-skip" class="btn btn-secondary" style="width: auto;">건너뛰기</button>
                 </div>
             </div>
         </div>

@@ -3567,7 +3567,10 @@ function updateMappingTable() {
             </td>
             <td class="mapping-editable" onclick="editMappingCell('${id}', 'pattern', this)">${m.pattern}</td>
             <td class="mapping-editable" onclick="editMappingCell('${id}', 'shortName', this)">${m.shortName}</td>
-            <td style="text-align: center;">
+            <td class="mapping-actions-cell">
+                <button class="btn-mapping-edit" onclick="editMappingRow('${id}')" title="수정">
+                    <i data-lucide="pencil" style="width: 14px; height: 14px; color: #3b82f6;"></i>
+                </button>
                 <button class="btn-mapping-delete" onclick="deleteMapping('${id}')" title="삭제">
                     <i data-lucide="trash-2" style="width: 14px; height: 14px; color: #ef4444;"></i>
                 </button>
@@ -3707,6 +3710,128 @@ document.getElementById('btn-add-mapping').addEventListener('click', async () =>
     showScanResult(`매핑 추가: [${channel || '전체'}] "${pattern}" → "${shortName}"`, 'success');
 });
 
+// 매핑 행 전체 수정
+window.editMappingRow = function(id) {
+    const mappings = AppState.productNameMappings;
+    const m = mappings[id];
+    if (!m) return;
+
+    const tbody = document.getElementById('mapping-tbody');
+    if (!tbody) return;
+
+    // 해당 행 찾기
+    const rows = tbody.querySelectorAll('tr');
+    let targetRow = null;
+    for (const row of rows) {
+        const editBtn = row.querySelector(`[onclick="editMappingRow('${id}')"]`);
+        if (editBtn) { targetRow = row; break; }
+    }
+    if (!targetRow) return;
+
+    targetRow.classList.add('editing-row');
+    const cells = targetRow.querySelectorAll('td');
+
+    // 채널 셀 → select
+    const channelCell = cells[0];
+    const presetChannels = ['', '네이버', '카카오', '아이원', '팔도감'];
+    const isPreset = presetChannels.includes(m.channel || '');
+    channelCell.className = '';
+    channelCell.removeAttribute('onclick');
+    channelCell.innerHTML = `
+        <select class="mapping-edit-input" id="edit-channel-${id}">
+            <option value="">선택 안함</option>
+            <option value="네이버">네이버</option>
+            <option value="카카오">카카오</option>
+            <option value="아이원">아이원</option>
+            <option value="팔도감">팔도감</option>
+            <option value="__other__">기타</option>
+        </select>
+        <input type="text" class="mapping-edit-input" id="edit-channel-other-${id}" placeholder="채널명" style="display:none;margin-top:4px;">
+    `;
+    const sel = document.getElementById(`edit-channel-${id}`);
+    const otherInp = document.getElementById(`edit-channel-other-${id}`);
+    if (isPreset) {
+        sel.value = m.channel || '';
+    } else {
+        sel.value = '__other__';
+        otherInp.style.display = '';
+        otherInp.value = m.channel || '';
+    }
+    sel.addEventListener('change', () => {
+        otherInp.style.display = sel.value === '__other__' ? '' : 'none';
+    });
+
+    // 패턴 셀 → input
+    const patternCell = cells[1];
+    patternCell.className = '';
+    patternCell.removeAttribute('onclick');
+    patternCell.innerHTML = `<input type="text" class="mapping-edit-input" id="edit-pattern-${id}" value="${m.pattern}">`;
+
+    // 단축명 셀 → input
+    const shortNameCell = cells[2];
+    shortNameCell.className = '';
+    shortNameCell.removeAttribute('onclick');
+    shortNameCell.innerHTML = `<input type="text" class="mapping-edit-input" id="edit-shortname-${id}" value="${m.shortName}">`;
+
+    // 관리 셀 → 저장/취소
+    const actionCell = cells[3];
+    actionCell.innerHTML = `
+        <button class="btn-mapping-save" onclick="saveMappingRow('${id}')" title="저장">
+            <i data-lucide="check" style="width: 14px; height: 14px; color: #22c55e;"></i>
+        </button>
+        <button class="btn-mapping-cancel" onclick="cancelMappingRow()" title="취소">
+            <i data-lucide="x" style="width: 14px; height: 14px; color: #6b7280;"></i>
+        </button>
+    `;
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // Enter → 저장, Escape → 취소
+    const editInputs = targetRow.querySelectorAll('input, select');
+    for (const inp of editInputs) {
+        inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); saveMappingRow(id); }
+            if (e.key === 'Escape') { cancelMappingRow(); }
+        });
+    }
+
+    // 패턴 입력에 포커스
+    document.getElementById(`edit-pattern-${id}`).focus();
+};
+
+// 매핑 행 저장
+window.saveMappingRow = async function(id) {
+    const sel = document.getElementById(`edit-channel-${id}`);
+    const otherInp = document.getElementById(`edit-channel-other-${id}`);
+    const patternInp = document.getElementById(`edit-pattern-${id}`);
+    const shortNameInp = document.getElementById(`edit-shortname-${id}`);
+
+    if (!sel || !patternInp || !shortNameInp) return;
+
+    const channel = sel.value === '__other__' ? (otherInp.value.trim()) : sel.value;
+    const pattern = patternInp.value.trim();
+    const shortName = shortNameInp.value.trim();
+
+    if (!pattern || !shortName) {
+        showScanResult('패턴과 단축명을 모두 입력해주세요.', 'error');
+        return;
+    }
+
+    await productNameMappingsRef.child(id).update({
+        channel: channel || '',
+        pattern,
+        shortName,
+        updatedAt: Date.now()
+    });
+
+    showScanResult(`매핑 수정: [${channel || '전체'}] "${pattern}" → "${shortName}"`, 'success');
+};
+
+// 매핑 행 수정 취소
+window.cancelMappingRow = function() {
+    updateMappingTable();
+};
+
 // 매핑 삭제
 window.deleteMapping = async function(id) {
     if (!confirm('이 매핑을 삭제하시겠습니까?')) return;
@@ -3830,6 +3955,11 @@ document.getElementById('btn-chulha-process').addEventListener('click', async ()
             chulhaCourierWorkbook = data.workbook;
             downloadBtn.style.display = 'inline-flex';
         }
+
+        // 미매핑 상품 팝업
+        if (data.unmappedProducts && data.unmappedProducts.length > 0) {
+            showUnmappedModal(data.unmappedProducts);
+        }
     } catch (err) {
         statusEl.textContent = `처리 오류: ${err.message}`;
         statusEl.className = 'chulha-status error';
@@ -3845,6 +3975,122 @@ document.getElementById('btn-chulha-process').addEventListener('click', async ()
 document.getElementById('btn-chulha-download').addEventListener('click', () => {
     if (!chulhaCourierWorkbook) return;
     downloadCourierXlsx(chulhaCourierWorkbook);
+});
+
+// ============================================
+// 미매핑 상품 모달
+// ============================================
+
+function showUnmappedModal(unmappedProducts) {
+    const overlay = document.getElementById('unmapped-overlay');
+    const tbody = document.getElementById('unmapped-tbody');
+    if (!overlay || !tbody) return;
+
+    tbody.innerHTML = unmappedProducts.map((item, i) => `
+        <tr>
+            <td>${item.originalName}</td>
+            <td>${item.count}</td>
+            <td><input type="text" id="unmapped-input-${i}" data-original="${encodeURIComponent(item.originalName)}" placeholder="단축명 입력"></td>
+        </tr>
+    `).join('');
+
+    overlay.style.display = 'flex';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // 첫 번째 입력에 포커스
+    const firstInput = document.getElementById('unmapped-input-0');
+    if (firstInput) setTimeout(() => firstInput.focus(), 100);
+}
+
+function hideUnmappedModal() {
+    const overlay = document.getElementById('unmapped-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+// 닫기 버튼
+document.getElementById('btn-close-unmapped').addEventListener('click', hideUnmappedModal);
+
+// 건너뛰기 버튼
+document.getElementById('btn-unmapped-skip').addEventListener('click', hideUnmappedModal);
+
+// 오버레이 클릭으로 닫기
+document.getElementById('unmapped-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'unmapped-overlay') hideUnmappedModal();
+});
+
+// 저장 후 재생성 버튼
+document.getElementById('btn-unmapped-save').addEventListener('click', async () => {
+    const inputs = document.querySelectorAll('#unmapped-tbody input[type="text"]');
+    const newMappings = [];
+
+    for (const input of inputs) {
+        const shortName = input.value.trim();
+        if (!shortName) continue;
+        const originalName = decodeURIComponent(input.dataset.original);
+        newMappings.push({ pattern: originalName, shortName });
+    }
+
+    if (newMappings.length === 0) {
+        hideUnmappedModal();
+        return;
+    }
+
+    // Firebase에 매핑 저장
+    const saveBtn = document.getElementById('btn-unmapped-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '저장 중...';
+
+    try {
+        for (const m of newMappings) {
+            await productNameMappingsRef.push({
+                pattern: m.pattern,
+                shortName: m.shortName,
+                channel: '',
+                priority: 10,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            });
+        }
+
+        // 최신 매핑 데이터로 재처리
+        hideUnmappedModal();
+
+        if (chulhaSelectedFiles.length > 0) {
+            // 매핑 데이터 갱신 대기
+            const snap = await productNameMappingsRef.once('value');
+            AppState.productNameMappings = snap.val() || {};
+
+            // 재처리
+            const data = await processSelectedFiles(chulhaSelectedFiles);
+            const statusEl = document.getElementById('chulha-status');
+            const resultsBody = document.getElementById('chulha-results-body');
+            const downloadBtn = document.getElementById('btn-chulha-download');
+
+            const totalRows = data.allRows.length;
+            const consolidatedRows = data.consolidated.length;
+            statusEl.textContent = `재생성 완료: ${data.results.length}개 파일, 택배양식 ${totalRows}행 → ${consolidatedRows}행 (합배송)`;
+            statusEl.className = 'chulha-status success';
+
+            renderProcessResults(data.results, resultsBody);
+
+            if (data.workbook) {
+                chulhaCourierWorkbook = data.workbook;
+                downloadBtn.style.display = 'inline-flex';
+            }
+
+            // 미매핑이 여전히 있으면 다시 팝업
+            if (data.unmappedProducts && data.unmappedProducts.length > 0) {
+                showUnmappedModal(data.unmappedProducts);
+            }
+        }
+
+        showScanResult(`${newMappings.length}개 매핑이 추가되었습니다.`, 'success');
+    } catch (err) {
+        showScanResult(`매핑 저장 오류: ${err.message}`, 'error');
+    }
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = '저장 후 재생성';
 });
 
 function renderProcessResults(results, container) {
