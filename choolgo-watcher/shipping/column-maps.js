@@ -59,36 +59,36 @@ const COLUMN_MAPS = {
 // 제네릭 채널은 파일명으로 세부 구분
 const GENERIC_MAPS = {
     '잇템커머스': {
-        recipientName: 'M',    // 수령인
-        phone: 'O',            // 수령인연락처1
-        postalCode: 'P',
-        address: 'Q',
-        message: 'R',
-        productName: ['D', 'E'], // 상품명 + 옵션
-        quantity: 'I',
-        headerCheck: { col: 'M', keyword: '수령인' },
+        recipientName: 'G',    // 받는분 성함
+        phone: 'H',            // 받는분 전화번호
+        postalCode: 'J',
+        address: 'K',
+        message: 'L',
+        productName: 'B',      // 상품명
+        quantity: 'C',
+        skipRows: 3,           // 3행 헤더 (발주서 형식)
     },
 
     '포앤서치': {
-        recipientName: 'M',    // 수령인
-        phone: 'O',            // 수령인연락처1
-        postalCode: 'P',
-        address: 'Q',
-        message: 'R',
-        productName: ['D', 'E'], // 상품명 + 옵션
-        quantity: 'I',
-        headerCheck: { col: 'M', keyword: '수령인' },
+        recipientName: 'G',
+        phone: 'H',
+        postalCode: 'J',
+        address: 'K',
+        message: 'L',
+        productName: 'B',
+        quantity: 'C',
+        skipRows: 3,
     },
 
     '캄므커머스': {
-        recipientName: 'M',    // 수령인
-        phone: 'O',            // 수령인연락처1
-        postalCode: 'P',
-        address: 'Q',
-        message: 'R',
-        productName: ['D', 'E'], // 상품명 + 옵션
-        quantity: 'I',
-        headerCheck: { col: 'M', keyword: '수령인' },
+        recipientName: 'G',
+        phone: 'H',
+        postalCode: 'J',
+        address: 'K',
+        message: 'L',
+        productName: 'B',
+        quantity: 'C',
+        skipRows: 3,
     },
 
     '크레이지': {
@@ -151,7 +151,7 @@ function autoDetectColumns(header) {
         let isRecipientCol = false;
 
         for (const [col, val] of Object.entries(header)) {
-            const s = String(val || '').trim();
+            const s = String(val || '').trim().replace(/\s+/g, '');
             if (!keywords.some(kw => s.includes(kw))) continue;
 
             // 수령자 관련 컬럼이면 우선 선택

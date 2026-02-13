@@ -22,16 +22,31 @@ async function extractShippingRows(filePath, channel) {
         return [];
     }
 
+    // skipRows 지원 (멀티행 헤더 파일)
+    let dataStartRow = 1;
+    if (columnMap !== 'auto-detect' && columnMap.skipRows) {
+        dataStartRow = columnMap.skipRows;
+    }
+
     const header = rows[0];
 
-    // 자동 탐지 모드
+    // 자동 탐지 모드: 여러 행에서 헤더 탐색
     if (columnMap === 'auto-detect') {
-        columnMap = autoDetectColumns(header);
-        if (!columnMap) {
+        let detected = null;
+        const maxScan = Math.min(5, rows.length);
+        for (let r = 0; r < maxScan; r++) {
+            detected = autoDetectColumns(rows[r]);
+            if (detected) {
+                dataStartRow = r + 1;
+                console.log(`  [택배양식] 자동 탐지 완료: 헤더=행${r + 1}, 수취인=${detected.recipientName}`);
+                break;
+            }
+        }
+        if (!detected) {
             console.log(`  [택배양식] 자동 탐지 실패: 수취인 컬럼을 찾을 수 없음`);
             return [];
         }
-        console.log(`  [택배양식] 자동 탐지 완료: 수취인=${columnMap.recipientName}`);
+        columnMap = detected;
     }
 
     // 헤더 검증 (auto-detect가 아닌 경우)
@@ -46,7 +61,7 @@ async function extractShippingRows(filePath, channel) {
 
     const results = [];
 
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = dataStartRow; i < rows.length; i++) {
         const row = rows[i];
 
         // 수취인명 추출

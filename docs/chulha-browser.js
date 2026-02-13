@@ -52,34 +52,34 @@ const COLUMN_MAPS = {
 
 const GENERIC_MAPS = {
     '잇템커머스': {
-        recipientName: 'M',
-        phone: 'O',
-        postalCode: 'P',
-        address: 'Q',
-        message: 'R',
-        productName: ['D', 'E'],
-        quantity: 'I',
-        headerCheck: { col: 'M', keyword: '수령인' },
+        recipientName: 'G',
+        phone: 'H',
+        postalCode: 'J',
+        address: 'K',
+        message: 'L',
+        productName: 'B',
+        quantity: 'C',
+        skipRows: 3,
     },
     '포앤서치': {
-        recipientName: 'M',
-        phone: 'O',
-        postalCode: 'P',
-        address: 'Q',
-        message: 'R',
-        productName: ['D', 'E'],
-        quantity: 'I',
-        headerCheck: { col: 'M', keyword: '수령인' },
+        recipientName: 'G',
+        phone: 'H',
+        postalCode: 'J',
+        address: 'K',
+        message: 'L',
+        productName: 'B',
+        quantity: 'C',
+        skipRows: 3,
     },
     '캄므커머스': {
-        recipientName: 'M',
-        phone: 'O',
-        postalCode: 'P',
-        address: 'Q',
-        message: 'R',
-        productName: ['D', 'E'],
-        quantity: 'I',
-        headerCheck: { col: 'M', keyword: '수령인' },
+        recipientName: 'G',
+        phone: 'H',
+        postalCode: 'J',
+        address: 'K',
+        message: 'L',
+        productName: 'B',
+        quantity: 'C',
+        skipRows: 3,
     },
     '크레이지': {
         recipientName: 'A',
@@ -132,7 +132,7 @@ function autoDetectColumns(header) {
         let isRecipientCol = false;
 
         for (const [col, val] of Object.entries(header)) {
-            const s = String(val || '').trim();
+            const s = String(val || '').trim().replace(/\s+/g, '');
             if (!keywords.some(kw => s.includes(kw))) continue;
 
             const isRecipient = recipientPrefixes.some(p => s.includes(p));
@@ -255,16 +255,31 @@ function extractShippingRowsBrowser(workbook, channelId, filename) {
         return [];
     }
 
+    // skipRows 지원 (멀티행 헤더 파일)
+    let dataStartRow = 1;
+    if (columnMap !== 'auto-detect' && columnMap.skipRows) {
+        dataStartRow = columnMap.skipRows;
+    }
+
     const header = rows[0];
 
-    // 자동 탐지 모드
+    // 자동 탐지 모드: 여러 행에서 헤더 탐색
     if (columnMap === 'auto-detect') {
-        columnMap = autoDetectColumns(header);
-        if (!columnMap) {
+        let detected = null;
+        const maxScan = Math.min(5, rows.length);
+        for (let r = 0; r < maxScan; r++) {
+            detected = autoDetectColumns(rows[r]);
+            if (detected) {
+                dataStartRow = r + 1;
+                console.log(`[택배양식] 자동 탐지 완료: 헤더=행${r + 1}, 수취인=${detected.recipientName}`);
+                break;
+            }
+        }
+        if (!detected) {
             console.log(`[택배양식] 자동 탐지 실패: 수취인 컬럼을 찾을 수 없음`);
             return [];
         }
-        console.log(`[택배양식] 자동 탐지 완료: 수취인=${columnMap.recipientName}`);
+        columnMap = detected;
     }
 
     // 헤더 검증
@@ -279,7 +294,7 @@ function extractShippingRowsBrowser(workbook, channelId, filename) {
 
     const results = [];
 
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = dataStartRow; i < rows.length; i++) {
         const row = rows[i];
         const recipientName = getVal(row, columnMap.recipientName);
         if (!recipientName) continue;
