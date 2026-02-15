@@ -3,7 +3,19 @@
  */
 
 /**
- * 품목명 매핑 적용 (원본 → 단축명)
+ * 원본 상품명에서 봉/팩 수 추출
+ * @param {string} name - 원본 상품명
+ * @returns {{count: number, unit: string}|null}
+ */
+function extractPackInfo(name) {
+    if (!name) return null;
+    const m = name.match(/(\d+)\s*(봉|팩)/);
+    if (!m) return null;
+    return { count: parseInt(m[1], 10), unit: m[2] };
+}
+
+/**
+ * 품목명 매핑 적용 (원본 → 단축명 + 봉수)
  * @param {string} originalName - 주문서 원본 품목명
  * @param {Array} mappings - [{pattern, shortName, priority}] priority 내림차순 정렬됨
  * @returns {string}
@@ -11,7 +23,13 @@
 function applyNameMapping(originalName, mappings) {
     if (!originalName) return originalName;
     for (const m of mappings) {
-        if (originalName.includes(m.pattern)) return m.shortName;
+        if (originalName.includes(m.pattern)) {
+            const packInfo = extractPackInfo(originalName);
+            if (packInfo) {
+                return `${m.shortName} ${packInfo.count}${packInfo.unit}`;
+            }
+            return m.shortName;
+        }
     }
     return originalName;
 }
@@ -61,11 +79,15 @@ function consolidateShipping(rows, mappings) {
             productMap.set(shortName, (productMap.get(shortName) || 0) + qty);
         }
 
-        // 품목명 문자열 생성: "현미뻥 7, 초코 3"
+        // 품목명 문자열 생성: "현미 5봉*2, 귀리 5봉"
         const productParts = [];
         let totalQty = 0;
         for (const [name, qty] of productMap) {
-            productParts.push(`${name} ${qty}`);
+            if (qty > 1) {
+                productParts.push(`${name}*${qty}`);
+            } else {
+                productParts.push(name);
+            }
             totalQty += qty;
         }
         const combinedProductName = productParts.join(', ');
@@ -99,4 +121,4 @@ function consolidateShipping(rows, mappings) {
     return consolidated;
 }
 
-module.exports = { consolidateShipping, applyNameMapping, recipientKey };
+module.exports = { consolidateShipping, applyNameMapping, recipientKey, extractPackInfo };

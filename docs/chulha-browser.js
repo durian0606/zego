@@ -324,10 +324,23 @@ function extractShippingRowsBrowser(workbook, channelId, filename) {
 // D. 합배송 (from consolidate.js)
 // ============================================
 
+function extractPackInfo(name) {
+    if (!name) return null;
+    const m = name.match(/(\d+)\s*(봉|팩)/);
+    if (!m) return null;
+    return { count: parseInt(m[1], 10), unit: m[2] };
+}
+
 function applyNameMapping(originalName, mappings) {
     if (!originalName) return originalName;
     for (const m of mappings) {
-        if (originalName.includes(m.pattern)) return m.shortName;
+        if (originalName.includes(m.pattern)) {
+            const packInfo = extractPackInfo(originalName);
+            if (packInfo) {
+                return `${m.shortName} ${packInfo.count}${packInfo.unit}`;
+            }
+            return m.shortName;
+        }
     }
     return originalName;
 }
@@ -385,7 +398,11 @@ function consolidateShipping(rows, mappings) {
         const productParts = [];
         let totalQty = 0;
         for (const [name, qty] of productMap) {
-            productParts.push(`${name} ${qty}`);
+            if (qty > 1) {
+                productParts.push(`${name}*${qty}`);
+            } else {
+                productParts.push(name);
+            }
             totalQty += qty;
         }
 
