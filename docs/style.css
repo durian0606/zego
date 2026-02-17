@@ -2477,9 +2477,11 @@ tr.row-locked td:first-child::before {
     background: rgba(0, 0, 0, 0.5);
     z-index: 1000;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     padding: var(--spacing-md);
+    padding-top: 10vh;
+    overflow-y: auto;
 }
 
 .manual-modal {
@@ -2487,9 +2489,20 @@ tr.row-locked td:first-child::before {
     border-radius: var(--radius-lg);
     width: 100%;
     max-width: 520px;
-    max-height: 85vh;
+    max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* 모바일 키보드 올라왔을 때 (세로 공간 부족) — 모달 전체화면 전환 */
+@media (max-height: 500px) {
+    .manual-overlay {
+        padding-top: var(--spacing-sm);
+        align-items: flex-start;
+    }
+    .manual-modal {
+        max-height: 95vh;
+    }
 }
 
 .manual-header {

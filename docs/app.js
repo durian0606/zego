@@ -3567,6 +3567,7 @@ productNameMappingsRef.on('value', (snapshot) => {
 const pageProduction = document.getElementById('page-production');
 const pageShipping = document.getElementById('page-shipping');
 const productionActions = document.getElementById('production-actions');
+const shippingActions = document.getElementById('shipping-actions');
 
 document.querySelectorAll('.main-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -3580,16 +3581,26 @@ document.querySelectorAll('.main-tab').forEach(tab => {
             pageProduction.style.display = '';
             pageShipping.style.display = 'none';
             productionActions.style.display = '';
+            if (shippingActions) shippingActions.style.display = 'none';
             scanIndicator.style.display = 'flex';
             document.getElementById('barcode-input').focus();
         } else {
             pageProduction.style.display = 'none';
             pageShipping.style.display = '';
             productionActions.style.display = 'none';
+            if (shippingActions) shippingActions.style.display = '';
             scanIndicator.style.display = 'none';
             lucide.createIcons();
         }
     });
+});
+
+// 출하관리 헤더 단축 버튼 → 실제 파일/폴더 input 연결
+document.getElementById('btn-header-folder')?.addEventListener('click', () => {
+    document.getElementById('chulha-folder-input')?.click();
+});
+document.getElementById('btn-header-file')?.addEventListener('click', () => {
+    document.getElementById('chulha-file-input')?.click();
 });
 
 // 매핑 채널 드롭다운 동적 초기화 (channel-maps.js의 ALL_CHANNEL_NAMES 사용)

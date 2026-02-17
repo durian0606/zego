@@ -1,0 +1,38 @@
+{
+  "rules": {
+    ".read": true,
+    "products": {
+      "$product": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['name', 'currentStock'])"
+      }
+    },
+    "barcodes": {
+      "$barcode": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['productName', 'type', 'quantity'])"
+      }
+    },
+    "history": {
+      "$entry": {
+        ".write": "newData.exists()",
+        ".validate": "newData.hasChildren(['productName', 'type', 'quantity', 'timestamp'])"
+      }
+    },
+    "dailyClosings": {
+      "$date": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['date'])"
+      }
+    },
+    "choolgoLogs": {
+      ".write": true
+    },
+    "productNameMappings": {
+      "$id": {
+        ".write": true,
+        ".validate": "!newData.exists() || newData.hasChildren(['pattern', 'shortName'])"
+      }
+    }
+  }
+}
