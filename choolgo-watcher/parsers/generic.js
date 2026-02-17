@@ -1,5 +1,16 @@
 const { readWorkbook, getRows } = require('../utils/read-xlsx');
 
+// 제품 패턴 (모듈 로드 시 1회 컴파일)
+const PRODUCT_PATTERNS = [
+    { regex: /현미.*뻥튀기|뻥튀기.*쌀과자/, product: '우리곡간 현미뻥튀기' },
+    { regex: /강황누룽지/, product: '우리곡간 강황누룽지' },
+    { regex: /귀리누룽지/, product: '우리곡간 귀리누룽지' },
+    { regex: /검정깨누룽지/, product: '우리곡간 검정깨누룽지' },
+    { regex: /코코넛누룽지/, product: '우리곡간 코코넛누룽지' },
+    { regex: /현미누룽지|수제.*누룽지/, product: '우리곡간 현미누룽지' },
+    { regex: /서리태/, product: '우리곡간 서리태' },
+];
+
 // 제네릭 파서 - 다양한 직택배 주문서 형식 처리
 // J우리곡간 (두브로), 크레이지아지트, 스마트스토어 등
 // 상품명/옵션을 찾아서 키워드 매칭으로 제품 추출
@@ -62,17 +73,7 @@ function detectColumns(header) {
 function extractProducts(text, orderQty) {
     const results = [];
 
-    const patterns = [
-        { regex: /현미.*뻥튀기|뻥튀기.*쌀과자/, product: '우리곡간 현미뻥튀기' },
-        { regex: /강황누룽지/, product: '우리곡간 강황누룽지' },
-        { regex: /귀리누룽지/, product: '우리곡간 귀리누룽지' },
-        { regex: /검정깨누룽지/, product: '우리곡간 검정깨누룽지' },
-        { regex: /코코넛누룽지/, product: '우리곡간 코코넛누룽지' },
-        { regex: /현미누룽지|수제.*누룽지/, product: '우리곡간 현미누룽지' },
-        { regex: /서리태/, product: '우리곡간 서리태' },
-    ];
-
-    for (const p of patterns) {
+    for (const p of PRODUCT_PATTERNS) {
         if (p.regex.test(text)) {
             // 봉수 추출 시도
             const packMatch = text.match(/(\d+)\s*(?:봉|팩|개입)/);

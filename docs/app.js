@@ -435,26 +435,44 @@ connectedRef.on('value', (snapshot) => {
     }
 });
 
+// 렌더링 debounce — 여러 리스너가 동시에 트리거될 때 1프레임으로 통합
+let _inventoryDebounceTimer = null;
+let _dashboardDebounceTimer = null;
+
+function scheduleInventoryUpdate() {
+    if (_inventoryDebounceTimer) clearTimeout(_inventoryDebounceTimer);
+    _inventoryDebounceTimer = setTimeout(() => {
+        _inventoryDebounceTimer = null;
+        updateInventoryTable();
+    }, 30);
+}
+
+function scheduleDashboardUpdate() {
+    if (_dashboardDebounceTimer) clearTimeout(_dashboardDebounceTimer);
+    _dashboardDebounceTimer = setTimeout(() => {
+        _dashboardDebounceTimer = null;
+        updateDashboard();
+    }, 30);
+}
+
 // 제품 목록 실시간 감지
 productsRef.on('value', (snapshot) => {
     AppState.productsData = snapshot.val() || {};
     updateSortedProductNames();
     migrateProductIndices();
-    updateInventoryTable();
+    scheduleInventoryUpdate();
     updateProductionHistoryTable();
     updateHistoryTable();
     updateBarcodeTable();
-    updateDashboard();
+    scheduleDashboardUpdate();
 });
 
 // 바코드 목록 실시간 감지
 barcodesRef.on('value', (snapshot) => {
     AppState.barcodesData = snapshot.val() || {};
-    console.log('Firebase에서 바코드 데이터 업데이트:', Object.keys(AppState.barcodesData).length, '개');
-    console.log('바코드 목록:', Object.keys(AppState.barcodesData));
     migrateProductIndices();
     updateBarcodeTable();
-    updateInventoryTable();
+    scheduleInventoryUpdate();
     updateProductionHistoryTable();
 });
 
@@ -466,16 +484,15 @@ historyRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
     });
     updateHistoryTable();
     updateProductionHistoryTable();
-    updateDashboard();
+    scheduleDashboardUpdate();
 });
 
 // 마감 기록 실시간 감지 (최근 7일)
 dailyClosingsRef.orderByKey().limitToLast(7).on('value', (snapshot) => {
     AppState.dailyClosingsData = snapshot.val() || {};
-    console.log('Firebase에서 마감 기록 업데이트:', Object.keys(AppState.dailyClosingsData).length, '개');
-    updateHistoryTable();  // 금일 생산현황 테이블도 업데이트 (수정된 값 반영)
+    updateHistoryTable();
     updateProductionHistoryTable();
-    updateDashboard();
+    scheduleDashboardUpdate();
 });
 
 // 오늘 출고 예정 요약 실시간 감지 (choolgo-watcher)
@@ -483,8 +500,8 @@ const choolgoTodayKey = formatDateKey(new Date());
 const choolgoSummaryRef = database.ref(`choolgoLogs/${choolgoTodayKey}/summary`);
 choolgoSummaryRef.on('value', (snapshot) => {
     AppState.choolgoSummary = snapshot.val() || { channels: {}, products: {} };
-    updateInventoryTable();
-    updateDashboard();
+    scheduleInventoryUpdate();
+    scheduleDashboardUpdate();
 });
 
 // 어제 기출고 요약 (어제 처리된 주문 = 오늘 기준 이미 나간 물량)
@@ -494,7 +511,7 @@ const choolgoYesterdayKey = formatDateKey(yesterday);
 const choolgoYesterdayRef = database.ref(`choolgoLogs/${choolgoYesterdayKey}/summary`);
 choolgoYesterdayRef.on('value', (snapshot) => {
     AppState.yesterdaySummary = snapshot.val() || { channels: {}, products: {} };
-    updateInventoryTable();
+    scheduleInventoryUpdate();
 });
 
 // ============================================
@@ -683,7 +700,6 @@ function updateWeeklyChart(closings) {
 // 재고 테이블 업데이트
 function updateInventoryTable() {
     const products = filterValidProducts(AppState.productsData);
-    console.log('제품 데이터:', products);
 
     if (products.length === 0) {
         inventoryTbody.innerHTML = '<tr><td colspan="7" class="no-data">제품이 없습니다.</td></tr>';
@@ -1395,8 +1411,6 @@ function updateBarcodeTable() {
     const products = filterValidProducts(AppState.productsData);
     const barcodes = filterValidBarcodes(AppState.barcodesData);
 
-    console.log('제품 데이터:', products);
-    console.log('바코드 데이터:', barcodes);
 
     if (products.length === 0) {
         barcodeTbody.innerHTML = '<tr><td colspan="4" class="no-data">등록된 제품이 없습니다.</td></tr>';

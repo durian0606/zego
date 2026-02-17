@@ -11,50 +11,73 @@ const { START_DATE, WATCH_PATHS, PROCESSED_FILE, FAILED_FILE } = require('./conf
 const DRY_RUN = process.argv.includes('--dry-run'); // 테스트 모드 (Firebase 차감 안 함)
 const REPROCESS_ARG = process.argv.indexOf('--reprocess');
 
-// 처리 완료 파일 목록 로드
-function loadProcessed() {
-    try {
-        return JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8'));
-    } catch {
-        return {};
+// ── 인메모리 캐시 (프로세스 시작 시 1회 로드, 이후 캐시에서 읽기) ──
+let _processedCache = null;
+let _failedCache = null;
+
+function _initCache() {
+    if (_processedCache === null) {
+        try { _processedCache = JSON.parse(fs.readFileSync(PROCESSED_FILE, 'utf8')); }
+        catch { _processedCache = {}; }
+    }
+    if (_failedCache === null) {
+        try { _failedCache = JSON.parse(fs.readFileSync(FAILED_FILE, 'utf8')); }
+        catch { _failedCache = {}; }
     }
 }
 
+function _flushProcessed() {
+    fs.writeFile(PROCESSED_FILE, JSON.stringify(_processedCache, null, 2), (err) => {
+        if (err) console.error('[캐시] processed.json 쓰기 실패:', err.message);
+    });
+}
+
+function _flushFailed() {
+    fs.writeFile(FAILED_FILE, JSON.stringify(_failedCache, null, 2), (err) => {
+        if (err) console.error('[캐시] failed.json 쓰기 실패:', err.message);
+    });
+}
+
+// 처리 완료 파일 목록 로드
+function loadProcessed() {
+    _initCache();
+    return _processedCache;
+}
+
 function saveProcessed(data) {
-    fs.writeFileSync(PROCESSED_FILE, JSON.stringify(data, null, 2));
+    _processedCache = data;
+    _flushProcessed();
 }
 
 // 처리 실패 파일 목록 관리
 function loadFailed() {
-    try {
-        return JSON.parse(fs.readFileSync(FAILED_FILE, 'utf8'));
-    } catch {
-        return {};
-    }
+    _initCache();
+    return _failedCache;
 }
 
 function saveFailed(data) {
-    fs.writeFileSync(FAILED_FILE, JSON.stringify(data, null, 2));
+    _failedCache = data;
+    _flushFailed();
 }
 
 function addFailed(filePath, error, details) {
-    const failed = loadFailed();
+    _initCache();
     const absPath = path.resolve(filePath);
-    failed[absPath] = {
+    _failedCache[absPath] = {
         error: error.message,
         code: error.code || 'UNKNOWN',
         timestamp: new Date().toISOString(),
         details: details || {},
-        retryCount: (failed[absPath]?.retryCount || 0) + 1
+        retryCount: (_failedCache[absPath]?.retryCount || 0) + 1
     };
-    saveFailed(failed);
+    _flushFailed();
 }
 
 function clearFailed(filePath) {
-    const failed = loadFailed();
+    _initCache();
     const absPath = path.resolve(filePath);
-    delete failed[absPath];
-    saveFailed(failed);
+    delete _failedCache[absPath];
+    _flushFailed();
 }
 
 // 파일 날짜 필터 (START_DATE 이후만 처리)
