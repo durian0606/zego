@@ -119,7 +119,8 @@ const AppState = {
     currentWorkingProduct: null,  // 현재 작업 중인 제품 (강조 표시용)
     selectedProductIndex: 0,  // 키보드 단축키용 선택된 제품 인덱스
     isProductLocked: false,  // 제품 선택 고정 상태
-    choolgoSummary: { channels: {}, products: {} },  // 오늘 출고 요약 (choolgo-watcher)
+    choolgoSummary: { channels: {}, products: {} },  // 오늘 출고 예정 요약 (choolgo-watcher)
+    yesterdaySummary: { channels: {}, products: {} }, // 어제 출고(기출고) 요약
     productNameMappings: {},  // 품목명 매핑 (출하관리)
     chulhaProcessing: false,  // 출하 처리 중 플래그
 };
@@ -477,13 +478,23 @@ dailyClosingsRef.orderByKey().limitToLast(7).on('value', (snapshot) => {
     updateDashboard();
 });
 
-// 오늘 출고 요약 실시간 감지 (choolgo-watcher)
+// 오늘 출고 예정 요약 실시간 감지 (choolgo-watcher)
 const choolgoTodayKey = formatDateKey(new Date());
 const choolgoSummaryRef = database.ref(`choolgoLogs/${choolgoTodayKey}/summary`);
 choolgoSummaryRef.on('value', (snapshot) => {
     AppState.choolgoSummary = snapshot.val() || { channels: {}, products: {} };
     updateInventoryTable();
     updateDashboard();
+});
+
+// 어제 기출고 요약 (어제 처리된 주문 = 오늘 기준 이미 나간 물량)
+const yesterday = new Date();
+yesterday.setDate(yesterday.getDate() - 1);
+const choolgoYesterdayKey = formatDateKey(yesterday);
+const choolgoYesterdayRef = database.ref(`choolgoLogs/${choolgoYesterdayKey}/summary`);
+choolgoYesterdayRef.on('value', (snapshot) => {
+    AppState.yesterdaySummary = snapshot.val() || { channels: {}, products: {} };
+    updateInventoryTable();
 });
 
 // ============================================
@@ -730,22 +741,38 @@ function updateInventoryTable() {
         const colorIndex = getProductColorIndex(product.name) + 1;
         const colorClass = `product-color-${colorIndex}`;
 
-        // 출고량 조회 (choolgo-watcher 데이터)
+        // 출고 예정량 (오늘 주문)
         const choolgoProducts = AppState.choolgoSummary.products || {};
         const shipmentQty = choolgoProducts[product.name] || 0;
         const shipmentDisplay = shipmentQty > 0
             ? `<span class="choolgo-shipment-value" onclick="showChannelDetail(event)" title="클릭하여 채널별 상세">${shipmentQty}</span>`
             : '<span class="choolgo-shipment-zero">-</span>';
 
+        // 기출고 (어제 주문 = 이미 나간 물량)
+        const yesterdayProducts = AppState.yesterdaySummary.products || {};
+        const yesterdayQty = yesterdayProducts[product.name] || 0;
+        const yesterdayDisplay = yesterdayQty > 0
+            ? `<span class="yesterday-shipment-value">${yesterdayQty}</span>`
+            : '<span class="choolgo-shipment-zero">-</span>';
+
+        // 출고 부족 판단: 출고 예정량 > 현재 재고
+        const shipmentShortage = shipmentQty - product.currentStock;
+        const hasShipmentShortage = shipmentShortage > 0;
+        const rowExtraClass = hasShipmentShortage ? ' row-shipment-shortage' : '';
+
         return `
-            <tr class="${colorClass}" data-product="${product.name}">
+            <tr class="${colorClass}${rowExtraClass}" data-product="${product.name}">
                 <td class="drag-handle" title="드래그하여 순서 변경">
                     <i data-lucide="grip-vertical" style="width: 18px; height: 18px; opacity: 0.5;"></i>
                 </td>
                 <td><strong>${product.name}</strong></td>
                 <td class="stock-number rice-cooker-count" data-product="${product.name}"><strong>${product.riceCookerCount || 0}</strong></td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
-                <td class="stock-number choolgo-shipment-cell">${shipmentDisplay}</td>
+                <td class="stock-number choolgo-shipment-cell">
+                    ${shipmentDisplay}
+                    ${hasShipmentShortage ? `<span class="shortage-badge">${shipmentShortage} 부족</span>` : ''}
+                </td>
+                <td class="stock-number yesterday-shipment-cell">${yesterdayDisplay}</td>
                 <td class="stock-number editable-stock" data-product="${product.name}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td>
                     <span class="stock-status ${stockStatus}">${stockText}</span>
