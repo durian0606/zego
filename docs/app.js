@@ -537,13 +537,13 @@ function updateDashboard() {
     today.setHours(0, 0, 0, 0);
     const todayTimestamp = today.getTime();
 
-    // 금일 생산현황 테이블의 currentStock 값을 직접 사용 (카테고리별 합계)
+    // 금일 생산현황 테이블의 todayProduction 값을 사용 (카테고리별 합계)
     let catNurungji = 0, catSeoridae = 0, catPpungtwigi = 0;
     products.forEach(product => {
-        const stock = product.currentStock || 0;
-        if (product.name.includes('누룽지')) catNurungji += stock;
-        else if (product.name.includes('서리태')) catSeoridae += stock;
-        else if (product.name.includes('뻥튀기')) catPpungtwigi += stock;
+        const production = product.todayProduction || 0;
+        if (product.name.includes('누룽지')) catNurungji += production;
+        else if (product.name.includes('서리태')) catSeoridae += production;
+        else if (product.name.includes('뻥튀기')) catPpungtwigi += production;
     });
 
     // 출고량 계산 (choolgo-watcher 요약 데이터 우선, 없으면 히스토리 기반)
@@ -651,7 +651,7 @@ function updateWeeklyChart(closings) {
             // 오늘은 실시간 데이터 사용
             const products = filterValidProducts(AppState.productsData);
             products.forEach(product => {
-                const production = product.currentStock || 0;
+                const production = product.todayProduction || 0;
                 categories.forEach(cat => {
                     if (product.name.includes(cat.keyword)) {
                         categoryTotals[cat.keyword] += production;
@@ -734,7 +734,7 @@ function updateInventoryTable() {
     const products = filterValidProducts(AppState.productsData);
 
     if (products.length === 0) {
-        inventoryTbody.innerHTML = '<tr><td colspan="7" class="no-data">제품이 없습니다.</td></tr>';
+        inventoryTbody.innerHTML = '<tr><td colspan="9" class="no-data">제품이 없습니다.</td></tr>';
         return;
     }
 
@@ -777,6 +777,7 @@ function updateInventoryTable() {
         const hasShipmentShortage = shipmentShortage > 0;
         const rowExtraClass = hasShipmentShortage ? ' row-shipment-shortage' : '';
 
+        const todayProduction = product.todayProduction || 0;
         const escapedName = escapeHtml(product.name);
         return `
             <tr class="${colorClass}${rowExtraClass}" data-product="${escapedName}">
@@ -785,6 +786,7 @@ function updateInventoryTable() {
                 </td>
                 <td><strong>${escapedName}</strong></td>
                 <td class="stock-number rice-cooker-count" data-product="${escapedName}"><strong>${product.riceCookerCount || 0}</strong></td>
+                <td class="stock-number">${todayProduction}</td>
                 <td class="stock-number editable-stock" data-product="${escapedName}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number choolgo-shipment-cell">
                     ${shipmentDisplay}
@@ -1328,7 +1330,7 @@ function updateProductionHistoryTable() {
             if (d.dateKey === todayKey) {
                 // 오늘은 실시간 데이터 사용
                 riceCookerCount = product.riceCookerCount || 0;
-                production = product.currentStock || 0;
+                production = product.todayProduction || 0;
             } else {
                 // 과거 날짜는 마감 데이터 사용
                 const closing = closings[d.dateKey];
@@ -1844,12 +1846,15 @@ async function updateStock(barcodeInfo) {
 
             if (type === 'IN') {
                 capturedAfter = capturedBefore + quantity;
+                return { ...current,
+                    currentStock: capturedAfter,
+                    todayProduction: (current.todayProduction || 0) + quantity,
+                    updatedAt: Date.now() };
             } else {
                 capturedAfter = capturedBefore - quantity;
                 if (capturedAfter < 0) return; // abort — 재고 부족
+                return { ...current, currentStock: capturedAfter, updatedAt: Date.now() };
             }
-
-            return { ...current, currentStock: capturedAfter, updatedAt: Date.now() };
         });
 
         if (!result.committed) {
@@ -2838,10 +2843,11 @@ async function executeClosing(dateKey) {
     const productSummary = {};
     // DOM 대신 AppState에서 직접 읽기 (인라인 편집 중이거나 렌더링 지연 시 DOM 값 불일치 방지)
     const products = filterValidProducts(AppState.productsData);
+    const choolgoProducts = AppState.choolgoSummary.products || {};
     products.forEach(product => {
         productSummary[product.name] = {
-            production: product.currentStock || 0,
-            shipment: 0,
+            production: product.todayProduction || 0,
+            shipment: choolgoProducts[product.name] || 0,
             riceCookerCount: product.riceCookerCount || 0
         };
     });
@@ -2878,30 +2884,18 @@ async function closeTodayProduction() {
     }
 
     try {
-        // 금일 생산현황 테이블에서 currentStock 값을 직접 읽어오기
-        const productSummary = {};
-        const inventoryRows = document.querySelectorAll('#inventory-table tbody tr[data-product]');
-
-        inventoryRows.forEach(row => {
-            const productName = row.getAttribute('data-product');
-            const stockCell = row.querySelector('[data-stock]');
-            const currentStock = stockCell ? parseInt(stockCell.getAttribute('data-stock')) || 0 : 0;
-
-            productSummary[productName] = {
-                production: currentStock,
-                shipment: 0
-            };
-        });
+        // AppState에서 직접 읽기 (확인 대화상자용 요약)
+        const products = filterValidProducts(AppState.productsData);
 
         // 마감할 내용이 없으면 종료
-        if (Object.keys(productSummary).length === 0) {
+        if (products.length === 0) {
             showScanResult('등록된 제품이 없습니다.', 'error');
             return;
         }
 
         // 마감 확인
-        const summaryText = Object.entries(productSummary)
-            .map(([name, data]) => `${name}: ${data.production}개`)
+        const summaryText = products
+            .map(p => `${p.name}: ${p.todayProduction || 0}개`)
             .join('\n');
 
         const confirmed = await showConfirmDialog(
@@ -3171,7 +3165,7 @@ async function resetTodayProduction(skipConfirm = false) {
     try {
         const updates = {};
         products.forEach(product => {
-            updates[`${product.name}/currentStock`] = 0;
+            updates[`${product.name}/todayProduction`] = 0;
             updates[`${product.name}/updatedAt`] = Date.now();
         });
 
