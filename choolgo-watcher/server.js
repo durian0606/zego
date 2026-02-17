@@ -81,6 +81,13 @@ app.post('/api/retry-failed', async (req, res) => {
         return res.status(400).json({ success: false, error: 'filePath 필요' });
     }
 
+    // Path Traversal 방지: failed.json에 등록된 경로만 처리
+    const absPath = path.resolve(filePath);
+    const failed = loadFailed();
+    if (!failed[absPath]) {
+        return res.status(400).json({ success: false, error: '등록되지 않은 파일 경로입니다.' });
+    }
+
     if (isProcessing) {
         return res.status(409).json({ success: false, error: '이미 처리 중입니다.' });
     }
@@ -88,7 +95,7 @@ app.post('/api/retry-failed', async (req, res) => {
     isProcessing = true;
     try {
         clearFailed(filePath);
-        const result = await processFile(filePath, { skipChecks: true });
+        const result = await processFile(absPath, { skipChecks: true });
         res.json({ success: true, result });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

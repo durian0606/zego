@@ -863,7 +863,6 @@ function editMinStock(element) {
     const productName = element.getAttribute('data-product');
     const currentValue = parseInt(element.getAttribute('data-minstock')) || 0;
 
-    console.log('목표재고 수정 시작:', productName, '현재값:', currentValue);
 
     AppState.isEditingMinStock = true; // 편집 시작
     const originalContent = element.innerHTML;
@@ -1014,7 +1013,6 @@ function editCurrentStock(element) {
     const productName = element.getAttribute('data-product');
     const currentValue = parseInt(element.getAttribute('data-stock')) || 0;
 
-    console.log('현재 재고 수정 시작:', productName, '현재값:', currentValue);
 
     AppState.isEditingCurrentStock = true; // 편집 시작
     const originalContent = element.innerHTML;
@@ -1355,7 +1353,8 @@ function updateProductionHistoryTable() {
         const colorIndex = getProductColorIndex(productName) + 1;
         const colorClass = `product-color-${colorIndex}`;
 
-        tbodyHtml += `<tr class="${colorClass}"><td><strong>${productName}</strong></td>`;
+        const escapedProductName = escapeHtml(productName);
+        tbodyHtml += `<tr class="${colorClass}"><td><strong>${escapedProductName}</strong></td>`;
 
         dates.forEach(d => {
             let riceCookerCount = 0;
@@ -1383,7 +1382,7 @@ function updateProductionHistoryTable() {
 
             // 금일생산 셀 (클릭하면 편집 가능)
             const cellClass = 'production-editable';
-            const cellData = `data-date="${d.dateKey}" data-product="${productName}" onclick="editProductionValue(this)"`;
+            const cellData = `data-date="${escapeHtml(d.dateKey)}" data-product="${escapedProductName}" onclick="editProductionValue(this)"`;
 
             if (production > 0) {
                 tbodyHtml += `<td class="${cellClass}" ${cellData}><span class="transaction-type transaction-in">${production}</span></td>`;
@@ -1451,16 +1450,17 @@ function updateBarcodeTable() {
         const colorIndex = getProductColorIndex(productName) + 1;
         const colorClass = `product-color-${colorIndex}`;
 
+        const escapedPN = escapeHtml(productName);
         html += `
-            <tr class="${colorClass}">
-                <td class="product-name-cell"><strong>${productName}</strong></td>
+            <tr class="${colorClass}" data-product="${escapedPN}">
+                <td class="product-name-cell"><strong>${escapedPN}</strong></td>
                 <td>${inQuantities}</td>
                 <td>${outQuantities}</td>
                 <td>
-                    <button class="btn-edit-barcode" onclick="editProduct('${productName}')" title="제품 수정">
+                    <button class="btn-edit-barcode" data-product="${escapedPN}" onclick="editProduct(this.dataset.product)" title="제품 수정">
                         <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
                     </button>
-                    <button class="btn-delete-barcode" onclick="deleteProduct('${productName}')" title="제품 삭제">
+                    <button class="btn-delete-barcode" data-product="${escapedPN}" onclick="deleteProduct(this.dataset.product)" title="제품 삭제">
                         <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                     </button>
                 </td>
@@ -1475,7 +1475,6 @@ function updateBarcodeTable() {
         lucide.createIcons();
     }
 
-    console.log('바코드 테이블 업데이트 완료');
 }
 
 // 제품 수정 함수 (제품명 및 바코드 수량 변경)
@@ -1930,16 +1929,8 @@ barcodeInput.addEventListener('keypress', async (e) => {
 
         if (!barcode) return;
 
-        // 디버깅: 스캔한 바코드와 등록된 바코드 목록 출력
-        console.log('=== 바코드 스캔 디버깅 ===');
-        console.log('스캔한 바코드:', barcode);
-        console.log('바코드 길이:', barcode.length);
-        console.log('등록된 바코드 목록:', Object.keys(AppState.barcodesData));
-
         // 바코드 정보 조회
         const barcodeInfo = findBarcodeInfo(barcode);
-
-        console.log('조회된 바코드 정보:', barcodeInfo);
 
         if (!barcodeInfo) {
             showScanResult('등록되지 않은 바코드입니다. 먼저 바코드를 등록하세요.', 'error');
@@ -2295,7 +2286,6 @@ productForm.addEventListener('submit', async (e) => {
             const barcodes = filterValidBarcodes(AppState.barcodesData);
             const relatedBarcodes = barcodes.filter(b => b.productName === oldProductName);
 
-            console.log(`기존 바코드 ${relatedBarcodes.length}개 삭제 중...`);
             for (const barcode of relatedBarcodes) {
                 await barcodesRef.child(barcode.barcode).remove();
             }
@@ -2328,11 +2318,9 @@ productForm.addEventListener('submit', async (e) => {
                         quantity: orphan.quantity,
                         createdAt: orphan.createdAt || Date.now()
                     });
-                    console.log(`  고아 바코드 이동: ${orphan.barcode} → ${newKey}`);
                 } else {
                     // 올바른 인덱스를 모르면 그냥 삭제 (해당 제품 수정 시 재생성됨)
                     await barcodesRef.child(orphan.barcode).remove();
-                    console.log(`  고아 바코드 삭제: ${orphan.barcode}`);
                 }
             }
         }
@@ -2356,10 +2344,8 @@ productForm.addEventListener('submit', async (e) => {
         let barcodeCount = 0;
 
         // 생산 바코드 생성
-        console.log(`생산 바코드 생성 시작 (제품 인덱스: ${productIndex})`);
         for (const quantity of uniqueQuantitiesIn) {
             const barcodeIn = `P${productIndex}-IN-${quantity}`;
-            console.log(`생성할 바코드: ${barcodeIn}`);
             await barcodesRef.child(barcodeIn).set({
                 barcode: barcodeIn,
                 productName: productName,
@@ -2371,10 +2357,8 @@ productForm.addEventListener('submit', async (e) => {
         }
 
         // 출고 바코드 생성
-        console.log(`출고 바코드 생성 시작`);
         for (const quantity of uniqueQuantitiesOut) {
             const barcodeOut = `P${productIndex}-OUT-${quantity}`;
-            console.log(`생성할 바코드: ${barcodeOut}`);
             await barcodesRef.child(barcodeOut).set({
                 barcode: barcodeOut,
                 productName: productName,
@@ -2387,7 +2371,6 @@ productForm.addEventListener('submit', async (e) => {
 
         // 조회 바코드 생성 (기본)
         const barcodeView = `P${productIndex}-VIEW`;
-        console.log(`조회 바코드 생성: ${barcodeView}`);
         await barcodesRef.child(barcodeView).set({
             barcode: barcodeView,
             productName: productName,
@@ -2397,7 +2380,6 @@ productForm.addEventListener('submit', async (e) => {
         });
         barcodeCount++;
 
-        console.log(`총 ${barcodeCount}개의 바코드 생성 완료`);
 
         // 로딩 숨김
         hideLoading();
@@ -2718,9 +2700,10 @@ function openBarcodePrintPage() {
         // 수량 내림차순 정렬
         inBarcodes.sort((a, b) => b.quantity - a.quantity);
 
+        const escapedPrintNameIn = escapeHtml(product.name);
         html += `
-        <div class="product-row" data-product="${product.name}">
-            <div class="product-row-header">${product.name}</div>
+        <div class="product-row" data-product="${escapedPrintNameIn}">
+            <div class="product-row-header">${escapedPrintNameIn}</div>
             <div class="barcode-list">
 `;
 
@@ -2758,9 +2741,10 @@ function openBarcodePrintPage() {
         // 수량 내림차순 정렬
         outBarcodes.sort((a, b) => b.quantity - a.quantity);
 
+        const escapedPrintNameOut = escapeHtml(product.name);
         html += `
-        <div class="product-row" data-product="${product.name}">
-            <div class="product-row-header">${product.name}</div>
+        <div class="product-row" data-product="${escapedPrintNameOut}">
+            <div class="product-row-header">${escapedPrintNameOut}</div>
             <div class="barcode-list">
 `;
 
@@ -3362,7 +3346,12 @@ function updateRiceCookerCount(delta) {
     AppState.productsData[product.name].riceCookerCount = newCount;
     const cell = document.querySelector(`.rice-cooker-count[data-product="${product.name}"]`);
     if (cell) cell.innerHTML = `<strong>${newCount}</strong>`;
-    productsRef.child(product.name).update({ riceCookerCount: newCount });
+    productsRef.child(product.name).update({ riceCookerCount: newCount }).catch(err => {
+        console.error('밥솥 카운터 저장 오류:', err.message);
+        // 저장 실패 시 메모리 롤백
+        AppState.productsData[product.name].riceCookerCount = current;
+        if (cell) cell.innerHTML = `<strong>${current}</strong>`;
+    });
 }
 
 // 선택된 제품 하이라이트 갱신
@@ -3934,8 +3923,12 @@ window.cancelMappingRow = function() {
 // 매핑 삭제
 window.deleteMapping = async function(id) {
     if (!confirm('이 매핑을 삭제하시겠습니까?')) return;
-    await productNameMappingsRef.child(id).remove();
-    showScanResult('매핑이 삭제되었습니다.', 'success');
+    try {
+        await productNameMappingsRef.child(id).remove();
+        showScanResult('매핑이 삭제되었습니다.', 'success');
+    } catch (err) {
+        showScanResult(`매핑 삭제 오류: ${err.message}`, 'error');
+    }
 };
 
 // ============================================
@@ -3969,9 +3962,9 @@ document.getElementById('chulha-file-input').addEventListener('change', (e) => {
 });
 
 function handleChulhaFileSelection(fileList) {
-    // 엑셀 파일만 필터링
+    // 엑셀 파일만 필터링 (임시파일·출력파일 제외)
     const files = Array.from(fileList).filter(f =>
-        f.name.match(/\.xlsx?$/i) && !f.name.startsWith('~$')
+        f.name.match(/\.xlsx?$/i) && !f.name.startsWith('~$') && !f.name.includes('택배양식')
     );
 
     if (files.length === 0) {

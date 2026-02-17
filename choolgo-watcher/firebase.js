@@ -174,4 +174,4 @@ async function getProductNameMappings() {
         .sort((a, b) => b.priority - a.priority);
 }
 
-module.exports = { getProduct, updateProductStock, addHistory, deductStock, addChoolgoLog, updateChoolgoSummary, getProductNameMappings };
+module.exports = { deductStock, addChoolgoLog, updateChoolgoSummary, getProductNameMappings };
