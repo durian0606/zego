@@ -123,27 +123,40 @@ async function addChoolgoLog(date, filename, channel, items) {
 }
 
 // 출고파일 일별 요약 업데이트
+// GET-PUT 대신 필드별 PATCH로 전환: 동시 처리 시 덮어쓰기 위험 제거
 async function updateChoolgoSummary(date, items, channel) {
     const encodedDate = encodeURIComponent(date);
+    const channelTotal = items.reduce((sum, i) => sum + i.quantity, 0);
 
-    // 기존 요약 가져오기
+    // 기존 채널/제품 값 조회 (증분 계산용)
     const existing = await firebaseRequestWithRetry('GET', `/choolgoLogs/${encodedDate}/summary.json`) || {};
+    const existingChannels = existing.channels || {};
+    const existingProducts = existing.products || {};
 
-    // 채널별 합계
-    const channels = existing.channels || {};
-    channels[channel] = (channels[channel] || 0) + items.reduce((sum, i) => sum + i.quantity, 0);
-
-    // 제품별 합계
-    const products = existing.products || {};
+    // 증분 후 값 계산
+    const newChannelValue = (existingChannels[channel] || 0) + channelTotal;
+    const newProducts = { ...existingProducts };
     for (const item of items) {
-        products[item.product] = (products[item.product] || 0) + item.quantity;
+        newProducts[item.product] = (newProducts[item.product] || 0) + item.quantity;
     }
 
-    return firebaseRequestWithRetry('PUT', `/choolgoLogs/${encodedDate}/summary.json`, {
-        channels,
-        products,
-        lastUpdated: Date.now()
-    });
+    // 채널/제품을 개별 PATCH — 전체 덮어쓰기 대신 필드 단위 업데이트
+    const encodedChannel = encodeURIComponent(channel);
+    await firebaseRequestWithRetry('PUT', `/choolgoLogs/${encodedDate}/summary/channels/${encodedChannel}.json`, newChannelValue);
+
+    const productUpdates = {};
+    for (const [productName, qty] of Object.entries(newProducts)) {
+        productUpdates[encodeURIComponent(productName)] = qty;
+    }
+    // multi-path PATCH로 제품별 수량 업데이트
+    const multiPath = {};
+    for (const item of items) {
+        const encodedProduct = encodeURIComponent(item.product);
+        multiPath[`choolgoLogs/${encodedDate}/summary/products/${encodedProduct}`] = newProducts[item.product];
+    }
+    multiPath[`choolgoLogs/${encodedDate}/summary/lastUpdated`] = Date.now();
+
+    return firebaseRequestWithRetry('PATCH', '/.json', multiPath);
 }
 
 // 품목명 매핑 전체 조회

@@ -130,6 +130,10 @@ function formatPhone(phone) {
         return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
     }
     if (digits.length === 10) {
+        // 서울 02 지역번호: 02-XXXX-XXXX (2-4-4)
+        if (digits.startsWith('02')) {
+            return `02-${digits.slice(2, 6)}-${digits.slice(6)}`;
+        }
         return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
     }
     return digits;

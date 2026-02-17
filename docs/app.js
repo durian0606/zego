@@ -735,7 +735,6 @@ function updateInventoryTable() {
             stockText = `${-shortage} 여유`;
         }
 
-        console.log('제품:', product.name, '현재재고:', product.currentStock, '목표재고:', minStock, '부족수량:', shortage);
 
         // 제품명 기반 고유 색상 클래스 (1~20)
         const colorIndex = getProductColorIndex(product.name) + 1;
@@ -760,23 +759,24 @@ function updateInventoryTable() {
         const hasShipmentShortage = shipmentShortage > 0;
         const rowExtraClass = hasShipmentShortage ? ' row-shipment-shortage' : '';
 
+        const escapedName = escapeHtml(product.name);
         return `
-            <tr class="${colorClass}${rowExtraClass}" data-product="${product.name}">
+            <tr class="${colorClass}${rowExtraClass}" data-product="${escapedName}">
                 <td class="drag-handle" title="드래그하여 순서 변경">
                     <i data-lucide="grip-vertical" style="width: 18px; height: 18px; opacity: 0.5;"></i>
                 </td>
-                <td><strong>${product.name}</strong></td>
-                <td class="stock-number rice-cooker-count" data-product="${product.name}"><strong>${product.riceCookerCount || 0}</strong></td>
-                <td class="stock-number editable-stock" data-product="${product.name}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
+                <td><strong>${escapedName}</strong></td>
+                <td class="stock-number rice-cooker-count" data-product="${escapedName}"><strong>${product.riceCookerCount || 0}</strong></td>
+                <td class="stock-number editable-stock" data-product="${escapedName}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number choolgo-shipment-cell">
                     ${shipmentDisplay}
                     ${hasShipmentShortage ? `<span class="shortage-badge">${shipmentShortage} 부족</span>` : ''}
                 </td>
                 <td class="stock-number yesterday-shipment-cell">${yesterdayDisplay}</td>
-                <td class="stock-number editable-stock" data-product="${product.name}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
+                <td class="stock-number editable-stock" data-product="${escapedName}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td>
                     <span class="stock-status ${stockStatus}">${stockText}</span>
-                    <button onclick="changeProductColor('${product.name}')" class="btn-change-color" title="색상 변경" style="margin-left: 8px; padding: 4px 8px; border: none; background: rgba(0,0,0,0.1); border-radius: 4px; cursor: pointer; font-size: 0.85em;">
+                    <button onclick="changeProductColor(this.closest('tr').dataset.product)" class="btn-change-color" title="색상 변경" style="margin-left: 8px; padding: 4px 8px; border: none; background: rgba(0,0,0,0.1); border-radius: 4px; cursor: pointer; font-size: 0.85em;">
                         <i data-lucide="palette" style="width: 14px; height: 14px; vertical-align: middle;"></i>
                     </button>
                 </td>
@@ -1853,36 +1853,37 @@ async function updateStock(barcodeInfo) {
         return;
     }
 
-    const beforeStock = product.currentStock || 0;
-    let afterStock;
-
-    if (type === 'IN') {
-        afterStock = beforeStock + quantity;
-    } else if (type === 'OUT') {
-        afterStock = beforeStock - quantity;
-        if (afterStock < 0) {
-            showScanResult('재고가 부족합니다!', 'error');
-            return;
-        }
-    } else if (type === 'ADJUST') {
-        afterStock = beforeStock - quantity;
-        if (afterStock < 0) {
-            showScanResult('재고가 부족합니다!', 'error');
-            return;
-        }
-    } else {
-        // VIEW 타입 - 조회만
-        showScanResult(`${productName} - 현재 재고: ${beforeStock}개`, 'success');
+    // VIEW 타입 - 조회만
+    if (type === 'VIEW') {
+        showScanResult(`${productName} - 현재 재고: ${product.currentStock || 0}개`, 'success');
         highlightProductRow(productName);
         return;
     }
 
     try {
-        // 제품 재고 업데이트
-        await productsRef.child(productName).update({
-            currentStock: afterStock,
-            updatedAt: Date.now()
+        let capturedBefore = 0;
+        let capturedAfter = 0;
+
+        // Firebase transaction으로 원자적 재고 업데이트 (동시 스캔 경쟁 조건 방지)
+        const result = await productsRef.child(productName).transaction((current) => {
+            if (current === null) return current;
+
+            capturedBefore = current.currentStock || 0;
+
+            if (type === 'IN') {
+                capturedAfter = capturedBefore + quantity;
+            } else {
+                capturedAfter = capturedBefore - quantity;
+                if (capturedAfter < 0) return; // abort — 재고 부족
+            }
+
+            return { ...current, currentStock: capturedAfter, updatedAt: Date.now() };
         });
+
+        if (!result.committed) {
+            showScanResult('재고가 부족합니다!', 'error');
+            return;
+        }
 
         // 히스토리 추가
         await historyRef.push({
@@ -1890,13 +1891,13 @@ async function updateStock(barcodeInfo) {
             barcode: barcodeInfo.barcode,
             type: type,
             quantity: quantity,
-            beforeStock: beforeStock,
-            afterStock: afterStock,
+            beforeStock: capturedBefore,
+            afterStock: capturedAfter,
             timestamp: Date.now()
         });
 
         const typeText = type === 'IN' ? '생산' : type === 'ADJUST' ? '수정' : '출고';
-        showScanResult(`${productName} ${typeText} 완료! (${beforeStock} → ${afterStock})`, 'success');
+        showScanResult(`${productName} ${typeText} 완료! (${capturedBefore} → ${capturedAfter})`, 'success');
 
         // 해당 제품 행 강조
         highlightProductRow(productName);
@@ -3017,10 +3018,34 @@ async function cleanupOldClosings() {
     for (const key of keysToDelete) {
         try {
             await dailyClosingsRef.child(key).remove();
-            console.log(`오래된 마감 기록 삭제: ${key}`);
         } catch (error) {
             console.error(`마감 기록 삭제 오류 (${key}):`, error);
         }
+    }
+
+    // history 노드도 함께 정리 (30일 초과 기록 삭제)
+    await cleanupOldHistory();
+}
+
+async function cleanupOldHistory() {
+    try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const cutoffTimestamp = thirtyDaysAgo.getTime();
+
+        const snapshot = await historyRef
+            .orderByChild('timestamp')
+            .endAt(cutoffTimestamp)
+            .limitToFirst(500)
+            .once('value');
+
+        if (!snapshot.exists()) return;
+
+        const updates = {};
+        snapshot.forEach(child => { updates[child.key] = null; });
+        await historyRef.update(updates);
+    } catch (error) {
+        console.error('history 정리 오류:', error);
     }
 }
 
