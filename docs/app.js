@@ -439,6 +439,16 @@ connectedRef.on('value', (snapshot) => {
 let _inventoryDebounceTimer = null;
 let _dashboardDebounceTimer = null;
 
+// lucide 아이콘 렌더링 debounce — 같은 프레임 내 중복 호출 통합
+let _lucideRafId = null;
+function renderLucideIcons() {
+    if (_lucideRafId) return; // 이미 예약됨
+    _lucideRafId = requestAnimationFrame(() => {
+        _lucideRafId = null;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+}
+
 function scheduleInventoryUpdate() {
     if (_inventoryDebounceTimer) clearTimeout(_inventoryDebounceTimer);
     _inventoryDebounceTimer = setTimeout(() => {
@@ -599,10 +609,7 @@ function updateDashboard() {
     // 7일 차트 업데이트
     updateWeeklyChart(closings);
 
-    // Lucide 아이콘 렌더링
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    renderLucideIcons();
 }
 
 // 7일 생산 추이 차트 업데이트 (종류별 스택 차트)
@@ -705,6 +712,23 @@ function updateWeeklyChart(closings) {
     }).join('');
 }
 
+// 제품 목록 정렬 (sortOrder 우선, 없으면 재고 부족 순)
+function getSortedProducts(products) {
+    return [...products].sort((a, b) => {
+        const orderA = a.sortOrder;
+        const orderB = b.sortOrder;
+        if (orderA != null && orderB != null) return orderA - orderB;
+        if (orderA != null) return -1;
+        if (orderB != null) return 1;
+        const minA = a.minStock || 0;
+        const minB = b.minStock || 0;
+        if (minA === 0 && minB !== 0) return 1;
+        if (minA !== 0 && minB === 0) return -1;
+        if (minA === 0 && minB === 0) return 0;
+        return (minB - (b.currentStock || 0)) - (minA - (a.currentStock || 0));
+    });
+}
+
 // 재고 테이블 업데이트
 function updateInventoryTable() {
     const products = filterValidProducts(AppState.productsData);
@@ -714,37 +738,7 @@ function updateInventoryTable() {
         return;
     }
 
-    // 정렬: sortOrder가 있는 제품 우선, 그 다음 기존 로직 (부족한 수량 순)
-    const sortedProducts = products.sort((a, b) => {
-        const orderA = a.sortOrder;
-        const orderB = b.sortOrder;
-
-        // 둘 다 sortOrder가 있으면 sortOrder 순
-        if (orderA !== undefined && orderA !== null &&
-            orderB !== undefined && orderB !== null) {
-            return orderA - orderB;
-        }
-
-        // sortOrder가 있는 쪽이 먼저
-        if (orderA !== undefined && orderA !== null) return -1;
-        if (orderB !== undefined && orderB !== null) return 1;
-
-        // 둘 다 없으면 기존 로직 (부족한 수량 순)
-        const minStockA = a.minStock || 0;
-        const minStockB = b.minStock || 0;
-
-        // 목표 재고가 0인 항목은 맨 아래
-        if (minStockA === 0 && minStockB !== 0) return 1;
-        if (minStockA !== 0 && minStockB === 0) return -1;
-        if (minStockA === 0 && minStockB === 0) return 0;
-
-        // 부족한 수량 계산 (목표 - 현재)
-        const shortageA = minStockA - (a.currentStock || 0);
-        const shortageB = minStockB - (b.currentStock || 0);
-
-        // 부족한 수량이 많은 순서대로 (내림차순)
-        return shortageB - shortageA;
-    });
+    const sortedProducts = getSortedProducts(products);
 
     inventoryTbody.innerHTML = sortedProducts.map((product, index) => {
         const minStock = product.minStock || 0; // undefined 방지
@@ -808,10 +802,7 @@ function updateInventoryTable() {
         `;
     }).join('');
 
-    // Lucide 아이콘 다시 렌더링
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    renderLucideIcons();
 
     // 드래그앤드롭 정렬 초기화
     if (typeof Sortable !== 'undefined') {
@@ -961,10 +952,7 @@ function editMinStock(element) {
             // 즉시 화면 업데이트 (Firebase 리스너 전에)
             element.innerHTML = `<span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
 
-            // 아이콘 다시 렌더링
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            renderLucideIcons();
 
             AppState.isEditingMinStock = false;
             showScanResult(`목표 재고가 ${minStock}개로 변경되었습니다.`, 'success');
@@ -1122,10 +1110,7 @@ function editCurrentStock(element) {
             // 즉시 화면 업데이트 (Firebase 리스너 전에)
             element.innerHTML = `<strong>${newStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
 
-            // 아이콘 다시 렌더링
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            renderLucideIcons();
 
             AppState.isEditingCurrentStock = false;
             showScanResult(`현재 재고가 ${currentValue}개에서 ${newStock}개로 수동 조정되었습니다.`, 'success');
@@ -1277,10 +1262,7 @@ function updateHistoryTable() {
         `;
     }).join('');
 
-    // Lucide 아이콘 다시 렌더링
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    renderLucideIcons();
 
     // 현재 작업 제품 강조 복원
     restoreWorkingProductHighlight();
@@ -1292,32 +1274,7 @@ function updateProductionHistoryTable() {
     const closings = AppState.dailyClosingsData;
 
     // 금일 생산현황과 동일한 순서로 정렬 (sortOrder 기반)
-    const sortedProducts = validProducts.sort((a, b) => {
-        const orderA = a.sortOrder;
-        const orderB = b.sortOrder;
-
-        // 둘 다 sortOrder가 있으면 sortOrder 순
-        if (orderA !== undefined && orderA !== null &&
-            orderB !== undefined && orderB !== null) {
-            return orderA - orderB;
-        }
-
-        // sortOrder가 있는 쪽이 먼저
-        if (orderA !== undefined && orderA !== null) return -1;
-        if (orderB !== undefined && orderB !== null) return 1;
-
-        // 둘 다 없으면 기존 로직 (부족한 수량 순)
-        const minStockA = a.minStock || 0;
-        const minStockB = b.minStock || 0;
-
-        if (minStockA === 0 && minStockB !== 0) return 1;
-        if (minStockA !== 0 && minStockB === 0) return -1;
-        if (minStockA === 0 && minStockB === 0) return 0;
-
-        const shortageA = minStockA - (a.currentStock || 0);
-        const shortageB = minStockB - (b.currentStock || 0);
-        return shortageB - shortageA;
-    });
+    const sortedProducts = getSortedProducts(validProducts);
 
     // 화면 크기에 따라 표시할 일수 결정 (모바일: 5일, PC: 7일)
     const daysToShow = window.innerWidth <= 768 ? 5 : 7;
@@ -1404,10 +1361,7 @@ function updateProductionHistoryTable() {
 
     productionHistoryTbody.innerHTML = tbodyHtml;
 
-    // Lucide 아이콘 다시 렌더링
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    renderLucideIcons();
 
     // 현재 작업 제품 강조 복원
     restoreWorkingProductHighlight();
@@ -1478,10 +1432,7 @@ function updateBarcodeTable() {
 
     barcodeTbody.innerHTML = html;
 
-    // Lucide 아이콘 다시 렌더링
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    renderLucideIcons();
 
 }
 
@@ -1960,10 +1911,7 @@ btnSettings.addEventListener('click', () => {
         settingsSection.style.display = 'block';
         settingsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         scanIndicator.style.display = 'none';
-        // Lucide 아이콘 다시 렌더링
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+        renderLucideIcons();
     } else {
         settingsSection.style.display = 'none';
         scanIndicator.style.display = 'flex';
@@ -2045,10 +1993,7 @@ btnToggleBarcodeMgmt.addEventListener('click', () => {
         barcodeMgmtSection.style.display = 'block';
         barcodeMgmtSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         scanIndicator.style.display = 'none';
-        // Lucide 아이콘 다시 렌더링
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+        renderLucideIcons();
     } else {
         barcodeMgmtSection.style.display = 'none';
         scanIndicator.style.display = 'flex';
@@ -3518,7 +3463,7 @@ setTimeout(() => {
 // 사용설명서 모달
 document.getElementById('btn-manual').addEventListener('click', () => {
     document.getElementById('manual-overlay').style.display = 'flex';
-    lucide.createIcons();
+    renderLucideIcons();
 });
 
 document.getElementById('btn-close-manual').addEventListener('click', () => {
@@ -3574,7 +3519,7 @@ document.querySelectorAll('.main-tab').forEach(tab => {
             productionActions.style.display = 'none';
             if (shippingActions) shippingActions.style.display = '';
             scanIndicator.style.display = 'none';
-            lucide.createIcons();
+            renderLucideIcons();
         }
     });
 });
@@ -3649,7 +3594,7 @@ function updateMappingTable() {
         </tr>
     `).join('');
 
-    lucide.createIcons();
+    renderLucideIcons();
 }
 
 // 매핑 셀 인라인 수정
@@ -3850,7 +3795,7 @@ window.editMappingRow = function(id) {
         </button>
     `;
 
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    renderLucideIcons();
 
     // Enter → 저장, Escape → 취소
     const editInputs = targetRow.querySelectorAll('input, select');
@@ -3976,7 +3921,7 @@ function handleChulhaFileSelection(fileList) {
     previewDiv.style.display = 'block';
 
     // Lucide 아이콘 갱신
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    renderLucideIcons();
 }
 
 // 취소 버튼
@@ -4041,7 +3986,7 @@ document.getElementById('btn-chulha-process').addEventListener('click', async ()
     btn.disabled = false;
     AppState.chulhaProcessing = false;
 
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    renderLucideIcons();
 });
 
 // 다운로드 버튼
@@ -4068,7 +4013,7 @@ function showUnmappedModal(unmappedProducts) {
     `).join('');
 
     overlay.style.display = 'flex';
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    renderLucideIcons();
 
     // 첫 번째 입력에 포커스
     const firstInput = document.getElementById('unmapped-input-0');
