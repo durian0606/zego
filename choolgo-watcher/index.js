@@ -11,6 +11,10 @@ const { START_DATE, WATCH_PATHS, PROCESSED_FILE, FAILED_FILE } = require('./conf
 const DRY_RUN = process.argv.includes('--dry-run'); // 테스트 모드 (Firebase 차감 안 함)
 const REPROCESS_ARG = process.argv.indexOf('--reprocess');
 
+// 파일 처리 중 여부 — server.js에서도 참조해 동시 실행 방지
+let _fileProcessing = false;
+function isFileProcessing() { return _fileProcessing; }
+
 // ── 인메모리 캐시 (프로세스 시작 시 1회 로드, 이후 캐시에서 읽기) ──
 let _processedCache = null;
 let _failedCache = null;
@@ -338,12 +342,11 @@ function startWatcher() {
     });
 
     // 파일 큐 (순차 처리)
-    let processing = false;
     const queue = [];
 
     async function processQueue() {
-        if (processing || queue.length === 0) return;
-        processing = true;
+        if (_fileProcessing || queue.length === 0) return;
+        _fileProcessing = true;
 
         try {
             while (queue.length > 0) {
@@ -353,7 +356,7 @@ function startWatcher() {
         } catch (err) {
             console.error('[processQueue 오류]', err.message);
         } finally {
-            processing = false;
+            _fileProcessing = false;
         }
     }
 
@@ -429,4 +432,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { processFile, scanAndProcess, loadProcessed, saveProcessed, loadFailed, saveFailed, addFailed, clearFailed };
+module.exports = { processFile, scanAndProcess, isFileProcessing, loadProcessed, saveProcessed, loadFailed, saveFailed, addFailed, clearFailed };

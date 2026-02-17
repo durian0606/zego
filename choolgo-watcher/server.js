@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { scanAndProcess, processFile, loadFailed, clearFailed } = require('./index');
+const { scanAndProcess, processFile, isFileProcessing, loadFailed, clearFailed } = require('./index');
 const { getProductNameMappings } = require('./firebase');
 const { consolidateShipping } = require('./shipping/consolidate');
 const { appendShippingRows } = require('./shipping/courier-writer');
@@ -24,13 +24,13 @@ app.get('/api/health', (req, res) => {
         status: 'ok',
         watchPaths: WATCH_PATHS,
         startDate: START_DATE,
-        isProcessing,
+        isProcessing: isProcessing || isFileProcessing(),
     });
 });
 
 // 출고 파일 처리 (수동 트리거)
 app.post('/api/process', async (req, res) => {
-    if (isProcessing) {
+    if (isProcessing || isFileProcessing()) {
         return res.status(409).json({
             success: false,
             error: '이미 처리 중입니다. 잠시 후 다시 시도해주세요.',
@@ -88,7 +88,7 @@ app.post('/api/retry-failed', async (req, res) => {
         return res.status(400).json({ success: false, error: '등록되지 않은 파일 경로입니다.' });
     }
 
-    if (isProcessing) {
+    if (isProcessing || isFileProcessing()) {
         return res.status(409).json({ success: false, error: '이미 처리 중입니다.' });
     }
 
