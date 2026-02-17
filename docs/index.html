@@ -103,11 +103,7 @@
                 <div class="chart-container">
                     <div class="chart-header">
                         <h3>최근 7일 생산 추이</h3>
-                        <div class="chart-legend">
-                        <span class="legend-item"><span class="legend-color" style="background: #eab308;"></span>누룽지</span>
-                        <span class="legend-item"><span class="legend-color" style="background: #f97316;"></span>뻥튀기</span>
-                        <span class="legend-item"><span class="legend-color" style="background: #374151;"></span>서리태</span>
-                        </div>
+                        <div class="chart-legend" id="chart-legend"></div>
                     </div>
                     <div class="bar-chart" id="weekly-chart">
                         <!-- JS에서 동적으로 생성 -->
@@ -124,7 +120,7 @@
                             <i data-lucide="book-open" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
                             사용설명서
                         </button>
-                        <button id="btn-close-today" class="btn btn-closing" title="금일 마감">
+                        <button id="btn-close-today" class="btn btn-closing" title="금일 마감 (자정에 자동 실행 — 브라우저 탭이 열려 있어야 합니다)">
                             <i data-lucide="check-circle" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
                             금일 마감
                         </button>

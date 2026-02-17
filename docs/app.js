@@ -670,6 +670,14 @@ function updateWeeklyChart(closings) {
         return { ...d, categoryTotals, total };
     });
 
+    // 범례 동적 생성
+    const legendEl = document.getElementById('chart-legend');
+    if (legendEl) {
+        legendEl.innerHTML = categories.map(cat =>
+            `<span class="legend-item"><span class="legend-color" style="background:${cat.color};"></span>${escapeHtml(cat.name)}</span>`
+        ).join('');
+    }
+
     // 최대값 계산 (개별 카테고리 최대값 기준)
     let maxValue = 1;
     dailyData.forEach(d => {
@@ -760,7 +768,7 @@ function updateInventoryTable() {
         const choolgoProducts = AppState.choolgoSummary.products || {};
         const shipmentQty = choolgoProducts[product.name] || 0;
         const shipmentDisplay = shipmentQty > 0
-            ? `<span class="choolgo-shipment-value" onclick="showChannelDetail(event)" title="클릭하여 채널별 상세">${shipmentQty}</span>`
+            ? `<button class="choolgo-shipment-value" onclick="showChannelDetail(event)" title="클릭하여 채널별 상세" aria-label="${shipmentQty}개 - 채널별 상세 보기">${shipmentQty}</button>`
             : '<span class="choolgo-shipment-zero">-</span>';
 
         // 기출고 (어제 주문 = 이미 나간 물량)
@@ -2883,19 +2891,13 @@ document.addEventListener('click', (e) => {
 // 마감 실행 (확인 대화상자 없이 - 자동마감/수동마감 공용)
 async function executeClosing(dateKey) {
     const productSummary = {};
-    const inventoryRows = document.querySelectorAll('#inventory-table tbody tr[data-product]');
-
-    inventoryRows.forEach(row => {
-        const productName = row.getAttribute('data-product');
-        const stockCell = row.querySelector('[data-stock]');
-        const currentStock = stockCell ? parseInt(stockCell.getAttribute('data-stock')) || 0 : 0;
-        const product = AppState.productsData[productName];
-        const riceCookerCount = product ? (product.riceCookerCount || 0) : 0;
-
-        productSummary[productName] = {
-            production: currentStock,
+    // DOM 대신 AppState에서 직접 읽기 (인라인 편집 중이거나 렌더링 지연 시 DOM 값 불일치 방지)
+    const products = filterValidProducts(AppState.productsData);
+    products.forEach(product => {
+        productSummary[product.name] = {
+            production: product.currentStock || 0,
             shipment: 0,
-            riceCookerCount: riceCookerCount
+            riceCookerCount: product.riceCookerCount || 0
         };
     });
 
@@ -2971,37 +2973,37 @@ async function closeTodayProduction() {
     }
 }
 
-// 자정 자동 마감
-function scheduleMidnightClosing() {
+// 자정 자동 마감 + 리셋 통합 타이머 (마감 → 리셋 순서 보장)
+function scheduleMidnightTasks() {
     const now = new Date();
     const midnight = new Date(now);
     midnight.setHours(24, 0, 0, 0);
     const msUntilMidnight = midnight.getTime() - now.getTime();
 
     setTimeout(async () => {
+        // 1. 전날 자동 마감
         try {
-            // 어제 날짜로 마감 (자정 직전 데이터이므로)
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             const dateKey = formatDateKey(yesterday);
-
-            // 이미 마감되지 않은 경우에만 자동 마감
             if (!AppState.dailyClosingsData[dateKey]) {
                 const result = await executeClosing(dateKey);
-                if (result) {
-                    showScanResult(`자동 마감 완료 (${dateKey})`, 'success');
-                }
+                if (result) showScanResult(`자동 마감 완료 (${dateKey})`, 'success');
             }
         } catch (error) {
             console.error('자동 마감 오류:', error);
         }
+
+        // 2. 오늘 생산현황 리셋 (마감 완료 후 실행)
+        await resetTodayProduction(true);
+
         // 다음 자정 타이머 재설정
-        scheduleMidnightClosing();
+        scheduleMidnightTasks();
     }, msUntilMidnight);
 }
 
-// 자정 자동 마감 타이머 시작
-scheduleMidnightClosing();
+// 자정 타이머 시작
+scheduleMidnightTasks();
 
 // 7일 초과 마감 기록 자동 삭제
 async function cleanupOldClosings() {
@@ -3230,7 +3232,6 @@ async function resetTodayProduction(skipConfirm = false) {
 
         await productsRef.update(updates);
         showScanResult('금일 생산현황이 리셋되었습니다.', 'success');
-        console.log('금일 생산현황 리셋 완료:', new Date().toLocaleString());
     } catch (error) {
         console.error('리셋 오류:', error);
         showScanResult('리셋 중 오류가 발생했습니다.', 'error');
@@ -3240,26 +3241,6 @@ async function resetTodayProduction(skipConfirm = false) {
 // 리셋 버튼 이벤트 리스너
 document.getElementById('btn-reset-today').addEventListener('click', () => resetTodayProduction(false));
 
-// 자정 자동 리셋 타이머 설정
-function setupMidnightReset() {
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 0, 0); // 다음 자정 (00:00:00)
-
-    const msUntilMidnight = midnight.getTime() - now.getTime();
-
-    console.log(`자정 자동 리셋 예정: ${midnight.toLocaleString()} (${Math.round(msUntilMidnight / 60000)}분 후)`);
-
-    setTimeout(() => {
-        console.log('자정이 되어 금일 생산현황을 자동 리셋합니다.');
-        resetTodayProduction(true); // 확인 없이 자동 리셋
-        // 다음 자정을 위해 타이머 재설정
-        setupMidnightReset();
-    }, msUntilMidnight);
-}
-
-// 앱 시작 시 자정 타이머 설정
-setupMidnightReset();
 
 // 화면 크기 변경 시 전일 생산현황 테이블 업데이트 (5일/7일 전환)
 let resizeTimeout;

@@ -1379,10 +1379,17 @@ tbody tr:hover {
     padding: 4px 8px;
     border-radius: var(--radius-sm);
     transition: background-color 0.2s;
+    background: none;
+    border: none;
+    line-height: inherit;
+    min-height: 44px;
 }
 
-.choolgo-shipment-value:hover {
+.choolgo-shipment-value:hover,
+.choolgo-shipment-value:focus-visible {
     background: #fee2e2;
+    outline: 2px solid #dc2626;
+    outline-offset: 2px;
 }
 
 .choolgo-shipment-zero {
