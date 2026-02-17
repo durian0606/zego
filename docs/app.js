@@ -3540,6 +3540,19 @@ document.querySelectorAll('.main-tab').forEach(tab => {
     });
 });
 
+// 매핑 채널 드롭다운 동적 초기화 (channel-maps.js의 ALL_CHANNEL_NAMES 사용)
+(function initMappingChannelDropdown() {
+    const sel = document.getElementById('mapping-channel');
+    if (!sel || typeof ALL_CHANNEL_NAMES === 'undefined') return;
+    const lastOpt = sel.querySelector('option[value="__other__"]');
+    for (const ch of ALL_CHANNEL_NAMES) {
+        const opt = document.createElement('option');
+        opt.value = ch;
+        opt.textContent = ch;
+        sel.insertBefore(opt, lastOpt);
+    }
+})();
+
 // 채널 드롭다운 "기타" 선택 시 직접 입력란 표시
 document.getElementById('mapping-channel').addEventListener('change', function() {
     const otherInput = document.getElementById('mapping-channel-other');
@@ -3905,7 +3918,7 @@ function handleChulhaFileSelection(fileList) {
     for (const f of files) {
         const channel = detectChannelBrowser(f);
         const size = f.size < 1024 ? `${f.size}B` : `${Math.round(f.size / 1024)}KB`;
-        html += `<tr><td>${f.name}</td><td>${channel ? channel.name : '-'}</td><td>${size}</td></tr>`;
+        html += `<tr><td>${escapeHtml(f.name)}</td><td>${channel ? escapeHtml(channel.name) : '-'}</td><td>${size}</td></tr>`;
     }
     html += '</tbody></table>';
     fileListDiv.innerHTML = html;
@@ -4113,12 +4126,17 @@ function renderProcessResults(results, container) {
         container.innerHTML = '<p class="no-data">처리할 파일이 없습니다.</p>';
         return;
     }
-    let html = '<table class="chulha-result-table"><thead><tr><th>파일명</th><th>채널</th><th>택배행</th><th>상태</th></tr></thead><tbody>';
+    let html = '<table class="chulha-result-table"><thead><tr><th>파일명</th><th>채널</th><th>상태</th></tr></thead><tbody>';
     for (const r of results) {
-        const status = r.error
-            ? `<span class="text-danger">${r.error}</span>`
-            : `<span class="text-success">${r.shippingRows}행</span>`;
-        html += `<tr><td>${r.filename}</td><td>${r.channel || '-'}</td><td>${r.shippingRows || 0}</td><td>${status}</td></tr>`;
+        let statusBadge;
+        if (r.error) {
+            statusBadge = `<span class="result-badge result-badge-error">✗ ${escapeHtml(r.error)}</span>`;
+        } else if (!r.channel || r.channel === '-') {
+            statusBadge = `<span class="result-badge result-badge-warn">채널 불명</span>`;
+        } else {
+            statusBadge = `<span class="result-badge result-badge-ok">✓ ${r.shippingRows}행</span>`;
+        }
+        html += `<tr><td>${escapeHtml(r.filename)}</td><td>${escapeHtml(r.channel || '-')}</td><td>${statusBadge}</td></tr>`;
     }
     html += '</tbody></table>';
     container.innerHTML = html;

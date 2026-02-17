@@ -2949,6 +2949,18 @@ tr.row-locked td:first-child::before {
 .text-success { color: var(--color-success); font-weight: 600; }
 .text-danger { color: var(--color-danger); font-weight: 600; }
 
+/* 결과 상태 배지 */
+.result-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.result-badge-ok    { background: #dcfce7; color: #16a34a; }
+.result-badge-error { background: #fee2e2; color: #dc2626; }
+.result-badge-warn  { background: #fef9c3; color: #ca8a04; }
+
 /* 매핑 폼 */
 .mapping-form {
     display: flex;

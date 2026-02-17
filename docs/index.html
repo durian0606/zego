@@ -316,10 +316,6 @@
                         <div class="mapping-channel-wrap">
                             <select id="mapping-channel">
                                 <option value="">채널 선택</option>
-                                <option value="네이버">네이버</option>
-                                <option value="카카오">카카오</option>
-                                <option value="아이원">아이원</option>
-                                <option value="팔도감">팔도감</option>
                                 <option value="__other__">기타 (직접입력)</option>
                             </select>
                             <input type="text" id="mapping-channel-other" class="mapping-channel-other" placeholder="채널명 입력" style="display: none;">
@@ -543,6 +539,9 @@
 
     <!-- SheetJS (엑셀 읽기/쓰기) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+    <!-- 채널 정의 및 컬럼 매핑 -->
+    <script src="channel-maps.js"></script>
 
     <!-- 브라우저 택배양식 생성 -->
     <script src="chulha-browser.js"></script>
