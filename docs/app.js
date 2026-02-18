@@ -123,6 +123,7 @@ const AppState = {
     yesterdaySummary: { channels: {}, products: {} }, // 어제 출고(기출고) 요약
     productNameMappings: {},  // 품목명 매핑 (출하관리)
     chulhaProcessing: false,  // 출하 처리 중 플래그
+    choolgoViewDate: null,  // 출고파일 현황 조회 날짜 (기본: 오늘, formatDateKey 정의 후 초기화)
 };
 
 // ============================================
@@ -347,6 +348,8 @@ function formatDateKey(date) {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
+// choolgoViewDate 초기값 (formatDateKey 정의 후 설정)
+AppState.choolgoViewDate = formatDateKey(new Date());
 
 // 표시용 날짜 형식 (M월 D일)
 function formatDisplayDate(date) {
@@ -3514,9 +3517,137 @@ document.querySelectorAll('.main-tab').forEach(tab => {
             if (shippingActions) shippingActions.style.display = '';
             scanIndicator.style.display = 'none';
             renderLucideIcons();
+            // 출고파일 현황 날짜를 오늘로 초기화하고 렌더링
+            AppState.choolgoViewDate = formatDateKey(new Date());
+            updateChoolgoSection();
         }
     });
 });
+
+// ============================================
+// 출고파일 현황 섹션 — 날짜 네비게이션 & 렌더링
+// ============================================
+
+async function updateChoolgoSection() {
+    const dateKey = AppState.choolgoViewDate;
+    const todayKey = formatDateKey(new Date());
+
+    // 날짜 라벨 업데이트
+    const labelEl = document.getElementById('choolgo-date-label');
+    if (labelEl) {
+        const d = new Date(dateKey + 'T00:00:00');
+        const mm = d.getMonth() + 1;
+        const dd = d.getDate();
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const dayName = dayNames[d.getDay()];
+        const isToday = dateKey === todayKey;
+        labelEl.textContent = `${mm}월 ${dd}일 (${dayName})${isToday ? ' · 오늘' : ''}`;
+    }
+
+    // 다음 날 버튼: 오늘이면 비활성화
+    const nextBtn = document.getElementById('btn-choolgo-next');
+    if (nextBtn) nextBtn.disabled = dateKey >= todayKey;
+
+    // Firebase에서 해당 날짜 데이터 로드 (summary + files 병렬)
+    const [summarySnap, filesSnap] = await Promise.all([
+        database.ref(`choolgoLogs/${dateKey}/summary`).once('value'),
+        database.ref(`choolgoLogs/${dateKey}/files`).once('value'),
+    ]);
+    const summary = summarySnap.val() || {};
+    const filesObj = filesSnap.val() || {};
+
+    const channels = summary.channels || {};
+    const products = summary.products || {};
+    // files는 push key 객체 → 배열로 변환 후 시간 역순 정렬
+    const files = Object.values(filesObj).sort((a, b) => (b.processedAt || 0) - (a.processedAt || 0));
+
+    // 요약 카드 렌더링
+    const cardsEl = document.getElementById('choolgo-summary-cards');
+    if (cardsEl) {
+        const totalQty = Object.values(products).reduce((s, v) => s + v, 0);
+        const channelCount = Object.keys(channels).length;
+        const productCount = Object.keys(products).length;
+        cardsEl.innerHTML = `
+            <div class="choolgo-summary-card">
+                <div class="card-label">총 출고 (봉)</div>
+                <div class="card-value">${totalQty.toLocaleString()}</div>
+            </div>
+            <div class="choolgo-summary-card">
+                <div class="card-label">채널 수</div>
+                <div class="card-value">${channelCount}</div>
+            </div>
+            <div class="choolgo-summary-card">
+                <div class="card-label">제품 종류</div>
+                <div class="card-value">${productCount}</div>
+            </div>
+            <div class="choolgo-summary-card">
+                <div class="card-label">처리 파일</div>
+                <div class="card-value">${files.length}</div>
+            </div>
+        `;
+    }
+
+    // 채널별 테이블
+    const channelTbody = document.getElementById('choolgo-channel-tbody');
+    if (channelTbody) {
+        const sorted = Object.entries(channels).sort((a, b) => b[1] - a[1]);
+        if (sorted.length === 0) {
+            channelTbody.innerHTML = '<tr><td colspan="2" class="no-data">데이터 없음</td></tr>';
+        } else {
+            channelTbody.innerHTML = sorted.map(([ch, qty]) =>
+                `<tr><td>${escapeHtml(ch)}</td><td>${qty.toLocaleString()}</td></tr>`
+            ).join('');
+        }
+    }
+
+    // 제품별 테이블
+    const productTbody = document.getElementById('choolgo-product-tbody');
+    if (productTbody) {
+        const sorted = Object.entries(products).sort((a, b) => b[1] - a[1]);
+        if (sorted.length === 0) {
+            productTbody.innerHTML = '<tr><td colspan="2" class="no-data">데이터 없음</td></tr>';
+        } else {
+            productTbody.innerHTML = sorted.map(([name, qty]) =>
+                `<tr><td>${escapeHtml(name)}</td><td>${qty.toLocaleString()}</td></tr>`
+            ).join('');
+        }
+    }
+
+    // 처리 파일 테이블
+    const filesTbody = document.getElementById('choolgo-files-tbody');
+    if (filesTbody) {
+        if (files.length === 0) {
+            filesTbody.innerHTML = '<tr><td colspan="4" class="no-data">데이터 없음</td></tr>';
+        } else {
+            filesTbody.innerHTML = files.map(f => {
+                const timeStr = f.processedAt
+                    ? new Date(f.processedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                    : '-';
+                const fname = f.filename || f.fileName || '';
+                const shortName = fname.split('/').pop().split('\\').pop();
+                return `<tr>
+                    <td title="${escapeHtml(fname)}">${escapeHtml(shortName)}</td>
+                    <td>${escapeHtml(f.channel || '-')}</td>
+                    <td>${(f.totalQuantity || 0).toLocaleString()}</td>
+                    <td>${timeStr}</td>
+                </tr>`;
+            }).join('');
+        }
+    }
+}
+
+function navigateChoolgoDate(delta) {
+    const d = new Date(AppState.choolgoViewDate + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    const todayKey = formatDateKey(new Date());
+    const newKey = formatDateKey(d);
+    if (newKey > todayKey) return; // 미래 이동 방지
+    AppState.choolgoViewDate = newKey;
+    updateChoolgoSection();
+}
+
+document.getElementById('btn-choolgo-prev')?.addEventListener('click', () => navigateChoolgoDate(-1));
+document.getElementById('btn-choolgo-next')?.addEventListener('click', () => navigateChoolgoDate(1));
 
 // 출하관리 헤더 단축 버튼 → 실제 파일/폴더 input 연결
 document.getElementById('btn-header-folder')?.addEventListener('click', () => {
