@@ -25,3 +25,11 @@ logs/
 
 # choolgo-watcher runtime
 choolgo-watcher/processed.json
+choolgo-watcher/failed.json
+
+# 테스트용 주문 파일 (로컬 전용)
+choolgo/
+
+# Claude Code 로컬 설정
+.claude/settings.local.json
+.claude/._DAV/
