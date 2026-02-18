@@ -3528,6 +3528,90 @@ document.querySelectorAll('.main-tab').forEach(tab => {
 // 출고파일 현황 섹션 — 날짜 네비게이션 & 렌더링
 // ============================================
 
+const CHOOLGO_CACHE_KEY = 'choolgoSectionCache';
+
+function saveChoolgoCache(dateKey, channels, products, files) {
+    try {
+        const cache = JSON.parse(localStorage.getItem(CHOOLGO_CACHE_KEY) || '{}');
+        cache[dateKey] = { channels, products, files, savedAt: Date.now() };
+        // 최근 7일치만 유지
+        const keys = Object.keys(cache).sort();
+        if (keys.length > 7) keys.slice(0, keys.length - 7).forEach(k => delete cache[k]);
+        localStorage.setItem(CHOOLGO_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) { /* 스토리지 오류 무시 */ }
+}
+
+function loadChoolgoCache(dateKey) {
+    try {
+        const cache = JSON.parse(localStorage.getItem(CHOOLGO_CACHE_KEY) || '{}');
+        return cache[dateKey] || null;
+    } catch (e) { return null; }
+}
+
+function renderChoolgoData(channels, products, files) {
+    // 요약 카드
+    const cardsEl = document.getElementById('choolgo-summary-cards');
+    if (cardsEl) {
+        const totalQty = Object.values(products).reduce((s, v) => s + v, 0);
+        cardsEl.innerHTML = `
+            <div class="choolgo-summary-card">
+                <div class="card-label">총 출고 (봉)</div>
+                <div class="card-value">${totalQty.toLocaleString()}</div>
+            </div>
+            <div class="choolgo-summary-card">
+                <div class="card-label">채널 수</div>
+                <div class="card-value">${Object.keys(channels).length}</div>
+            </div>
+            <div class="choolgo-summary-card">
+                <div class="card-label">제품 종류</div>
+                <div class="card-value">${Object.keys(products).length}</div>
+            </div>
+            <div class="choolgo-summary-card">
+                <div class="card-label">처리 파일</div>
+                <div class="card-value">${files.length}</div>
+            </div>
+        `;
+    }
+
+    // 채널별 테이블
+    const channelTbody = document.getElementById('choolgo-channel-tbody');
+    if (channelTbody) {
+        const sorted = Object.entries(channels).sort((a, b) => b[1] - a[1]);
+        channelTbody.innerHTML = sorted.length === 0
+            ? '<tr><td colspan="2" class="no-data">데이터 없음</td></tr>'
+            : sorted.map(([ch, qty]) => `<tr><td>${escapeHtml(ch)}</td><td>${qty.toLocaleString()}</td></tr>`).join('');
+    }
+
+    // 제품별 테이블
+    const productTbody = document.getElementById('choolgo-product-tbody');
+    if (productTbody) {
+        const sorted = Object.entries(products).sort((a, b) => b[1] - a[1]);
+        productTbody.innerHTML = sorted.length === 0
+            ? '<tr><td colspan="2" class="no-data">데이터 없음</td></tr>'
+            : sorted.map(([name, qty]) => `<tr><td>${escapeHtml(name)}</td><td>${qty.toLocaleString()}</td></tr>`).join('');
+    }
+
+    // 처리 파일 테이블
+    const filesTbody = document.getElementById('choolgo-files-tbody');
+    if (filesTbody) {
+        filesTbody.innerHTML = files.length === 0
+            ? '<tr><td colspan="4" class="no-data">데이터 없음</td></tr>'
+            : files.map(f => {
+                const timeStr = f.processedAt
+                    ? new Date(f.processedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                    : '-';
+                const fname = f.filename || f.fileName || '';
+                const shortName = fname.split('/').pop().split('\\').pop();
+                return `<tr>
+                    <td title="${escapeHtml(fname)}">${escapeHtml(shortName)}</td>
+                    <td>${escapeHtml(f.channel || '-')}</td>
+                    <td>${(f.totalQuantity || 0).toLocaleString()}</td>
+                    <td>${timeStr}</td>
+                </tr>`;
+            }).join('');
+    }
+}
+
 async function updateChoolgoSection() {
     const dateKey = AppState.choolgoViewDate;
     const todayKey = formatDateKey(new Date());
@@ -3548,7 +3632,13 @@ async function updateChoolgoSection() {
     const nextBtn = document.getElementById('btn-choolgo-next');
     if (nextBtn) nextBtn.disabled = dateKey >= todayKey;
 
-    // Firebase에서 해당 날짜 데이터 로드 (summary + files 병렬)
+    // 캐시 데이터 즉시 렌더링 (새로고침 후 바로 보이게)
+    const cached = loadChoolgoCache(dateKey);
+    if (cached) {
+        renderChoolgoData(cached.channels, cached.products, cached.files);
+    }
+
+    // Firebase에서 최신 데이터 로드 (summary + files 병렬)
     const [summarySnap, filesSnap] = await Promise.all([
         database.ref(`choolgoLogs/${dateKey}/summary`).once('value'),
         database.ref(`choolgoLogs/${dateKey}/files`).once('value'),
@@ -3558,82 +3648,11 @@ async function updateChoolgoSection() {
 
     const channels = summary.channels || {};
     const products = summary.products || {};
-    // files는 push key 객체 → 배열로 변환 후 시간 역순 정렬
     const files = Object.values(filesObj).sort((a, b) => (b.processedAt || 0) - (a.processedAt || 0));
 
-    // 요약 카드 렌더링
-    const cardsEl = document.getElementById('choolgo-summary-cards');
-    if (cardsEl) {
-        const totalQty = Object.values(products).reduce((s, v) => s + v, 0);
-        const channelCount = Object.keys(channels).length;
-        const productCount = Object.keys(products).length;
-        cardsEl.innerHTML = `
-            <div class="choolgo-summary-card">
-                <div class="card-label">총 출고 (봉)</div>
-                <div class="card-value">${totalQty.toLocaleString()}</div>
-            </div>
-            <div class="choolgo-summary-card">
-                <div class="card-label">채널 수</div>
-                <div class="card-value">${channelCount}</div>
-            </div>
-            <div class="choolgo-summary-card">
-                <div class="card-label">제품 종류</div>
-                <div class="card-value">${productCount}</div>
-            </div>
-            <div class="choolgo-summary-card">
-                <div class="card-label">처리 파일</div>
-                <div class="card-value">${files.length}</div>
-            </div>
-        `;
-    }
-
-    // 채널별 테이블
-    const channelTbody = document.getElementById('choolgo-channel-tbody');
-    if (channelTbody) {
-        const sorted = Object.entries(channels).sort((a, b) => b[1] - a[1]);
-        if (sorted.length === 0) {
-            channelTbody.innerHTML = '<tr><td colspan="2" class="no-data">데이터 없음</td></tr>';
-        } else {
-            channelTbody.innerHTML = sorted.map(([ch, qty]) =>
-                `<tr><td>${escapeHtml(ch)}</td><td>${qty.toLocaleString()}</td></tr>`
-            ).join('');
-        }
-    }
-
-    // 제품별 테이블
-    const productTbody = document.getElementById('choolgo-product-tbody');
-    if (productTbody) {
-        const sorted = Object.entries(products).sort((a, b) => b[1] - a[1]);
-        if (sorted.length === 0) {
-            productTbody.innerHTML = '<tr><td colspan="2" class="no-data">데이터 없음</td></tr>';
-        } else {
-            productTbody.innerHTML = sorted.map(([name, qty]) =>
-                `<tr><td>${escapeHtml(name)}</td><td>${qty.toLocaleString()}</td></tr>`
-            ).join('');
-        }
-    }
-
-    // 처리 파일 테이블
-    const filesTbody = document.getElementById('choolgo-files-tbody');
-    if (filesTbody) {
-        if (files.length === 0) {
-            filesTbody.innerHTML = '<tr><td colspan="4" class="no-data">데이터 없음</td></tr>';
-        } else {
-            filesTbody.innerHTML = files.map(f => {
-                const timeStr = f.processedAt
-                    ? new Date(f.processedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-                    : '-';
-                const fname = f.filename || f.fileName || '';
-                const shortName = fname.split('/').pop().split('\\').pop();
-                return `<tr>
-                    <td title="${escapeHtml(fname)}">${escapeHtml(shortName)}</td>
-                    <td>${escapeHtml(f.channel || '-')}</td>
-                    <td>${(f.totalQuantity || 0).toLocaleString()}</td>
-                    <td>${timeStr}</td>
-                </tr>`;
-            }).join('');
-        }
-    }
+    // 최신 데이터로 렌더링 및 캐시 저장
+    renderChoolgoData(channels, products, files);
+    saveChoolgoCache(dateKey, channels, products, files);
 }
 
 function navigateChoolgoDate(delta) {
