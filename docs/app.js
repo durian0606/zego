@@ -3517,8 +3517,12 @@ document.querySelectorAll('.main-tab').forEach(tab => {
             if (shippingActions) shippingActions.style.display = '';
             scanIndicator.style.display = 'none';
             renderLucideIcons();
-            // 출고파일 현황 날짜를 오늘로 초기화하고 렌더링
+            // 출고파일 현황: 오늘 날짜로 초기화
             AppState.choolgoViewDate = formatDateKey(new Date());
+            // 캐시 즉시 동기 렌더링 (탭이 보이는 즉시 데이터 표시)
+            const initCached = loadChoolgoCache(AppState.choolgoViewDate);
+            if (initCached) renderChoolgoData(initCached.channels, initCached.products, initCached.files);
+            // 이후 Firebase 최신 데이터로 갱신
             updateChoolgoSection();
         }
     });
