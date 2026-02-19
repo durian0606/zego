@@ -15,11 +15,14 @@ function getVal(row, col) {
 }
 
 function getProductName(row, productNameSpec) {
+    if (!productNameSpec) {
+        return '';
+    }
     if (Array.isArray(productNameSpec)) {
-        return productNameSpec
+        const parts = productNameSpec
             .map(col => getVal(row, col))
-            .filter(v => v)
-            .join(' ');
+            .filter(v => v && v.trim());
+        return parts.join(' ');
     }
     return getVal(row, productNameSpec);
 }
@@ -46,21 +49,21 @@ function formatPhone(phone) {
  * @param {Object} workbook - XLSX.read()로 읽은 워크북
  * @param {string} channelId - 채널 ID
  * @param {string} filename - 파일명
- * @returns {Array}
+ * @returns {Object} { rows: Array, skippedEmptyProduct: number }
  */
 function extractShippingRowsBrowser(workbook, channelId, filename) {
     const sheetName = workbook.SheetNames[0];
-    if (!sheetName) return [];
+    if (!sheetName) return { rows: [], skippedEmptyProduct: 0 };
 
     const sheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 'A', defval: '' });
 
-    if (rows.length < 2) return [];
+    if (rows.length < 2) return { rows: [], skippedEmptyProduct: 0 };
 
     let columnMap = getColumnMap(channelId, filename);
     if (!columnMap) {
         console.log(`[택배양식] 채널 "${channelId}"에 대한 컬럼 매핑 없음`);
-        return [];
+        return { rows: [], skippedEmptyProduct: 0 };
     }
 
     // skipRows 지원 (멀티행 헤더 파일)
@@ -79,13 +82,16 @@ function extractShippingRowsBrowser(workbook, channelId, filename) {
             detected = autoDetectColumns(rows[r]);
             if (detected) {
                 dataStartRow = r + 1;
-                console.log(`[택배양식] 자동 탐지 완료: 헤더=행${r + 1}, 수취인=${detected.recipientName}`);
+                console.log(`[택배양식] 자동 탐지 완료: 헤더=행${r + 1}, 수취인=${detected.recipientName}, 상품명=${detected.productName || '(없음)'}`);
                 break;
             }
         }
         if (!detected) {
             console.log(`[택배양식] 자동 탐지 실패: 수취인 컬럼을 찾을 수 없음`);
-            return [];
+            return { rows: [], skippedEmptyProduct: 0 };
+        }
+        if (!detected.productName) {
+            console.log(`[택배양식] 경고: 상품명 컬럼을 찾을 수 없음 (빈칸으로 처리됨)`);
         }
         columnMap = detected;
     }
@@ -96,11 +102,12 @@ function extractShippingRowsBrowser(workbook, channelId, filename) {
         const headerVal = String(header[col] || '').trim();
         if (!headerVal.includes(keyword)) {
             console.log(`[택배양식] 헤더 불일치: ${col}컬럼에 "${keyword}" 없음 (실제: "${headerVal}")`);
-            return [];
+            return { rows: [], skippedEmptyProduct: 0 };
         }
     }
 
     const results = [];
+    let skippedEmptyProduct = 0;
 
     for (let i = dataStartRow; i < rows.length; i++) {
         const row = rows[i];
@@ -114,6 +121,13 @@ function extractShippingRowsBrowser(workbook, channelId, filename) {
         const productName = getProductName(row, columnMap.productName);
         const quantity = columnMap.quantity ? (parseInt(getVal(row, columnMap.quantity)) || 1) : 1;
 
+        // 상품명이 비어있으면 경고 후 건너뛰기
+        if (!productName || productName.trim() === '') {
+            skippedEmptyProduct++;
+            console.warn(`[택배양식] 행${i + 1}: 상품명 없음 (수취인=${recipientName}) - 건너뜀`);
+            continue;
+        }
+
         results.push({
             recipientName,
             phone,
@@ -125,7 +139,11 @@ function extractShippingRowsBrowser(workbook, channelId, filename) {
         });
     }
 
-    return results;
+    if (skippedEmptyProduct > 0) {
+        console.warn(`[택배양식] 총 ${skippedEmptyProduct}개 행의 상품명이 비어있어 건너뛰었습니다.`);
+    }
+
+    return { rows: results, skippedEmptyProduct };
 }
 
 // ============================================
@@ -342,7 +360,9 @@ async function processSelectedFiles(fileList) {
                 continue;
             }
 
-            const rows = extractShippingRowsBrowser(workbook, channel.id, file.name);
+            const extractResult = extractShippingRowsBrowser(workbook, channel.id, file.name);
+            const rows = extractResult.rows;
+            const skipped = extractResult.skippedEmptyProduct;
 
             // 채널 정보 추가
             for (const row of rows) {
@@ -355,6 +375,7 @@ async function processSelectedFiles(fileList) {
                 channel: channel.name,
                 items: rows.length,
                 shippingRows: rows.length,
+                skippedEmptyProduct: skipped,
             });
         } catch (err) {
             results.push({ filename: file.name, channel: channel.name, error: err.message });

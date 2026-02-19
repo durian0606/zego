@@ -4278,7 +4278,11 @@ function renderProcessResults(results, container) {
         } else if (!r.channel || r.channel === '-') {
             statusBadge = `<span class="result-badge result-badge-warn">채널 불명</span>`;
         } else {
-            statusBadge = `<span class="result-badge result-badge-ok">✓ ${r.shippingRows}행</span>`;
+            let badge = `<span class="result-badge result-badge-ok">✓ ${r.shippingRows}행</span>`;
+            if (r.skippedEmptyProduct > 0) {
+                badge += ` <span class="result-badge result-badge-warn" title="상품명이 비어있어 건너뛴 행">⚠ ${r.skippedEmptyProduct}행 제외</span>`;
+            }
+            statusBadge = badge;
         }
         html += `<tr><td>${escapeHtml(r.filename)}</td><td>${escapeHtml(r.channel || '-')}</td><td>${statusBadge}</td></tr>`;
     }
