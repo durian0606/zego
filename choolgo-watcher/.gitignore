@@ -1,0 +1,24 @@
+# 환경변수 (민감 정보)
+.env
+
+# 의존성
+node_modules/
+
+# 로그
+logs/
+*.log
+
+# 임시 파일
+temp/
+*.tmp
+
+# PM2
+.pm2/
+
+# 처리 기록
+processed.json
+failed.json
+
+# OS
+.DS_Store
+Thumbs.db

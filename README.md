@@ -81,8 +81,61 @@ zego/
 │   ├── style.css             # 스타일
 │   └── firebase-config.js    # Firebase 설정 (수정 필요!)
 ├── choolgo-watcher/          # 출하관리 파일 감시 서비스
+│   ├── email/                # 이메일 자동 처리 모듈
+│   │   ├── imap-watcher.js   # IMAP 메일 감시
+│   │   ├── attachment-handler.js  # 첨부파일 처리
+│   │   └── sender-rules.js   # 발신자 → 채널 매핑
+│   ├── .env.example          # 환경변수 템플릿
+│   └── EMAIL_SETUP.md        # 이메일 설정 가이드
 ├── FIREBASE_SETUP.md         # Firebase 설정 가이드
 └── README.md                 # 이 파일
+```
+
+## 📧 choolgo-watcher (출하관리 자동화)
+
+주문 엑셀 파일을 자동으로 처리하고 Firebase에 출고 데이터를 업데이트하는 백그라운드 서비스입니다.
+
+### 주요 기능
+
+1. **파일 감시**: 지정 폴더의 새 엑셀 파일 자동 감지
+2. **채널 자동 분류**: 파일 경로/이름으로 판매 채널 감지 (아이원, 네이버, 카카오, 팔도감 등)
+3. **재고 차감**: Firebase에서 자동으로 재고 차감
+4. **택배양식 생성**: 중복 제거 후 CJ대한통운 택배양식 자동 생성
+5. **📧 이메일 자동 처리 (NEW)**: 네이버 이메일 감시 → 첨부 엑셀 자동 다운로드 → 처리
+
+### 설치 및 실행
+
+```bash
+cd choolgo-watcher
+npm install
+npm run pm2:start   # 백그라운드 실행
+npm run pm2:logs    # 로그 확인
+npm run pm2:stop    # 중지
+```
+
+### 이메일 자동 처리 설정
+
+네이버 이메일로 오는 주문서를 자동으로 다운로드하고 처리할 수 있습니다.
+
+**설정 방법:**
+1. `.env.example`을 복사하여 `.env` 파일 생성
+2. 네이버 이메일 계정 및 앱 비밀번호 입력
+3. `email/sender-rules.js`에서 발신자 → 채널 매핑 설정
+4. PM2 재시작: `npm run pm2:restart`
+
+자세한 설정 방법은 [choolgo-watcher/EMAIL_SETUP.md](choolgo-watcher/EMAIL_SETUP.md) 참고
+
+**작동 방식:**
+```
+이메일 도착 (엑셀 첨부)
+  ↓
+발신자 주소로 채널 자동 분류
+  ↓
+지정 폴더에 첨부파일 저장
+  ↓
+choolgo-watcher가 자동 처리
+  ↓
+Firebase 재고 차감 + 택배양식 생성
 ```
 
 ## 🎨 화면 구성

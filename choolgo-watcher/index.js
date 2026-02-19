@@ -1,3 +1,5 @@
+require('dotenv').config(); // 환경변수 로드 (.env 파일)
+
 const chokidar = require('chokidar');
 const path = require('path');
 const fs = require('fs');
@@ -7,6 +9,7 @@ const { extractShippingRows } = require('./shipping/extract-shipping');
 const { appendShippingRows } = require('./shipping/courier-writer');
 const { consolidateShipping } = require('./shipping/consolidate');
 const { START_DATE, WATCH_PATHS, PROCESSED_FILE, FAILED_FILE } = require('./config/config');
+const { startEmailWatcher, stopEmailWatcher } = require('./email/imap-watcher');
 
 const DRY_RUN = process.argv.includes('--dry-run'); // 테스트 모드 (Firebase 차감 안 함)
 const REPROCESS_ARG = process.argv.indexOf('--reprocess');
@@ -370,6 +373,9 @@ function startWatcher() {
 
     watcher.on('ready', () => {
         console.log('\n감시 준비 완료. 새 파일을 기다리는 중...\n');
+
+        // 이메일 감시 시작
+        startEmailWatcher();
     });
 
     watcher.on('error', (error) => {
@@ -378,12 +384,14 @@ function startWatcher() {
 
     process.on('SIGINT', () => {
         console.log('\n서비스 종료...');
+        stopEmailWatcher();
         watcher.close();
         process.exit(0);
     });
 
     process.on('SIGTERM', () => {
         console.log('\n서비스 종료...');
+        stopEmailWatcher();
         watcher.close();
         process.exit(0);
     });
