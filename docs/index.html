@@ -274,6 +274,72 @@
                     <h2>택배양식 생성</h2>
                 </div>
 
+                <!-- 이메일 자동 처리 블록 -->
+                <div class="chulha-block">
+                    <h3><i data-lucide="mail" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>이메일 자동 처리</h3>
+                    <p class="chulha-desc">네이버 이메일로 수신되는 주문서를 자동으로 처리합니다.</p>
+
+                    <!-- 네이버 계정 정보 -->
+                    <div class="email-account-section" style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px; font-size: 1em; color: #374151;">네이버 계정 정보</h4>
+                        <div style="display: grid; gap: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #6b7280; font-size: 0.9em;">이메일 주소</label>
+                                <input type="email" id="email-account-email" placeholder="your-email@naver.com"
+                                       style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95em;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #6b7280; font-size: 0.9em;">
+                                    앱 비밀번호 (16자리)
+                                    <a href="https://nid.naver.com/user2/help/myInfo?lang=ko_KR" target="_blank"
+                                       style="color: #3b82f6; text-decoration: none; margin-left: 5px; font-size: 0.85em;">발급 방법 →</a>
+                                </label>
+                                <input type="password" id="email-account-password" placeholder="앱 비밀번호 16자리"
+                                       style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95em;">
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button id="btn-save-email-account" class="btn btn-primary" style="flex: 1;">
+                                    <i data-lucide="save" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                                    계정 정보 저장
+                                </button>
+                                <button id="btn-test-email-connection" class="btn" style="flex: 1;">
+                                    <i data-lucide="wifi" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                                    연결 테스트
+                                </button>
+                            </div>
+                            <div id="email-account-status" style="padding: 10px; border-radius: 6px; font-size: 0.9em; display: none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- 발신자 규칙 관리 -->
+                    <div class="email-rules-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="margin: 0; font-size: 1em; color: #374151;">발신자 규칙</h4>
+                            <button id="btn-add-sender-rule" class="btn btn-small">
+                                <i data-lucide="plus" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 3px;"></i>
+                                규칙 추가
+                            </button>
+                        </div>
+                        <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">발신자 패턴</th>
+                                        <th style="width: 15%;">채널</th>
+                                        <th style="width: 15%;">폴더</th>
+                                        <th style="width: 30%;">설명</th>
+                                        <th style="width: 10%;">우선순위</th>
+                                        <th style="width: 5%;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sender-rules-tbody">
+                                    <!-- 동적 렌더링 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 파일 선택 + 택배양식 생성 블록 -->
                 <div class="chulha-block">
                     <h3>출고 파일 처리</h3>
@@ -353,72 +419,6 @@
                     <button id="btn-close-settings" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
                 </div>
                 <div class="settings-content">
-                    <!-- 이메일 관리 섹션 -->
-                    <div class="setting-item">
-                        <h3><i data-lucide="mail" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>이메일 자동 처리</h3>
-                        <p style="color: #6b7280; margin-bottom: 15px;">네이버 이메일로 수신되는 주문서를 자동으로 처리합니다.</p>
-
-                        <!-- 네이버 계정 정보 -->
-                        <div class="email-account-section" style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h4 style="margin-bottom: 15px; font-size: 1em; color: #374151;">네이버 계정 정보</h4>
-                            <div style="display: grid; gap: 15px;">
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; color: #6b7280; font-size: 0.9em;">이메일 주소</label>
-                                    <input type="email" id="email-account-email" placeholder="your-email@naver.com"
-                                           style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95em;">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; color: #6b7280; font-size: 0.9em;">
-                                        앱 비밀번호 (16자리)
-                                        <a href="https://nid.naver.com/user2/help/myInfo?lang=ko_KR" target="_blank"
-                                           style="color: #3b82f6; text-decoration: none; margin-left: 5px; font-size: 0.85em;">발급 방법 →</a>
-                                    </label>
-                                    <input type="password" id="email-account-password" placeholder="앱 비밀번호 16자리"
-                                           style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95em;">
-                                </div>
-                                <div style="display: flex; gap: 10px;">
-                                    <button id="btn-save-email-account" class="btn btn-primary" style="flex: 1;">
-                                        <i data-lucide="save" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
-                                        계정 정보 저장
-                                    </button>
-                                    <button id="btn-test-email-connection" class="btn" style="flex: 1;">
-                                        <i data-lucide="wifi" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
-                                        연결 테스트
-                                    </button>
-                                </div>
-                                <div id="email-account-status" style="padding: 10px; border-radius: 6px; font-size: 0.9em; display: none;"></div>
-                            </div>
-                        </div>
-
-                        <!-- 발신자 규칙 관리 -->
-                        <div class="email-rules-section">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <h4 style="margin: 0; font-size: 1em; color: #374151;">발신자 규칙</h4>
-                                <button id="btn-add-sender-rule" class="btn btn-small">
-                                    <i data-lucide="plus" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 3px;"></i>
-                                    규칙 추가
-                                </button>
-                            </div>
-                            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 25%;">발신자 패턴</th>
-                                            <th style="width: 15%;">채널</th>
-                                            <th style="width: 15%;">폴더</th>
-                                            <th style="width: 30%;">설명</th>
-                                            <th style="width: 10%;">우선순위</th>
-                                            <th style="width: 5%;"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="sender-rules-tbody">
-                                        <!-- 동적 렌더링 -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="setting-item danger-zone">
                         <h3><i data-lucide="alert-triangle" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px; color: #ef4444;"></i>위험 구역</h3>
                         <p style="color: #6b7280; margin-bottom: 15px;">모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</p>
