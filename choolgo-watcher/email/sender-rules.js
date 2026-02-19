@@ -3,33 +3,13 @@
  *
  * 이메일 주소 패턴에 따라 자동으로 채널을 분류합니다.
  * 매칭 순서: 정확한 주소 > 도메인 > 키워드
+ *
+ * Firebase에서 규칙을 읽어오며, 없으면 기본 규칙 사용
  */
 
-const SENDER_RULES = [
-  // 정확한 이메일 주소 매칭
-  {
-    pattern: 'order@example.com',
-    channel: '아이원',
-    folder: '직택배',
-    description: '아이원 자동 주문서'
-  },
+const { getEmailSettings } = require('../firebase');
 
-  // 도메인 매칭 (모든 @domain.com 이메일)
-  {
-    pattern: '@smartstore.naver.com',
-    channel: '네이버',
-    folder: '직택배',
-    description: '네이버 스마트스토어'
-  },
-
-  // 키워드 매칭 (이메일에 특정 단어 포함)
-  {
-    pattern: 'kakao',
-    channel: '카카오',
-    folder: '카카오',
-    description: '카카오 관련 이메일'
-  },
-
+let SENDER_RULES = [
   // 기본값 (매칭 실패 시)
   {
     pattern: '*',
@@ -38,6 +18,34 @@ const SENDER_RULES = [
     description: '분류되지 않은 이메일'
   }
 ];
+
+// Firebase에서 규칙 로드
+async function loadSenderRulesFromFirebase() {
+  try {
+    const settings = await getEmailSettings();
+    if (settings && settings.senderRules) {
+      const rules = Object.values(settings.senderRules)
+        .filter(r => r.pattern && r.channel)
+        .sort((a, b) => (b.priority || 10) - (a.priority || 10));
+
+      if (rules.length > 0) {
+        // 기본값(*) 규칙 찾기
+        const defaultRule = SENDER_RULES.find(r => r.pattern === '*');
+
+        // Firebase 규칙 + 기본값
+        SENDER_RULES = [...rules, defaultRule];
+        console.log(`[이메일] Firebase에서 ${rules.length}개 발신자 규칙 로드 완료`);
+        return;
+      }
+    }
+    console.log('[이메일] Firebase 발신자 규칙 없음 → 기본 규칙 사용');
+  } catch (error) {
+    console.error('[이메일] Firebase 규칙 로드 실패:', error.message);
+  }
+}
+
+// 초기화 시 규칙 로드
+loadSenderRulesFromFirebase();
 
 /**
  * 발신자 이메일로 채널 감지

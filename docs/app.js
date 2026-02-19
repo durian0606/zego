@@ -4,6 +4,7 @@ const productsRef = database.ref('products');
 const barcodesRef = database.ref('barcodes');
 const historyRef = database.ref('history');
 const dailyClosingsRef = database.ref('dailyClosings');
+const emailSettingsRef = database.ref('emailSettings');
 
 // HTML 이스케이프 (XSS 방지)
 function escapeHtml(str) {
@@ -124,6 +125,11 @@ const AppState = {
     productNameMappings: {},  // 품목명 매핑 (출하관리)
     chulhaProcessing: false,  // 출하 처리 중 플래그
     choolgoViewDate: null,  // 출고파일 현황 조회 날짜 (기본: 오늘, formatDateKey 정의 후 초기화)
+    emailSettings: {  // 이메일 자동 처리 설정
+        account: {},  // { email, password, host, port, pollInterval }
+        senderRules: {}  // { ruleId: { pattern, channel, folder, description, priority } }
+    },
+    editingSenderRuleId: null  // 수정 중인 발신자 규칙 ID
 };
 
 // ============================================
@@ -525,6 +531,15 @@ const choolgoYesterdayRef = database.ref(`choolgoLogs/${choolgoYesterdayKey}/sum
 choolgoYesterdayRef.on('value', (snapshot) => {
     AppState.yesterdaySummary = snapshot.val() || { channels: {}, products: {} };
     scheduleInventoryUpdate();
+});
+
+// 이메일 설정 실시간 감지
+emailSettingsRef.on('value', (snapshot) => {
+    const data = snapshot.val() || {};
+    AppState.emailSettings.account = data.account || {};
+    AppState.emailSettings.senderRules = data.senderRules || {};
+    updateEmailAccountUI();
+    updateSenderRulesTable();
 });
 
 // ============================================
@@ -4289,5 +4304,300 @@ function renderProcessResults(results, container) {
     html += '</tbody></table>';
     container.innerHTML = html;
 }
+
+// ============================================
+// 이메일 자동 처리 관리
+// ============================================
+
+// 비밀번호 암호화 (간단한 Base64 인코딩 - 실제로는 더 강력한 암호화 필요)
+function encryptPassword(password) {
+    return btoa(password);  // Base64 인코딩
+}
+
+function decryptPassword(encrypted) {
+    try {
+        return atob(encrypted);  // Base64 디코딩
+    } catch (e) {
+        return '';
+    }
+}
+
+// 이메일 계정 UI 업데이트
+function updateEmailAccountUI() {
+    const account = AppState.emailSettings.account;
+    const emailInput = document.getElementById('email-account-email');
+    const passwordInput = document.getElementById('email-account-password');
+
+    if (emailInput && account.email) {
+        emailInput.value = account.email || '';
+    }
+
+    // 비밀번호는 보안상 표시하지 않음 (플레이스홀더만 변경)
+    if (passwordInput && account.password) {
+        passwordInput.placeholder = '••••••••••••••••';
+    }
+}
+
+// 발신자 규칙 테이블 렌더링
+function updateSenderRulesTable() {
+    const tbody = document.getElementById('sender-rules-tbody');
+    if (!tbody) return;
+
+    const rules = AppState.emailSettings.senderRules;
+    const ruleArray = Object.entries(rules).map(([id, rule]) => ({
+        id,
+        ...rule
+    }));
+
+    // 우선순위 내림차순 정렬
+    ruleArray.sort((a, b) => (b.priority || 10) - (a.priority || 10));
+
+    if (ruleArray.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #9ca3af; padding: 30px;">발신자 규칙이 없습니다. "규칙 추가" 버튼을 눌러 추가하세요.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = ruleArray.map(rule => `
+        <tr>
+            <td><code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">${escapeHtml(rule.pattern)}</code></td>
+            <td><span style="background: #dbeafe; color: #1e40af; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: 500;">${escapeHtml(rule.channel)}</span></td>
+            <td>${escapeHtml(rule.folder)}</td>
+            <td style="color: #6b7280; font-size: 0.9em;">${escapeHtml(rule.description || '-')}</td>
+            <td style="text-align: center;">${rule.priority || 10}</td>
+            <td style="text-align: center;">
+                <button class="btn-icon" onclick="editSenderRule('${rule.id}')" title="수정">
+                    <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                </button>
+                <button class="btn-icon" onclick="deleteSenderRule('${rule.id}')" title="삭제" style="color: #ef4444;">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    lucide.createIcons();
+}
+
+// 이메일 계정 정보 저장
+async function saveEmailAccount() {
+    const email = document.getElementById('email-account-email').value.trim();
+    const password = document.getElementById('email-account-password').value.trim();
+    const statusDiv = document.getElementById('email-account-status');
+
+    if (!email || !password) {
+        statusDiv.innerHTML = '⚠️ 이메일과 비밀번호를 모두 입력하세요.';
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fef3c7';
+        statusDiv.style.color = '#92400e';
+        return;
+    }
+
+    if (!email.includes('@naver.com')) {
+        statusDiv.innerHTML = '⚠️ 네이버 이메일 주소를 입력하세요. (@naver.com)';
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fef3c7';
+        statusDiv.style.color = '#92400e';
+        return;
+    }
+
+    try {
+        await emailSettingsRef.child('account').set({
+            email: email,
+            password: encryptPassword(password),
+            host: 'imap.naver.com',
+            port: 993,
+            tls: true,
+            pollInterval: 60000,
+            updatedAt: Date.now()
+        });
+
+        statusDiv.innerHTML = '✓ 계정 정보가 저장되었습니다. choolgo-watcher를 재시작하세요.';
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#d1fae5';
+        statusDiv.style.color = '#065f46';
+
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+    } catch (error) {
+        statusDiv.innerHTML = `✗ 저장 실패: ${error.message}`;
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+    }
+}
+
+// 이메일 연결 테스트 (UI만, 실제 테스트는 choolgo-watcher에서)
+function testEmailConnection() {
+    const account = AppState.emailSettings.account;
+    const statusDiv = document.getElementById('email-account-status');
+
+    if (!account.email || !account.password) {
+        statusDiv.innerHTML = '⚠️ 먼저 계정 정보를 저장하세요.';
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fef3c7';
+        statusDiv.style.color = '#92400e';
+        return;
+    }
+
+    statusDiv.innerHTML = 'ℹ️ choolgo-watcher 로그에서 연결 상태를 확인하세요. (npm run pm2:logs)';
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#dbeafe';
+    statusDiv.style.color = '#1e40af';
+
+    setTimeout(() => {
+        statusDiv.style.display = 'none';
+    }, 5000);
+}
+
+// 발신자 규칙 추가 모달 열기
+function openSenderRuleModal(ruleId = null) {
+    const modal = document.getElementById('sender-rule-modal');
+    const form = document.getElementById('sender-rule-form');
+    const title = document.getElementById('sender-rule-modal-title');
+
+    AppState.editingSenderRuleId = ruleId;
+
+    if (ruleId) {
+        // 수정 모드
+        const rule = AppState.emailSettings.senderRules[ruleId];
+        if (rule) {
+            title.textContent = '발신자 규칙 수정';
+            document.getElementById('rule-pattern').value = rule.pattern || '';
+            document.getElementById('rule-channel').value = rule.channel || '';
+            document.getElementById('rule-folder').value = rule.folder || '직택배';
+            document.getElementById('rule-description').value = rule.description || '';
+            document.getElementById('rule-priority').value = rule.priority || 10;
+        }
+    } else {
+        // 추가 모드
+        title.textContent = '발신자 규칙 추가';
+        form.reset();
+        document.getElementById('rule-folder').value = '직택배';
+        document.getElementById('rule-priority').value = 10;
+    }
+
+    modal.style.display = 'flex';
+    lucide.createIcons();
+}
+
+// 발신자 규칙 추가 모달 닫기
+function closeSenderRuleModal() {
+    const modal = document.getElementById('sender-rule-modal');
+    modal.style.display = 'none';
+    AppState.editingSenderRuleId = null;
+}
+
+// 발신자 규칙 저장
+async function saveSenderRule(event) {
+    event.preventDefault();
+
+    const pattern = document.getElementById('rule-pattern').value.trim();
+    const channel = document.getElementById('rule-channel').value.trim();
+    const folder = document.getElementById('rule-folder').value;
+    const description = document.getElementById('rule-description').value.trim();
+    const priority = parseInt(document.getElementById('rule-priority').value) || 10;
+
+    if (!pattern || !channel) {
+        showScanResult('발신자 패턴과 채널명을 입력하세요.', 'error');
+        return;
+    }
+
+    try {
+        const ruleData = {
+            pattern,
+            channel,
+            folder,
+            description,
+            priority,
+            updatedAt: Date.now()
+        };
+
+        if (AppState.editingSenderRuleId) {
+            // 수정
+            await emailSettingsRef.child(`senderRules/${AppState.editingSenderRuleId}`).update(ruleData);
+            showScanResult('발신자 규칙이 수정되었습니다.', 'success');
+        } else {
+            // 추가
+            const newRuleRef = emailSettingsRef.child('senderRules').push();
+            await newRuleRef.set(ruleData);
+            showScanResult('발신자 규칙이 추가되었습니다.', 'success');
+        }
+
+        closeSenderRuleModal();
+    } catch (error) {
+        showScanResult(`저장 실패: ${error.message}`, 'error');
+    }
+}
+
+// 발신자 규칙 수정
+function editSenderRule(ruleId) {
+    openSenderRuleModal(ruleId);
+}
+
+// 발신자 규칙 삭제
+async function deleteSenderRule(ruleId) {
+    const rule = AppState.emailSettings.senderRules[ruleId];
+    if (!rule) return;
+
+    if (!confirm(`"${rule.pattern}" 규칙을 삭제하시겠습니까?`)) {
+        return;
+    }
+
+    try {
+        await emailSettingsRef.child(`senderRules/${ruleId}`).remove();
+        showScanResult('발신자 규칙이 삭제되었습니다.', 'success');
+    } catch (error) {
+        showScanResult(`삭제 실패: ${error.message}`, 'error');
+    }
+}
+
+// 이벤트 리스너 등록
+document.addEventListener('DOMContentLoaded', () => {
+    // 이메일 계정 저장
+    const btnSaveAccount = document.getElementById('btn-save-email-account');
+    if (btnSaveAccount) {
+        btnSaveAccount.addEventListener('click', saveEmailAccount);
+    }
+
+    // 이메일 연결 테스트
+    const btnTestConnection = document.getElementById('btn-test-email-connection');
+    if (btnTestConnection) {
+        btnTestConnection.addEventListener('click', testEmailConnection);
+    }
+
+    // 발신자 규칙 추가 버튼
+    const btnAddRule = document.getElementById('btn-add-sender-rule');
+    if (btnAddRule) {
+        btnAddRule.addEventListener('click', () => openSenderRuleModal());
+    }
+
+    // 발신자 규칙 모달 닫기
+    const btnCloseModal = document.getElementById('btn-close-sender-rule-modal');
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener('click', closeSenderRuleModal);
+    }
+
+    const btnCancelModal = document.getElementById('btn-cancel-sender-rule');
+    if (btnCancelModal) {
+        btnCancelModal.addEventListener('click', closeSenderRuleModal);
+    }
+
+    // 발신자 규칙 폼 제출
+    const ruleForm = document.getElementById('sender-rule-form');
+    if (ruleForm) {
+        ruleForm.addEventListener('submit', saveSenderRule);
+    }
+
+    // 모달 외부 클릭 시 닫기
+    const senderRuleModal = document.getElementById('sender-rule-modal');
+    if (senderRuleModal) {
+        senderRuleModal.addEventListener('click', (e) => {
+            if (e.target === senderRuleModal) {
+                closeSenderRuleModal();
+            }
+        });
+    }
+});
 
 console.log('우리곡간식품 재고관리 시스템이 시작되었습니다!');

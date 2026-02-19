@@ -174,4 +174,22 @@ async function getProductNameMappings() {
         .sort((a, b) => b.priority - a.priority);
 }
 
-module.exports = { deductStock, addChoolgoLog, updateChoolgoSummary, getProductNameMappings };
+// 이메일 설정 조회
+async function getEmailSettings() {
+    const data = await firebaseRequestWithRetry('GET', '/emailSettings.json');
+    if (!data) return null;
+
+    // 비밀번호 복호화 (Base64)
+    if (data.account && data.account.password) {
+        try {
+            data.account.password = Buffer.from(data.account.password, 'base64').toString('utf-8');
+        } catch (e) {
+            console.error('[Firebase] 비밀번호 복호화 실패:', e.message);
+            data.account.password = '';
+        }
+    }
+
+    return data;
+}
+
+module.exports = { deductStock, addChoolgoLog, updateChoolgoSummary, getProductNameMappings, getEmailSettings };

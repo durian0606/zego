@@ -371,11 +371,11 @@ function startWatcher() {
         }
     });
 
-    watcher.on('ready', () => {
+    watcher.on('ready', async () => {
         console.log('\n감시 준비 완료. 새 파일을 기다리는 중...\n');
 
-        // 이메일 감시 시작
-        startEmailWatcher();
+        // 이메일 감시 시작 (Firebase 또는 .env에서 설정 읽기)
+        await startEmailWatcher();
     });
 
     watcher.on('error', (error) => {
