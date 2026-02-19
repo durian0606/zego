@@ -4427,28 +4427,6 @@ async function saveEmailAccount() {
     }
 }
 
-// 이메일 연결 테스트 (UI만, 실제 테스트는 choolgo-watcher에서)
-function testEmailConnection() {
-    const account = AppState.emailSettings.account;
-    const statusDiv = document.getElementById('email-account-status');
-
-    if (!account.email || !account.password) {
-        statusDiv.innerHTML = '⚠️ 먼저 계정 정보를 저장하세요.';
-        statusDiv.style.display = 'block';
-        statusDiv.style.background = '#fef3c7';
-        statusDiv.style.color = '#92400e';
-        return;
-    }
-
-    statusDiv.innerHTML = 'ℹ️ choolgo-watcher 로그에서 연결 상태를 확인하세요. (npm run pm2:logs)';
-    statusDiv.style.display = 'block';
-    statusDiv.style.background = '#dbeafe';
-    statusDiv.style.color = '#1e40af';
-
-    setTimeout(() => {
-        statusDiv.style.display = 'none';
-    }, 5000);
-}
 
 // 발신자 규칙 추가 모달 열기
 function openSenderRuleModal(ruleId = null) {
@@ -4462,7 +4440,7 @@ function openSenderRuleModal(ruleId = null) {
         // 수정 모드
         const rule = AppState.emailSettings.senderRules[ruleId];
         if (rule) {
-            title.textContent = '발신자 규칙 수정';
+            title.textContent = '거래처 수정';
             document.getElementById('rule-pattern').value = rule.pattern || '';
             document.getElementById('rule-channel').value = rule.channel || '';
             document.getElementById('rule-folder').value = rule.folder || '직택배';
@@ -4471,7 +4449,7 @@ function openSenderRuleModal(ruleId = null) {
         }
     } else {
         // 추가 모드
-        title.textContent = '발신자 규칙 추가';
+        title.textContent = '거래처 추가';
         form.reset();
         document.getElementById('rule-folder').value = '직택배';
         document.getElementById('rule-priority').value = 10;
@@ -4558,12 +4536,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveAccount = document.getElementById('btn-save-email-account');
     if (btnSaveAccount) {
         btnSaveAccount.addEventListener('click', saveEmailAccount);
-    }
-
-    // 이메일 연결 테스트
-    const btnTestConnection = document.getElementById('btn-test-email-connection');
-    if (btnTestConnection) {
-        btnTestConnection.addEventListener('click', testEmailConnection);
     }
 
     // 발신자 규칙 추가 버튼
