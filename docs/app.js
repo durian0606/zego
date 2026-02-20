@@ -4560,6 +4560,36 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancelModal.addEventListener('click', closeSenderRuleModal);
     }
 
+    // 폴더 선택 버튼
+    const btnSelectFolder = document.getElementById('btn-select-folder');
+    if (btnSelectFolder) {
+        btnSelectFolder.addEventListener('click', () => {
+            document.getElementById('rule-folder-input').click();
+        });
+    }
+
+    const ruleFolderInput = document.getElementById('rule-folder-input');
+    if (ruleFolderInput) {
+        ruleFolderInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                // webkitRelativePath에서 경로 추출
+                const firstFile = files[0];
+                let folderPath = '';
+
+                if (firstFile.webkitRelativePath) {
+                    // 상대 경로에서 폴더 부분만 추출
+                    const pathParts = firstFile.webkitRelativePath.split('/');
+                    pathParts.pop(); // 파일명 제거
+                    folderPath = pathParts.join('/');
+                }
+
+                // 전체 경로를 알 수 없으므로 상대 경로 표시
+                document.getElementById('rule-folder').value = folderPath || firstFile.name;
+            }
+        });
+    }
+
     // 발신자 규칙 폼 제출
     const ruleForm = document.getElementById('sender-rule-form');
     if (ruleForm) {
