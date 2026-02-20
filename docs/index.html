@@ -15,6 +15,7 @@
                     <button id="btn-toggle-register" class="btn btn-register"><i data-lucide="plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>제품 등록</button>
                     <button id="btn-print-barcode" class="btn btn-print" title="바코드 인쇄"><i data-lucide="printer" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 인쇄</button>
                     <button id="btn-toggle-barcode-management" class="btn btn-barcode-mgmt" title="바코드 관리"><i data-lucide="list" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>바코드 관리</button>
+                    <button id="btn-open-chulha" class="btn btn-chulha" title="택배양식 생성"><i data-lucide="truck" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>택배양식</button>
                     <button id="btn-settings" class="btn btn-settings" title="설정"><i data-lucide="settings" style="width: 18px; height: 18px;"></i></button>
                 </div>
                 <div id="shipping-actions" class="header-action-group" style="display:none;">
@@ -268,15 +269,14 @@
                 </div>
             </section>
 
-            <!-- 출하관리 섹션 -->
-            <section class="chulha-section" id="chulha-section">
+            <!-- 이메일 자동 처리 섹션 -->
+            <section class="chulha-section" id="email-auto-section">
                 <div class="section-header">
-                    <h2>택배양식 생성</h2>
+                    <h2><i data-lucide="mail" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>이메일 자동 처리</h2>
                 </div>
 
                 <!-- 이메일 자동 처리 블록 -->
                 <div class="chulha-block">
-                    <h3><i data-lucide="mail" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>이메일 자동 처리</h3>
                     <p class="chulha-desc">네이버 이메일로 수신되는 주문서를 자동으로 처리합니다.</p>
 
                     <!-- 네이버 계정 정보 -->
@@ -335,78 +335,91 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- 파일 선택 + 택배양식 생성 블록 -->
-                <div class="chulha-block">
-                    <h3>출고 파일 처리</h3>
-                    <p class="chulha-desc">PC에서 주문 파일을 선택하여 합배송 택배양식을 생성합니다.</p>
-                    <div class="chulha-file-actions">
-                        <button id="btn-chulha-folder" class="btn btn-primary" style="width: auto;">
-                            <i data-lucide="folder-open" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>폴더 선택
-                        </button>
-                        <button id="btn-chulha-files" class="btn btn-secondary" style="width: auto;">
-                            <i data-lucide="file-plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>파일 선택
-                        </button>
-                        <input type="file" id="chulha-folder-input" webkitdirectory style="display:none;" accept=".xlsx,.xls">
-                        <input type="file" id="chulha-file-input" multiple style="display:none;" accept=".xlsx,.xls">
-                    </div>
-                    <div id="chulha-file-preview" class="chulha-file-preview" style="display: none;">
-                        <h4>선택된 파일</h4>
-                        <div id="chulha-file-list"></div>
-                        <div class="chulha-preview-actions">
-                            <button id="btn-chulha-process" class="btn btn-primary" style="width: auto;">
-                                <i data-lucide="play" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>택배양식 생성
-                            </button>
-                            <button id="btn-chulha-cancel" class="btn btn-secondary" style="width: auto;">취소</button>
-                            <span id="chulha-status" class="chulha-status"></span>
-                        </div>
-                    </div>
-                    <div id="chulha-results" class="chulha-results" style="display: none;">
-                        <h4>처리 결과</h4>
-                        <div id="chulha-results-body"></div>
-                        <div class="chulha-download-actions">
-                            <button id="btn-chulha-download" class="btn btn-primary" style="width: auto; display: none;">
-                                <i data-lucide="download" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>택배양식 다운로드
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 품목명 매핑 블록 -->
-                <div class="chulha-block">
-                    <h3>품목명 매핑</h3>
-                    <p class="chulha-desc">주문서의 긴 품목명을 택배 송장용 단축명으로 변환합니다.</p>
-                    <div class="mapping-form">
-                        <div class="mapping-channel-wrap">
-                            <select id="mapping-channel">
-                                <option value="">채널 선택</option>
-                                <option value="__other__">기타 (직접입력)</option>
-                            </select>
-                            <input type="text" id="mapping-channel-other" class="mapping-channel-other" placeholder="채널명 입력" style="display: none;">
-                        </div>
-                        <input type="text" id="mapping-pattern" placeholder="포함 패턴 (예: 현미뻥튀기)">
-                        <input type="text" id="mapping-shortname" placeholder="단축명 (예: 현미뻥)">
-                        <button id="btn-add-mapping" class="btn btn-primary" style="width: auto; white-space: nowrap;">추가</button>
-                    </div>
-                    <div class="table-wrapper">
-                        <table id="mapping-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px;">채널</th>
-                                    <th>포함 패턴</th>
-                                    <th>단축명</th>
-                                    <th style="width: 80px;">관리</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mapping-tbody">
-                                <tr><td colspan="4" class="no-data">매핑이 없습니다.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </section>
 
             </div><!-- /page-shipping -->
+
+            <!-- 택배양식 생성 모달 -->
+            <div id="chulha-modal" class="manual-overlay" style="display:none;">
+                <div class="manual-modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                    <div class="manual-header">
+                        <h2>택배양식 생성</h2>
+                        <button id="btn-close-chulha" class="btn-close"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+                    </div>
+                    <div class="manual-body" style="padding: 30px;">
+
+                        <!-- 파일 선택 + 택배양식 생성 블록 -->
+                        <div class="chulha-block">
+                            <h3>출고 파일 처리</h3>
+                            <p class="chulha-desc">PC에서 주문 파일을 선택하여 합배송 택배양식을 생성합니다.</p>
+                            <div class="chulha-file-actions">
+                                <button id="btn-chulha-folder" class="btn btn-primary" style="width: auto;">
+                                    <i data-lucide="folder-open" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>폴더 선택
+                                </button>
+                                <button id="btn-chulha-files" class="btn btn-secondary" style="width: auto;">
+                                    <i data-lucide="file-plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>파일 선택
+                                </button>
+                                <input type="file" id="chulha-folder-input" webkitdirectory style="display:none;" accept=".xlsx,.xls">
+                                <input type="file" id="chulha-file-input" multiple style="display:none;" accept=".xlsx,.xls">
+                            </div>
+                            <div id="chulha-file-preview" class="chulha-file-preview" style="display: none;">
+                                <h4>선택된 파일</h4>
+                                <div id="chulha-file-list"></div>
+                                <div class="chulha-preview-actions">
+                                    <button id="btn-chulha-process" class="btn btn-primary" style="width: auto;">
+                                        <i data-lucide="play" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>택배양식 생성
+                                    </button>
+                                    <button id="btn-chulha-cancel" class="btn btn-secondary" style="width: auto;">취소</button>
+                                    <span id="chulha-status" class="chulha-status"></span>
+                                </div>
+                            </div>
+                            <div id="chulha-results" class="chulha-results" style="display: none;">
+                                <h4>처리 결과</h4>
+                                <div id="chulha-results-body"></div>
+                                <div class="chulha-download-actions">
+                                    <button id="btn-chulha-download" class="btn btn-primary" style="width: auto; display: none;">
+                                        <i data-lucide="download" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>택배양식 다운로드
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 품목명 매핑 블록 -->
+                        <div class="chulha-block" style="margin-top: 30px;">
+                            <h3>품목명 매핑</h3>
+                            <p class="chulha-desc">주문서의 긴 품목명을 택배 송장용 단축명으로 변환합니다.</p>
+                            <div class="mapping-form">
+                                <div class="mapping-channel-wrap">
+                                    <select id="mapping-channel">
+                                        <option value="">채널 선택</option>
+                                        <option value="__other__">기타 (직접입력)</option>
+                                    </select>
+                                    <input type="text" id="mapping-channel-other" class="mapping-channel-other" placeholder="채널명 입력" style="display: none;">
+                                </div>
+                                <input type="text" id="mapping-pattern" placeholder="포함 패턴 (예: 현미뻥튀기)">
+                                <input type="text" id="mapping-shortname" placeholder="단축명 (예: 현미뻥)">
+                                <button id="btn-add-mapping" class="btn btn-primary" style="width: auto; white-space: nowrap;">추가</button>
+                            </div>
+                            <div class="table-wrapper">
+                                <table id="mapping-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 80px;">채널</th>
+                                            <th>포함 패턴</th>
+                                            <th>단축명</th>
+                                            <th style="width: 80px;">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mapping-tbody">
+                                        <tr><td colspan="4" class="no-data">매핑이 없습니다.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
 
             <!-- 설정 섹션 (토글) -->
             <section class="settings-section" id="settings-section" style="display: none;">

@@ -3490,6 +3490,24 @@ document.getElementById('manual-overlay').addEventListener('click', (e) => {
     }
 });
 
+// 택배양식 생성 모달
+document.getElementById('btn-open-chulha').addEventListener('click', () => {
+    document.getElementById('chulha-modal').style.display = 'flex';
+    renderLucideIcons();
+});
+
+document.getElementById('btn-close-chulha').addEventListener('click', () => {
+    document.getElementById('chulha-modal').style.display = 'none';
+    document.getElementById('barcode-input').focus();
+});
+
+document.getElementById('chulha-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        document.getElementById('chulha-modal').style.display = 'none';
+        document.getElementById('barcode-input').focus();
+    }
+});
+
 // ============================================
 // 출하관리 (합배송 + 품목명 매핑 + 수동 트리거)
 // ============================================
