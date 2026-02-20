@@ -4560,38 +4560,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancelModal.addEventListener('click', closeSenderRuleModal);
     }
 
-    // 폴더 선택 버튼
-    const btnSelectFolder = document.getElementById('btn-select-folder');
-    if (btnSelectFolder) {
-        btnSelectFolder.addEventListener('click', async () => {
-            try {
-                if ('showDirectoryPicker' in window) {
-                    // File System Access API 사용
-                    const dirHandle = await window.showDirectoryPicker();
-                    document.getElementById('rule-folder').value = dirHandle.name;
-                } else {
-                    // Fallback: input file 사용
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.webkitdirectory = true;
-                    input.onchange = (e) => {
-                        const files = e.target.files;
-                        if (files.length > 0) {
-                            const path = files[0].webkitRelativePath || files[0].name;
-                            const folderName = path.split('/')[0];
-                            document.getElementById('rule-folder').value = folderName;
-                        }
-                    };
-                    input.click();
-                }
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error('폴더 선택 오류:', err);
-                }
-            }
-        });
-    }
-
     // 발신자 규칙 폼 제출
     const ruleForm = document.getElementById('sender-rule-form');
     if (ruleForm) {
