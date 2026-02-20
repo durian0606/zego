@@ -4560,26 +4560,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancelModal.addEventListener('click', closeSenderRuleModal);
     }
 
-    // 폴더 선택 버튼
-    const btnSelectFolder = document.getElementById('btn-select-folder');
-    if (btnSelectFolder) {
-        btnSelectFolder.addEventListener('click', () => {
-            document.getElementById('rule-folder-input').click();
-        });
-    }
-
-    const ruleFolderInput = document.getElementById('rule-folder-input');
-    if (ruleFolderInput) {
-        ruleFolderInput.addEventListener('change', (e) => {
-            const files = e.target.files;
-            if (files.length > 0) {
-                const folderPath = files[0].webkitRelativePath;
-                const folderName = folderPath.split('/')[0];
-                document.getElementById('rule-folder').value = folderName;
-            }
-        });
-    }
-
     // 발신자 규칙 폼 제출
     const ruleForm = document.getElementById('sender-rule-form');
     if (ruleForm) {
