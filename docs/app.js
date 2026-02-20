@@ -3490,20 +3490,20 @@ document.getElementById('manual-overlay').addEventListener('click', (e) => {
     }
 });
 
-// 택배양식 생성 모달
-document.getElementById('btn-open-chulha').addEventListener('click', () => {
-    document.getElementById('chulha-modal').style.display = 'flex';
+// 이메일 설정 모달
+document.getElementById('btn-open-email-settings').addEventListener('click', () => {
+    document.getElementById('email-settings-modal').style.display = 'flex';
     renderLucideIcons();
 });
 
-document.getElementById('btn-close-chulha').addEventListener('click', () => {
-    document.getElementById('chulha-modal').style.display = 'none';
+document.getElementById('btn-close-email-settings').addEventListener('click', () => {
+    document.getElementById('email-settings-modal').style.display = 'none';
     document.getElementById('barcode-input').focus();
 });
 
-document.getElementById('chulha-modal').addEventListener('click', (e) => {
+document.getElementById('email-settings-modal').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) {
-        document.getElementById('chulha-modal').style.display = 'none';
+        document.getElementById('email-settings-modal').style.display = 'none';
         document.getElementById('barcode-input').focus();
     }
 });
