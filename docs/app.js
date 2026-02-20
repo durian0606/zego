@@ -4367,11 +4367,8 @@ function updateSenderRulesTable() {
         ...rule
     }));
 
-    // 우선순위 내림차순 정렬
-    ruleArray.sort((a, b) => (b.priority || 10) - (a.priority || 10));
-
     if (ruleArray.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #9ca3af; padding: 30px;">발신자 규칙이 없습니다. "규칙 추가" 버튼을 눌러 추가하세요.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9ca3af; padding: 30px;">발신자 규칙이 없습니다. "거래처 추가" 버튼을 눌러 추가하세요.</td></tr>';
         return;
     }
 
@@ -4380,8 +4377,6 @@ function updateSenderRulesTable() {
             <td><code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">${escapeHtml(rule.pattern)}</code></td>
             <td><span style="background: #dbeafe; color: #1e40af; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: 500;">${escapeHtml(rule.channel)}</span></td>
             <td>${escapeHtml(rule.folder)}</td>
-            <td style="color: #6b7280; font-size: 0.9em;">${escapeHtml(rule.description || '-')}</td>
-            <td style="text-align: center;">${rule.priority || 10}</td>
             <td style="text-align: center;">
                 <button class="btn-icon" onclick="editSenderRule('${rule.id}')" title="수정">
                     <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
@@ -4461,16 +4456,12 @@ function openSenderRuleModal(ruleId = null) {
             title.textContent = '거래처 수정';
             document.getElementById('rule-pattern').value = rule.pattern || '';
             document.getElementById('rule-channel').value = rule.channel || '';
-            document.getElementById('rule-folder').value = rule.folder || '직택배';
-            document.getElementById('rule-description').value = rule.description || '';
-            document.getElementById('rule-priority').value = rule.priority || 10;
+            document.getElementById('rule-folder').value = rule.folder || '';
         }
     } else {
         // 추가 모드
         title.textContent = '거래처 추가';
         form.reset();
-        document.getElementById('rule-folder').value = '직택배';
-        document.getElementById('rule-priority').value = 10;
     }
 
     modal.style.display = 'flex';
@@ -4490,12 +4481,10 @@ async function saveSenderRule(event) {
 
     const pattern = document.getElementById('rule-pattern').value.trim();
     const channel = document.getElementById('rule-channel').value.trim();
-    const folder = document.getElementById('rule-folder').value;
-    const description = document.getElementById('rule-description').value.trim();
-    const priority = parseInt(document.getElementById('rule-priority').value) || 10;
+    const folder = document.getElementById('rule-folder').value.trim();
 
-    if (!pattern || !channel) {
-        showScanResult('발신자 패턴과 채널명을 입력하세요.', 'error');
+    if (!pattern || !channel || !folder) {
+        showScanResult('이메일 주소, 채널명, 폴더를 모두 입력하세요.', 'error');
         return;
     }
 
@@ -4504,8 +4493,6 @@ async function saveSenderRule(event) {
             pattern,
             channel,
             folder,
-            description,
-            priority,
             updatedAt: Date.now()
         };
 
@@ -4571,6 +4558,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelModal = document.getElementById('btn-cancel-sender-rule');
     if (btnCancelModal) {
         btnCancelModal.addEventListener('click', closeSenderRuleModal);
+    }
+
+    // 폴더 선택 버튼
+    const btnSelectFolder = document.getElementById('btn-select-folder');
+    if (btnSelectFolder) {
+        btnSelectFolder.addEventListener('click', () => {
+            document.getElementById('rule-folder-input').click();
+        });
+    }
+
+    const ruleFolderInput = document.getElementById('rule-folder-input');
+    if (ruleFolderInput) {
+        ruleFolderInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                const folderPath = files[0].webkitRelativePath;
+                const folderName = folderPath.split('/')[0];
+                document.getElementById('rule-folder').value = folderName;
+            }
+        });
     }
 
     // 발신자 규칙 폼 제출

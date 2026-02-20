@@ -400,12 +400,10 @@
                                 <table class="data-table">
                                     <thead>
                                         <tr>
-                                            <th style="width: 25%;">발신자 패턴</th>
-                                            <th style="width: 15%;">채널</th>
-                                            <th style="width: 15%;">폴더</th>
-                                            <th style="width: 30%;">설명</th>
-                                            <th style="width: 10%;">우선순위</th>
-                                            <th style="width: 5%;"></th>
+                                            <th style="width: 40%;">이메일 주소</th>
+                                            <th style="width: 20%;">채널</th>
+                                            <th style="width: 30%;">폴더</th>
+                                            <th style="width: 10%;"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="sender-rules-tbody">
@@ -605,12 +603,9 @@
             <div class="manual-body">
                 <form id="sender-rule-form" style="display: grid; gap: 15px;">
                     <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">발신자 패턴 *</label>
-                        <input type="text" id="rule-pattern" required placeholder="예: order@company.com, @naver.com, kakao"
+                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">이메일 주소 *</label>
+                        <input type="email" id="rule-pattern" required placeholder="예: order@company.com"
                                style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;">
-                        <small style="color: #6b7280; display: block; margin-top: 5px;">
-                            정확한 주소, @도메인, 또는 키워드 입력
-                        </small>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 5px; font-weight: 500;">채널명 *</label>
@@ -619,25 +614,15 @@
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 5px; font-weight: 500;">저장 폴더 *</label>
-                        <select id="rule-folder" required
-                                style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;">
-                            <option value="직택배">직택배</option>
-                            <option value="카카오">카카오</option>
-                            <option value="팔도감">팔도감</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">설명</label>
-                        <input type="text" id="rule-description" placeholder="예: 아이원 자동 주문서"
-                               style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;">
-                    </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">우선순위</label>
-                        <input type="number" id="rule-priority" value="10" min="1" max="100"
-                               style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;">
-                        <small style="color: #6b7280; display: block; margin-top: 5px;">
-                            숫자가 클수록 먼저 적용됩니다
-                        </small>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="rule-folder" required placeholder="폴더명 입력 (예: 직택배)"
+                                   style="flex: 1; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;">
+                            <button type="button" id="btn-select-folder" class="btn" style="white-space: nowrap;">
+                                <i data-lucide="folder-open" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                                폴더 선택
+                            </button>
+                        </div>
+                        <input type="file" id="rule-folder-input" webkitdirectory style="display: none;">
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
                         <button type="submit" class="btn btn-primary" style="flex: 1;">
