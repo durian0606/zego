@@ -1863,9 +1863,9 @@ async function updateStock(barcodeInfo) {
             capturedBefore = current.currentStock || 0;
 
             if (type === 'IN') {
-                capturedAfter = capturedBefore + quantity;
+                // IN: 생산량만 증가 (재고는 변경 안 함)
+                capturedAfter = capturedBefore; // 재고는 그대로
                 return { ...current,
-                    currentStock: capturedAfter,
                     todayProduction: (current.todayProduction || 0) + quantity,
                     updatedAt: Date.now() };
             } else if (type === 'ADJUST') {
