@@ -1868,7 +1868,19 @@ async function updateStock(barcodeInfo) {
                     currentStock: capturedAfter,
                     todayProduction: (current.todayProduction || 0) + quantity,
                     updatedAt: Date.now() };
+            } else if (type === 'ADJUST') {
+                // ADJUST: 생산 수정 - todayProduction과 currentStock을 함께 차감
+                const currentProduction = current.todayProduction || 0;
+                if (currentProduction < quantity || capturedBefore < quantity) {
+                    return; // abort — 생산량 또는 재고 부족
+                }
+                capturedAfter = capturedBefore - quantity;
+                return { ...current,
+                    currentStock: capturedAfter,
+                    todayProduction: currentProduction - quantity,
+                    updatedAt: Date.now() };
             } else {
+                // OUT: 출고 - currentStock만 차감
                 capturedAfter = capturedBefore - quantity;
                 if (capturedAfter < 0) return; // abort — 재고 부족
                 return { ...current, currentStock: capturedAfter, updatedAt: Date.now() };
@@ -1876,7 +1888,11 @@ async function updateStock(barcodeInfo) {
         });
 
         if (!result.committed) {
-            showScanResult('재고가 부족합니다!', 'error');
+            if (type === 'ADJUST') {
+                showScanResult('생산량 또는 재고가 부족합니다!', 'error');
+            } else {
+                showScanResult('재고가 부족합니다!', 'error');
+            }
             return;
         }
 
