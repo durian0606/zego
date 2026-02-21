@@ -116,6 +116,7 @@ const AppState = {
     isEditingMinStock: false,
     isEditingCurrentStock: false,
     isEditingProduction: false,  // 생산현황 편집 중
+    isEditingPlannedShipment: false,  // 출고예정 편집 중
     editingProduct: null,  // 수정 중인 제품명 (null이면 신규 등록 모드)
     currentWorkingProduct: null,  // 현재 작업 중인 제품 (강조 표시용)
     selectedProductIndex: 0,  // 키보드 단축키용 선택된 제품 인덱스
@@ -776,12 +777,11 @@ function updateInventoryTable() {
         const colorIndex = getProductColorIndex(product.name) + 1;
         const colorClass = `product-color-${colorIndex}`;
 
-        // 출고 예정량 (오늘 주문)
+        // 출고 예정량 (수동 설정값 우선, 없으면 자동 감지값)
         const choolgoProducts = AppState.choolgoSummary.products || {};
-        const shipmentQty = choolgoProducts[product.name] || 0;
-        const shipmentDisplay = shipmentQty > 0
-            ? `<button class="choolgo-shipment-value" onclick="showChannelDetail(event)" title="클릭하여 채널별 상세" aria-label="${shipmentQty}개 - 채널별 상세 보기">${shipmentQty}</button>`
-            : '<span class="choolgo-shipment-zero">-</span>';
+        const autoShipmentQty = choolgoProducts[product.name] || 0;
+        const shipmentQty = product.plannedShipment !== undefined ? product.plannedShipment : autoShipmentQty;
+        const isManuallySet = product.plannedShipment !== undefined;
 
         // 기출고 (어제 주문 = 이미 나간 물량)
         const yesterdayProducts = AppState.yesterdaySummary.products || {};
@@ -806,9 +806,11 @@ function updateInventoryTable() {
                 <td class="stock-number rice-cooker-count" data-product="${escapedName}"><strong>${product.riceCookerCount || 0}</strong></td>
                 <td class="stock-number">${todayProduction}</td>
                 <td class="stock-number editable-stock" data-product="${escapedName}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
-                <td class="stock-number choolgo-shipment-cell">
-                    ${shipmentDisplay}
+                <td class="stock-number choolgo-shipment-cell editable-stock" data-product="${escapedName}" data-planned="${shipmentQty}" onclick="editPlannedShipment(this)" title="클릭하여 수정">
+                    <strong>${shipmentQty > 0 ? shipmentQty : '-'}</strong>
+                    ${isManuallySet ? '<span style="font-size: 0.75em; opacity: 0.7;"> (수동)</span>' : ''}
                     ${hasShipmentShortage ? `<span class="shortage-badge">${shipmentShortage} 부족</span>` : ''}
+                    <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>
                 </td>
                 <td class="stock-number yesterday-shipment-cell">${yesterdayDisplay}</td>
                 <td class="stock-number editable-stock" data-product="${escapedName}" data-minstock="${minStock}" onclick="editMinStock(this)" title="클릭하여 수정"><span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
@@ -1173,6 +1175,198 @@ function editCurrentStock(element) {
     input.addEventListener('blur', () => {
         setTimeout(() => {
             if (AppState.isEditingCurrentStock && !isSaving && element.contains(container)) {
+                cancelEdit();
+            }
+        }, 150);
+    });
+}
+
+// 출고예정 수정 함수
+function editPlannedShipment(element) {
+    // 이미 편집 중인 경우 무시
+    if (element.querySelector('input')) return;
+
+    // data 속성에서 제품명과 현재값 가져오기
+    const productName = element.getAttribute('data-product');
+    const currentValue = parseInt(element.getAttribute('data-planned')) || 0;
+
+    AppState.isEditingPlannedShipment = true; // 편집 시작
+    const originalContent = element.innerHTML;
+
+    // 인라인 편집 컨테이너 생성
+    const container = document.createElement('div');
+    container.className = 'inline-edit-container';
+
+    // input 필드 생성
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = currentValue;
+    input.min = '0';
+    input.className = 'inline-edit-input';
+
+    // 저장 버튼
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
+    saveBtn.innerHTML = '&#10003;';
+    saveBtn.title = '저장 (Enter)';
+
+    // 취소 버튼
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
+    cancelBtn.innerHTML = '&#10005;';
+    cancelBtn.title = '취소 (ESC)';
+
+    // 자동값 복원 버튼 (수동값 삭제)
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'inline-edit-btn inline-edit-btn-reset';
+    resetBtn.innerHTML = '&#8635;';
+    resetBtn.title = '자동값으로 복원';
+
+    container.appendChild(input);
+    container.appendChild(saveBtn);
+    container.appendChild(resetBtn);
+    container.appendChild(cancelBtn);
+
+    // 전체 내용 교체
+    element.innerHTML = '';
+    element.appendChild(container);
+
+    // 포커스 및 전체 선택
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 0);
+
+    // 저장 중 플래그
+    let isSaving = false;
+
+    // 취소 함수
+    const cancelEdit = () => {
+        if (isSaving) return;
+        element.innerHTML = originalContent;
+        AppState.isEditingPlannedShipment = false;
+        renderLucideIcons();
+        barcodeInput.focus();
+    };
+
+    // 저장 함수
+    const saveValue = async () => {
+        if (isSaving) return;
+        isSaving = true;
+
+        const newValue = input.value.trim();
+
+        if (newValue === '') {
+            isSaving = false;
+            cancelEdit();
+            return;
+        }
+
+        const newPlanned = parseInt(newValue);
+        if (isNaN(newPlanned) || newPlanned < 0) {
+            showScanResult('올바른 숫자를 입력해주세요.', 'error');
+            isSaving = false;
+            cancelEdit();
+            return;
+        }
+
+        // 값이 변경되지 않았으면 그냥 취소
+        if (newPlanned === currentValue) {
+            isSaving = false;
+            cancelEdit();
+            return;
+        }
+
+        try {
+            // Firebase에 업데이트
+            await productsRef.child(productName).update({
+                plannedShipment: newPlanned,
+                updatedAt: Date.now()
+            });
+
+            // 즉시 화면 업데이트
+            element.innerHTML = `<strong>${newPlanned > 0 ? newPlanned : '-'}</strong> <span style="font-size: 0.75em; opacity: 0.7;"> (수동)</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
+
+            renderLucideIcons();
+
+            AppState.isEditingPlannedShipment = false;
+            showScanResult(`출고예정이 ${currentValue}개에서 ${newPlanned}개로 수정되었습니다.`, 'success');
+            highlightProductRow(productName);
+            barcodeInput.focus();
+        } catch (error) {
+            console.error('출고예정 업데이트 오류:', error);
+            showScanResult('출고예정 업데이트 중 오류가 발생했습니다.', 'error');
+            element.innerHTML = originalContent;
+            AppState.isEditingPlannedShipment = false;
+        }
+        isSaving = false;
+    };
+
+    // 자동값 복원 함수
+    const resetToAuto = async () => {
+        if (isSaving) return;
+        isSaving = true;
+
+        try {
+            // Firebase에서 plannedShipment 필드 삭제
+            await productsRef.child(productName).update({
+                plannedShipment: null,
+                updatedAt: Date.now()
+            });
+
+            // 즉시 화면 업데이트 (자동값 표시)
+            const choolgoProducts = AppState.choolgoSummary.products || {};
+            const autoValue = choolgoProducts[productName] || 0;
+            element.innerHTML = `<strong>${autoValue > 0 ? autoValue : '-'}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
+
+            renderLucideIcons();
+
+            AppState.isEditingPlannedShipment = false;
+            showScanResult('출고예정이 자동값으로 복원되었습니다.', 'success');
+            highlightProductRow(productName);
+            barcodeInput.focus();
+        } catch (error) {
+            console.error('출고예정 복원 오류:', error);
+            showScanResult('출고예정 복원 중 오류가 발생했습니다.', 'error');
+            element.innerHTML = originalContent;
+            AppState.isEditingPlannedShipment = false;
+        }
+        isSaving = false;
+    };
+
+    // 버튼 이벤트
+    saveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        saveValue();
+    });
+
+    resetBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resetToAuto();
+    });
+
+    cancelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelEdit();
+    });
+
+    // 엔터 키: 저장, ESC: 취소
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            saveValue();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            cancelEdit();
+        }
+    });
+
+    // 포커스 잃을 때: 저장 중이 아니면 취소 (버튼 클릭 허용을 위해 딜레이)
+    input.addEventListener('blur', () => {
+        setTimeout(() => {
+            if (AppState.isEditingPlannedShipment && !isSaving && element.contains(container)) {
                 cancelEdit();
             }
         }, 150);
