@@ -3429,6 +3429,10 @@ window.addEventListener('resize', () => {
 // 마우스 휠: 제품 선택
 // ============================================
 
+// 마지막 IN 키 입력 시간 (5분 쿨다운용)
+let lastInKeyPressTime = 0;
+const IN_KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5분
+
 // 알파벳 키 수량 매핑
 const FKEY_MAPPINGS = {
     'a': { quantity: 30, type: 'IN' },
@@ -3662,6 +3666,22 @@ document.addEventListener('keydown', async (e) => {
     if (!product) {
         showScanResult('제품을 먼저 선택해주세요. ([/] 키로 선택 후 w로 고정)', 'error');
         return;
+    }
+
+    // IN 타입 키 (a~f)는 5분 쿨다운 적용
+    if (mapping.type === 'IN') {
+        const now = Date.now();
+        const timeSinceLastPress = now - lastInKeyPressTime;
+
+        if (lastInKeyPressTime > 0 && timeSinceLastPress < IN_KEY_COOLDOWN_MS) {
+            const remainingSeconds = Math.ceil((IN_KEY_COOLDOWN_MS - timeSinceLastPress) / 1000);
+            const remainingMinutes = Math.floor(remainingSeconds / 60);
+            const remainingSecondsInMinute = remainingSeconds % 60;
+            showScanResult(`생산량 추가는 ${remainingMinutes}분 ${remainingSecondsInMinute}초 후에 가능합니다.`, 'error');
+            return;
+        }
+
+        lastInKeyPressTime = now;
     }
 
     // updateStock 호출
