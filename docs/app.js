@@ -3437,6 +3437,11 @@ const HISTORY_DISPLAY_DURATION = 60000; // 1분
 let lastProductionKeyPressTime = 0;
 const PRODUCTION_KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5분
 
+// 금일생산 세션 추적 (30초 무입력 시 음성 알림)
+let productionSessionChanges = {}; // { productName: totalChange }
+let productionSessionTimer = null;
+const PRODUCTION_SESSION_TIMEOUT = 30000; // 30초
+
 // 알파벳 키 수량 매핑
 const FKEY_MAPPINGS = {
     'a': { quantity: 30, type: 'IN' },
@@ -3698,6 +3703,9 @@ document.addEventListener('keydown', async (e) => {
         quantity: mapping.quantity,
         barcode: 'KEYBOARD'
     });
+
+    // 금일생산 세션 추적 (30초 후 음성 알림)
+    trackProductionSession(product.name, mapping.type === 'ADJUST' ? -mapping.quantity : mapping.quantity);
 });
 
 // 앱 시작 시 첫 번째 제품 선택
@@ -3707,6 +3715,68 @@ setTimeout(() => {
         updateSelectedProductHighlight();
     }
 }, 1000);
+
+// 음성 알림 (TTS)
+function speak(text) {
+    if (!window.speechSynthesis) {
+        console.warn('TTS not supported');
+        return;
+    }
+
+    // 기존 음성 중단
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    speechSynthesis.speak(utterance);
+}
+
+// 금일생산 세션 추적 (30초 무입력 시 음성 알림)
+function trackProductionSession(productName, change) {
+    // 누적 변경량 기록
+    if (!productionSessionChanges[productName]) {
+        productionSessionChanges[productName] = 0;
+    }
+    productionSessionChanges[productName] += change;
+
+    // 기존 타이머 취소
+    if (productionSessionTimer) {
+        clearTimeout(productionSessionTimer);
+    }
+
+    // 30초 후 세션 종료 및 음성 알림
+    productionSessionTimer = setTimeout(() => {
+        announceProductionSessionEnd();
+    }, PRODUCTION_SESSION_TIMEOUT);
+}
+
+function announceProductionSessionEnd() {
+    // 변경된 제품들의 총량을 음성으로 알림
+    const changes = Object.entries(productionSessionChanges).filter(([_, change]) => change !== 0);
+
+    if (changes.length === 0) {
+        productionSessionChanges = {};
+        return;
+    }
+
+    // 음성 메시지 생성
+    const messages = changes.map(([productName, change]) => {
+        const action = change > 0 ? '추가' : '감소';
+        const absChange = Math.abs(change);
+        return `${productName} ${absChange}개 ${action}`;
+    });
+
+    const fullMessage = messages.join(', ') + ' 되었습니다.';
+    speak(fullMessage);
+
+    // 세션 초기화
+    productionSessionChanges = {};
+    productionSessionTimer = null;
+}
 
 // 생산밥솥 변경 이력 관리
 function addRiceCookerChangeHistory(productName, beforeCount, afterCount, change) {
