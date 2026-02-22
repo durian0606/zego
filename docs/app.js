@@ -3437,10 +3437,10 @@ const HISTORY_DISPLAY_DURATION = 60000; // 1분
 let lastProductionKeyPressTime = 0;
 const PRODUCTION_KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5분
 
-// 금일생산 세션 추적 (30초 무입력 시 음성 알림)
+// 금일생산 세션 추적 (10초 무입력 시 음성 알림)
 let productionSessionChanges = {}; // { productName: totalChange }
 let productionSessionTimer = null;
-const PRODUCTION_SESSION_TIMEOUT = 30000; // 30초
+const PRODUCTION_SESSION_TIMEOUT = 10000; // 10초
 
 // 알파벳 키 수량 매핑
 const FKEY_MAPPINGS = {
@@ -3735,7 +3735,7 @@ function speak(text) {
     speechSynthesis.speak(utterance);
 }
 
-// 금일생산 세션 추적 (30초 무입력 시 음성 알림)
+// 금일생산 세션 추적 (10초 무입력 시 음성 알림)
 function trackProductionSession(productName, change) {
     // 누적 변경량 기록
     if (!productionSessionChanges[productName]) {
@@ -3748,7 +3748,7 @@ function trackProductionSession(productName, change) {
         clearTimeout(productionSessionTimer);
     }
 
-    // 30초 후 세션 종료 및 음성 알림
+    // 10초 후 세션 종료 및 음성 알림
     productionSessionTimer = setTimeout(() => {
         announceProductionSessionEnd();
     }, PRODUCTION_SESSION_TIMEOUT);
