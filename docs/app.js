@@ -3429,9 +3429,13 @@ window.addEventListener('resize', () => {
 // 마우스 휠: 제품 선택
 // ============================================
 
-// 키보드 변경 이력 (팝업 표시용)
-let keyboardChangeHistory = [];
+// 생산밥솥 변경 이력 (팝업 표시용)
+let riceCookerChangeHistory = [];
 const HISTORY_DISPLAY_DURATION = 60000; // 1분
+
+// 금일생산 쿨다운 (5분)
+let lastProductionKeyPressTime = 0;
+const PRODUCTION_KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5분
 
 // 알파벳 키 수량 매핑
 const FKEY_MAPPINGS = {
@@ -3503,6 +3507,9 @@ function updateRiceCookerCount(delta) {
         AppState.productsData[product.name].riceCookerCount = current;
         if (cell) cell.innerHTML = `<strong>${current}</strong>`;
     });
+
+    // 변경 이력 팝업 표시
+    addRiceCookerChangeHistory(product.name, current, newCount, delta);
 }
 
 // 선택된 제품 하이라이트 갱신
@@ -3668,8 +3675,21 @@ document.addEventListener('keydown', async (e) => {
         return;
     }
 
-    // 변경 전 수량 기록
-    const beforeStock = product.currentStock || 0;
+    // 금일생산 키(a~f)는 5분 쿨다운 적용
+    if (mapping.type === 'IN') {
+        const now = Date.now();
+        const timeSinceLastPress = now - lastProductionKeyPressTime;
+
+        if (lastProductionKeyPressTime > 0 && timeSinceLastPress < PRODUCTION_KEY_COOLDOWN_MS) {
+            const remainingSeconds = Math.ceil((PRODUCTION_KEY_COOLDOWN_MS - timeSinceLastPress) / 1000);
+            const remainingMinutes = Math.floor(remainingSeconds / 60);
+            const remainingSecondsInMinute = remainingSeconds % 60;
+            showScanResult(`생산량 추가는 ${remainingMinutes}분 ${remainingSecondsInMinute}초 후에 가능합니다.`, 'error');
+            return;
+        }
+
+        lastProductionKeyPressTime = now;
+    }
 
     // updateStock 호출
     await updateStock({
@@ -3678,11 +3698,6 @@ document.addEventListener('keydown', async (e) => {
         quantity: mapping.quantity,
         barcode: 'KEYBOARD'
     });
-
-    // 변경 이력 저장 및 팝업 표시
-    const afterStock = (AppState.productsData[product.name]?.currentStock || 0);
-    const change = mapping.type === 'ADJUST' ? -mapping.quantity : mapping.quantity;
-    addKeyboardChangeHistory(product.name, beforeStock, afterStock, change);
 });
 
 // 앱 시작 시 첫 번째 제품 선택
@@ -3693,33 +3708,33 @@ setTimeout(() => {
     }
 }, 1000);
 
-// 키보드 변경 이력 관리
-function addKeyboardChangeHistory(productName, beforeStock, afterStock, change) {
+// 생산밥솥 변경 이력 관리
+function addRiceCookerChangeHistory(productName, beforeCount, afterCount, change) {
     const now = Date.now();
 
     // 새 이력 추가
-    keyboardChangeHistory.push({
+    riceCookerChangeHistory.push({
         productName,
-        beforeStock,
-        afterStock,
+        beforeCount,
+        afterCount,
         change,
         timestamp: now
     });
 
     // 1분 지난 이력 자동 제거
-    keyboardChangeHistory = keyboardChangeHistory.filter(h => now - h.timestamp < HISTORY_DISPLAY_DURATION);
+    riceCookerChangeHistory = riceCookerChangeHistory.filter(h => now - h.timestamp < HISTORY_DISPLAY_DURATION);
 
     // 최근 5개만 유지
-    if (keyboardChangeHistory.length > 5) {
-        keyboardChangeHistory = keyboardChangeHistory.slice(-5);
+    if (riceCookerChangeHistory.length > 5) {
+        riceCookerChangeHistory = riceCookerChangeHistory.slice(-5);
     }
 
     // 팝업 업데이트
-    updateChangeHistoryPopup();
+    updateRiceCookerHistoryPopup();
 
     // 1분 후 팝업 갱신 (자동 숨김)
     setTimeout(() => {
-        updateChangeHistoryPopup();
+        updateRiceCookerHistoryPopup();
     }, HISTORY_DISPLAY_DURATION);
 }
 
@@ -3734,9 +3749,9 @@ function formatTimeSince(timestamp) {
     return `${seconds}초 전`;
 }
 
-function updateChangeHistoryPopup() {
+function updateRiceCookerHistoryPopup() {
     const now = Date.now();
-    const validHistory = keyboardChangeHistory.filter(h => now - h.timestamp < HISTORY_DISPLAY_DURATION);
+    const validHistory = riceCookerChangeHistory.filter(h => now - h.timestamp < HISTORY_DISPLAY_DURATION);
 
     const popup = document.getElementById('keyboard-change-popup');
     if (!popup) return;
@@ -3759,7 +3774,7 @@ function updateChangeHistoryPopup() {
                 <div class="history-time">${timeStr}</div>
                 <div class="history-detail">
                     <span class="history-product">${escapeHtml(h.productName)}</span>
-                    <span class="history-stock">${h.beforeStock}개 → ${h.afterStock}개</span>
+                    <span class="history-stock">${h.beforeCount}대 → ${h.afterCount}대</span>
                     <span class="history-change ${changeClass}">(${changeStr})</span>
                 </div>
             </div>
@@ -3772,8 +3787,8 @@ function updateChangeHistoryPopup() {
 
 // 1초마다 팝업 시간 업데이트
 setInterval(() => {
-    if (keyboardChangeHistory.length > 0) {
-        updateChangeHistoryPopup();
+    if (riceCookerChangeHistory.length > 0) {
+        updateRiceCookerHistoryPopup();
     }
 }, 1000);
 
