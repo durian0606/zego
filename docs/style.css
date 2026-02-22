@@ -3221,3 +3221,92 @@ tr.editing-row td {
         flex-direction: column;
     }
 }
+
+/* 키보드 변경 이력 팝업 */
+.keyboard-change-popup {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    max-width: 400px;
+    min-width: 300px;
+    display: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.history-item {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.history-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.history-time {
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+.history-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.history-product {
+    font-weight: bold;
+    color: #4fc3f7;
+    font-size: 13px;
+}
+
+.history-stock {
+    font-size: 14px;
+    color: white;
+}
+
+.history-change {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.history-change.change-positive {
+    color: #66bb6a;
+}
+
+.history-change.change-negative {
+    color: #ef5350;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .keyboard-change-popup {
+        top: 60px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        min-width: auto;
+    }
+}

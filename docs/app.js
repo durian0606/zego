@@ -3429,9 +3429,9 @@ window.addEventListener('resize', () => {
 // 마우스 휠: 제품 선택
 // ============================================
 
-// 마지막 IN 키 입력 시간 (5분 쿨다운용)
-let lastInKeyPressTime = 0;
-const IN_KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5분
+// 키보드 변경 이력 (팝업 표시용)
+let keyboardChangeHistory = [];
+const HISTORY_DISPLAY_DURATION = 60000; // 1분
 
 // 알파벳 키 수량 매핑
 const FKEY_MAPPINGS = {
@@ -3668,21 +3668,8 @@ document.addEventListener('keydown', async (e) => {
         return;
     }
 
-    // IN 타입 키 (a~f)는 5분 쿨다운 적용
-    if (mapping.type === 'IN') {
-        const now = Date.now();
-        const timeSinceLastPress = now - lastInKeyPressTime;
-
-        if (lastInKeyPressTime > 0 && timeSinceLastPress < IN_KEY_COOLDOWN_MS) {
-            const remainingSeconds = Math.ceil((IN_KEY_COOLDOWN_MS - timeSinceLastPress) / 1000);
-            const remainingMinutes = Math.floor(remainingSeconds / 60);
-            const remainingSecondsInMinute = remainingSeconds % 60;
-            showScanResult(`생산량 추가는 ${remainingMinutes}분 ${remainingSecondsInMinute}초 후에 가능합니다.`, 'error');
-            return;
-        }
-
-        lastInKeyPressTime = now;
-    }
+    // 변경 전 수량 기록
+    const beforeStock = product.currentStock || 0;
 
     // updateStock 호출
     await updateStock({
@@ -3691,6 +3678,11 @@ document.addEventListener('keydown', async (e) => {
         quantity: mapping.quantity,
         barcode: 'KEYBOARD'
     });
+
+    // 변경 이력 저장 및 팝업 표시
+    const afterStock = (AppState.productsData[product.name]?.currentStock || 0);
+    const change = mapping.type === 'ADJUST' ? -mapping.quantity : mapping.quantity;
+    addKeyboardChangeHistory(product.name, beforeStock, afterStock, change);
 });
 
 // 앱 시작 시 첫 번째 제품 선택
@@ -3698,6 +3690,90 @@ setTimeout(() => {
     const products = getSortedProductList();
     if (products.length > 0) {
         updateSelectedProductHighlight();
+    }
+}, 1000);
+
+// 키보드 변경 이력 관리
+function addKeyboardChangeHistory(productName, beforeStock, afterStock, change) {
+    const now = Date.now();
+
+    // 새 이력 추가
+    keyboardChangeHistory.push({
+        productName,
+        beforeStock,
+        afterStock,
+        change,
+        timestamp: now
+    });
+
+    // 1분 지난 이력 자동 제거
+    keyboardChangeHistory = keyboardChangeHistory.filter(h => now - h.timestamp < HISTORY_DISPLAY_DURATION);
+
+    // 최근 5개만 유지
+    if (keyboardChangeHistory.length > 5) {
+        keyboardChangeHistory = keyboardChangeHistory.slice(-5);
+    }
+
+    // 팝업 업데이트
+    updateChangeHistoryPopup();
+
+    // 1분 후 팝업 갱신 (자동 숨김)
+    setTimeout(() => {
+        updateChangeHistoryPopup();
+    }, HISTORY_DISPLAY_DURATION);
+}
+
+function formatTimeSince(timestamp) {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (minutes > 0) {
+        return `${minutes}분 ${remainingSeconds}초 전`;
+    }
+    return `${seconds}초 전`;
+}
+
+function updateChangeHistoryPopup() {
+    const now = Date.now();
+    const validHistory = keyboardChangeHistory.filter(h => now - h.timestamp < HISTORY_DISPLAY_DURATION);
+
+    const popup = document.getElementById('keyboard-change-popup');
+    if (!popup) return;
+
+    if (validHistory.length === 0) {
+        popup.style.display = 'none';
+        return;
+    }
+
+    // 최신 순으로 정렬
+    validHistory.sort((a, b) => b.timestamp - a.timestamp);
+
+    const html = validHistory.map(h => {
+        const timeStr = formatTimeSince(h.timestamp);
+        const changeStr = h.change > 0 ? `+${h.change}` : `${h.change}`;
+        const changeClass = h.change > 0 ? 'change-positive' : 'change-negative';
+
+        return `
+            <div class="history-item">
+                <div class="history-time">${timeStr}</div>
+                <div class="history-detail">
+                    <span class="history-product">${escapeHtml(h.productName)}</span>
+                    <span class="history-stock">${h.beforeStock}개 → ${h.afterStock}개</span>
+                    <span class="history-change ${changeClass}">(${changeStr})</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    popup.innerHTML = html;
+    popup.style.display = 'block';
+}
+
+// 1초마다 팝업 시간 업데이트
+setInterval(() => {
+    if (keyboardChangeHistory.length > 0) {
+        updateChangeHistoryPopup();
     }
 }, 1000);
 
