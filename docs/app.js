@@ -5164,8 +5164,8 @@ document.addEventListener('DOMContentLoaded', () => {
 const edgeDeviceRef = database.ref('edgeDevice');
 const deviceSettingsRef = database.ref('deviceSettings');
 
-// 라즈베리 파이 IP 주소 (Firebase edgeDevice/ipAddress 에서 수신)
-let _deviceIpAddress = null;
+// 카메라 스트리밍 URL (고정 외부 주소)
+const CAMERA_STREAM_URL = 'http://durian0606.iptime.org:8080/stream';
 // 생산 중 여부 (activeProductionRef 와 동기화)
 let _isProductionActive = false;
 // 카메라 패널 접힘 상태
@@ -5175,14 +5175,13 @@ function updateCameraPreview() {
     const section = document.getElementById('camera-preview-section');
     if (!section) return;
 
-    if (!_isProductionActive || !_deviceIpAddress) {
+    if (!_isProductionActive) {
         section.style.display = 'none';
         const img = document.getElementById('camera-stream-img');
         if (img) img.src = '';
         return;
     }
 
-    const streamUrl = `http://${_deviceIpAddress}:8080/stream`;
     section.style.display = 'block';
 
     const img = document.getElementById('camera-stream-img');
@@ -5190,10 +5189,10 @@ function updateCameraPreview() {
     const urlText = document.getElementById('camera-stream-url-text');
     const openBtn = document.getElementById('btn-open-stream');
 
-    if (openBtn) openBtn.href = streamUrl;
-    if (urlText) urlText.textContent = streamUrl;
+    if (openBtn) openBtn.href = CAMERA_STREAM_URL;
+    if (urlText) urlText.textContent = CAMERA_STREAM_URL;
 
-    if (img && img.src !== streamUrl) {
+    if (img && img.src !== CAMERA_STREAM_URL) {
         img.style.display = 'none';
         if (offlineMsg) offlineMsg.style.display = 'flex';
 
@@ -5205,7 +5204,7 @@ function updateCameraPreview() {
             img.style.display = 'block';
             if (offlineMsg) offlineMsg.style.display = 'none';
         };
-        img.src = streamUrl;
+        img.src = CAMERA_STREAM_URL;
     }
 
     lucide.createIcons();
@@ -5263,11 +5262,6 @@ edgeDeviceRef.on('value', (snap) => {
             }
         }
 
-        // IP 주소 갱신 → 카메라 프리뷰 URL 업데이트
-        if (data.ipAddress && data.ipAddress !== _deviceIpAddress) {
-            _deviceIpAddress = data.ipAddress;
-            updateCameraPreview();
-        }
     }
     lucide.createIcons();
 });
