@@ -139,6 +139,34 @@
                 </div>
             </section>
 
+            <!-- 카메라 프리뷰 패널 (생산 중일 때 표시) -->
+            <section id="camera-preview-section" class="camera-preview-section" style="display:none;">
+                <div class="camera-preview-card">
+                    <div class="camera-preview-header">
+                        <span class="camera-preview-title">
+                            <span class="camera-live-dot"></span>
+                            LIVE 카메라
+                        </span>
+                        <div class="camera-preview-actions">
+                            <a id="btn-open-stream" href="#" target="_blank" class="btn-stream-link" title="새 탭에서 열기">
+                                <i data-lucide="external-link" style="width:13px;height:13px;vertical-align:middle;margin-right:3px;"></i>새 탭
+                            </a>
+                            <button id="btn-toggle-camera" class="btn-toggle-camera" title="카메라 숨기기">
+                                <i data-lucide="chevron-up" style="width:14px;height:14px;vertical-align:middle;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="camera-preview-body" class="camera-preview-body">
+                        <img id="camera-stream-img" src="" alt="카메라 피드" class="camera-stream-img" />
+                        <div id="camera-offline-msg" class="camera-offline-msg">
+                            <i data-lucide="video-off" style="width:28px;height:28px;opacity:0.4;"></i>
+                            <p>카메라 스트리밍 연결 중...</p>
+                            <p id="camera-stream-url-text" class="camera-url-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- 금일 생산현황 테이블 -->
             <section class="inventory-section">
                 <div class="section-header-with-button">

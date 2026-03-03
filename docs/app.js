@@ -3547,6 +3547,9 @@ activeProductionRef.on('value', (snap) => {
             activeProductName.textContent = current.product;
             activeProductEl.style.display = 'flex';
         }
+        // 카메라 프리뷰 활성화
+        _isProductionActive = true;
+        updateCameraPreview();
     } else {
         // 버튼: 생산 시작으로 복원
         if (btn) {
@@ -3558,6 +3561,9 @@ activeProductionRef.on('value', (snap) => {
         if (activeProductEl) {
             activeProductEl.style.display = 'none';
         }
+        // 카메라 프리뷰 비활성화
+        _isProductionActive = false;
+        updateCameraPreview();
     }
     lucide.createIcons();
 });
@@ -5153,10 +5159,69 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================
-// 라즈베리 파이 장치 상태 카드
+// 라즈베리 파이 장치 상태 카드 + 카메라 프리뷰
 // ============================================
 const edgeDeviceRef = database.ref('edgeDevice');
 const deviceSettingsRef = database.ref('deviceSettings');
+
+// 라즈베리 파이 IP 주소 (Firebase edgeDevice/ipAddress 에서 수신)
+let _deviceIpAddress = null;
+// 생산 중 여부 (activeProductionRef 와 동기화)
+let _isProductionActive = false;
+// 카메라 패널 접힘 상태
+let _cameraCollapsed = false;
+
+function updateCameraPreview() {
+    const section = document.getElementById('camera-preview-section');
+    if (!section) return;
+
+    if (!_isProductionActive || !_deviceIpAddress) {
+        section.style.display = 'none';
+        const img = document.getElementById('camera-stream-img');
+        if (img) img.src = '';
+        return;
+    }
+
+    const streamUrl = `http://${_deviceIpAddress}:8080/stream`;
+    section.style.display = 'block';
+
+    const img = document.getElementById('camera-stream-img');
+    const offlineMsg = document.getElementById('camera-offline-msg');
+    const urlText = document.getElementById('camera-stream-url-text');
+    const openBtn = document.getElementById('btn-open-stream');
+
+    if (openBtn) openBtn.href = streamUrl;
+    if (urlText) urlText.textContent = streamUrl;
+
+    if (img && img.src !== streamUrl) {
+        img.style.display = 'none';
+        if (offlineMsg) offlineMsg.style.display = 'flex';
+
+        img.onerror = () => {
+            img.style.display = 'none';
+            if (offlineMsg) offlineMsg.style.display = 'flex';
+        };
+        img.onload = () => {
+            img.style.display = 'block';
+            if (offlineMsg) offlineMsg.style.display = 'none';
+        };
+        img.src = streamUrl;
+    }
+
+    lucide.createIcons();
+}
+
+// 카메라 패널 접기/펼치기
+document.getElementById('btn-toggle-camera').addEventListener('click', () => {
+    _cameraCollapsed = !_cameraCollapsed;
+    const body = document.getElementById('camera-preview-body');
+    const icon = document.querySelector('#btn-toggle-camera [data-lucide]');
+    if (body) body.style.display = _cameraCollapsed ? 'none' : 'block';
+    if (icon) {
+        icon.setAttribute('data-lucide', _cameraCollapsed ? 'chevron-down' : 'chevron-up');
+        lucide.createIcons();
+    }
+});
 
 // 마지막 업데이트 시각 표시 포맷
 function formatLastSeen(ms) {
@@ -5196,6 +5261,12 @@ edgeDeviceRef.on('value', (snap) => {
                 void countEl.offsetWidth; // reflow 강제
                 countEl.classList.add('count-updated');
             }
+        }
+
+        // IP 주소 갱신 → 카메라 프리뷰 URL 업데이트
+        if (data.ipAddress && data.ipAddress !== _deviceIpAddress) {
+            _deviceIpAddress = data.ipAddress;
+            updateCameraPreview();
         }
     }
     lucide.createIcons();
