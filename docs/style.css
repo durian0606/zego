@@ -240,6 +240,26 @@ header h1 {
 }
 
 /* 리셋 버튼 */
+.btn-production-start {
+    background: #10b981;
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-production-start:hover {
+    background: #059669;
+}
+
 .btn-reset {
     background: var(--color-warning);
     color: white;
@@ -3308,5 +3328,225 @@ tr.editing-row td {
         left: 10px;
         max-width: none;
         min-width: auto;
+    }
+}
+
+/* ============================================
+   라즈베리 파이 장치 상태 카드
+   ============================================ */
+.device-status-section {
+    padding: 0 var(--spacing-lg) var(--spacing-sm);
+}
+
+.device-status-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: 10px var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-light);
+    flex-wrap: wrap;
+    transition: background 0.3s, border-color 0.3s;
+}
+
+.device-status-card.online {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.device-status-card.offline {
+    border-color: var(--color-border);
+    background: var(--color-bg-light);
+}
+
+.device-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    min-width: 75px;
+}
+
+.device-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #9ca3af;
+    display: inline-block;
+    flex-shrink: 0;
+    transition: background 0.3s;
+}
+
+.online .device-status-dot {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px #bbf7d0;
+    animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 3px #bbf7d0; }
+    50%       { box-shadow: 0 0 0 6px #86efac; }
+}
+
+.online #device-status-text  { color: #16a34a; }
+.offline #device-status-text { color: #6b7280; }
+
+.device-status-info {
+    display: flex;
+    gap: var(--spacing-md);
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.device-live-count {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+#device-count-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #9ca3af;
+    transition: color 0.3s;
+}
+
+.online #device-count-number {
+    color: #16a34a;
+}
+
+.device-count-label {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+@keyframes count-update {
+    0%   { transform: scale(1.3); opacity: 0.7; }
+    100% { transform: scale(1);   opacity: 1; }
+}
+
+.count-updated {
+    animation: count-update 0.25s ease-out;
+}
+
+.device-stat {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.btn-device-settings {
+    background: white;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-dark);
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-device-settings:hover {
+    background: var(--color-bg);
+}
+
+/* 장치 설정 폼 */
+.device-settings-form {
+    display: grid;
+    gap: 18px;
+}
+
+.setting-row {
+    display: grid;
+    gap: 6px;
+}
+
+.setting-row label {
+    font-size: 0.9rem;
+    color: var(--color-text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.setting-value-display {
+    font-weight: 700;
+    color: var(--color-primary);
+    min-width: 50px;
+    text-align: right;
+}
+
+.setting-slider {
+    width: 100%;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+
+.setting-row-toggle {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    display: flex;
+    gap: 0;
+}
+
+/* 토글 스위치 */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #d1d5db;
+    border-radius: 24px;
+    transition: background 0.2s;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--color-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(22px);
+}
+
+@media (max-width: 600px) {
+    .device-status-card {
+        gap: var(--spacing-sm);
+    }
+    .device-status-info {
+        gap: var(--spacing-sm);
+    }
+    .btn-device-settings {
+        margin-left: 0;
     }
 }

@@ -3407,6 +3407,144 @@ async function resetTodayProduction(skipConfirm = false) {
 // 리셋 버튼 이벤트 리스너
 document.getElementById('btn-reset-today').addEventListener('click', () => resetTodayProduction(false));
 
+// ============================================
+// 생산 시작 / 종료 (라즈베리 파이 연동)
+// ============================================
+const activeProductionRef = database.ref('activeProduction');
+
+// 선택된 제품 (모달 내부 상태)
+let _selectedProductForProduction = null;
+
+function openProductionStartModal() {
+    const modal = document.getElementById('production-start-modal');
+    const startForm = document.getElementById('production-start-form');
+    const activeInfo = document.getElementById('production-active-info');
+    const activeName = document.getElementById('production-active-name');
+    const confirmBtn = document.getElementById('btn-confirm-production-start');
+
+    // 현재 activeProduction 상태 확인
+    activeProductionRef.once('value').then((snap) => {
+        const current = snap.val();
+        if (current && current.product) {
+            // 이미 생산 중
+            startForm.style.display = 'none';
+            activeInfo.style.display = 'block';
+            activeName.textContent = current.product;
+        } else {
+            // 생산 중 아님 — 제품 선택 UI 표시
+            startForm.style.display = 'block';
+            activeInfo.style.display = 'none';
+            _selectedProductForProduction = null;
+            confirmBtn.disabled = true;
+
+            // 제품 목록 렌더링
+            const products = filterValidProducts(AppState.productsData);
+            const listEl = document.getElementById('production-product-list');
+            if (products.length === 0) {
+                listEl.innerHTML = '<p style="color:#6b7280;">등록된 제품이 없습니다.</p>';
+            } else {
+                listEl.innerHTML = products.map(p => `
+                    <label style="display:flex; align-items:center; gap:10px; padding:10px 14px;
+                                  border:2px solid #e5e7eb; border-radius:8px; cursor:pointer;
+                                  transition: border-color 0.15s;" class="production-product-option">
+                        <input type="radio" name="production-product" value="${escapeHtml(p.name)}"
+                               style="accent-color:#10b981; width:18px; height:18px;">
+                        <span style="font-size:1em; font-weight:500;">${escapeHtml(p.name)}</span>
+                    </label>
+                `).join('');
+
+                listEl.querySelectorAll('input[name="production-product"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        _selectedProductForProduction = e.target.value;
+                        confirmBtn.disabled = false;
+                        listEl.querySelectorAll('.production-product-option').forEach(label => {
+                            label.style.borderColor = '#e5e7eb';
+                        });
+                        e.target.closest('.production-product-option').style.borderColor = '#10b981';
+                    });
+                });
+            }
+        }
+        lucide.createIcons();
+        modal.style.display = 'flex';
+    });
+}
+
+function closeProductionStartModal() {
+    document.getElementById('production-start-modal').style.display = 'none';
+    _selectedProductForProduction = null;
+}
+
+async function startProduction() {
+    if (!_selectedProductForProduction) return;
+    try {
+        await activeProductionRef.set({
+            product: _selectedProductForProduction,
+            startedAt: Date.now()
+        });
+        // RPi에 즉시 신호 전송 (poll 대기 없이 3초 내 응답)
+        await database.ref('deviceCommands').set({
+            action: 'start_production',
+            timestamp: Date.now(),
+            processed: false
+        });
+        showScanResult(`생산 시작: ${_selectedProductForProduction}`, 'success');
+        closeProductionStartModal();
+    } catch (e) {
+        console.error('생산 시작 오류:', e);
+        showScanResult('생산 시작 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+async function stopProduction() {
+    const confirmed = confirm('생산을 종료하시겠습니까?\n라즈베리 파이 자동 카운팅이 중지됩니다.');
+    if (!confirmed) return;
+    try {
+        await activeProductionRef.remove();
+        // RPi에 즉시 종료 신호 전송
+        await database.ref('deviceCommands').set({
+            action: 'stop_production',
+            timestamp: Date.now(),
+            processed: false
+        });
+        showScanResult('생산이 종료되었습니다.', 'info');
+        closeProductionStartModal();
+    } catch (e) {
+        console.error('생산 종료 오류:', e);
+        showScanResult('생산 종료 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 버튼 이벤트
+document.getElementById('btn-start-production').addEventListener('click', openProductionStartModal);
+document.getElementById('btn-close-production-modal').addEventListener('click', closeProductionStartModal);
+document.getElementById('btn-confirm-production-start').addEventListener('click', startProduction);
+document.getElementById('btn-stop-production').addEventListener('click', stopProduction);
+
+// 모달 배경 클릭 시 닫기
+document.getElementById('production-start-modal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('production-start-modal')) {
+        closeProductionStartModal();
+    }
+});
+
+// 생산 시작 버튼 상태: activeProduction 실시간 반영
+activeProductionRef.on('value', (snap) => {
+    const current = snap.val();
+    const btn = document.getElementById('btn-start-production');
+    if (!btn) return;
+    if (current && current.product) {
+        btn.innerHTML = `<i data-lucide="activity" style="width:16px;height:16px;vertical-align:middle;margin-right:5px;"></i>생산 중: ${escapeHtml(current.product)}`;
+        btn.style.background = '#10b981';
+        btn.style.color = '#fff';
+    } else {
+        btn.innerHTML = `<i data-lucide="play-circle" style="width:16px;height:16px;vertical-align:middle;margin-right:5px;"></i>생산 시작`;
+        btn.style.background = '';
+        btn.style.color = '';
+    }
+    lucide.createIcons();
+});
+
 
 // 화면 크기 변경 시 전일 생산현황 테이블 업데이트 (5일/7일 전환)
 let resizeTimeout;
@@ -4994,6 +5132,145 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeSenderRuleModal();
             }
         });
+    }
+});
+
+// ============================================
+// 라즈베리 파이 장치 상태 카드
+// ============================================
+const edgeDeviceRef = database.ref('edgeDevice');
+const deviceSettingsRef = database.ref('deviceSettings');
+
+// 마지막 업데이트 시각 표시 포맷
+function formatLastSeen(ms) {
+    const diff = Date.now() - ms;
+    if (diff < 60000) return '방금 전';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`;
+    return `${Math.floor(diff / 3600000)}시간 전`;
+}
+
+// 장치 상태 카드 실시간 업데이트
+edgeDeviceRef.on('value', (snap) => {
+    const data = snap.val();
+    const card = document.getElementById('device-status-card');
+    if (!card) return;
+
+    const ONLINE_THRESHOLD = 60000; // 60초 이내면 온라인
+    const isOnline = data && data.lastSeen && (Date.now() - data.lastSeen < ONLINE_THRESHOLD);
+
+    card.className = 'device-status-card ' + (isOnline ? 'online' : 'offline');
+    document.getElementById('device-status-text').textContent = isOnline ? '온라인' : '오프라인';
+
+    if (data) {
+        document.getElementById('device-cpu-temp').textContent =
+            data.cpuTemp != null ? `CPU ${data.cpuTemp}°C` : 'CPU --°C';
+        document.getElementById('device-last-seen').textContent =
+            data.lastSeen ? `업데이트: ${formatLastSeen(data.lastSeen)}` : '업데이트: --';
+        document.getElementById('device-current-count').textContent =
+            data.currentCount != null ? `감지: ${data.currentCount}개` : '감지: --개';
+
+        // 팬 위 갯수 큰 숫자 업데이트 (변경 시 flash 애니메이션)
+        const countEl = document.getElementById('device-count-number');
+        if (countEl) {
+            const newVal = data.currentCount != null ? String(data.currentCount) : '--';
+            if (countEl.textContent !== newVal) {
+                countEl.textContent = newVal;
+                countEl.classList.remove('count-updated');
+                void countEl.offsetWidth; // reflow 강제
+                countEl.classList.add('count-updated');
+            }
+        }
+    }
+    lucide.createIcons();
+});
+
+// 1분마다 "방금 전" → "N분 전" 갱신
+setInterval(() => {
+    edgeDeviceRef.once('value').then((snap) => {
+        const data = snap.val();
+        if (!data || !data.lastSeen) return;
+        const ONLINE_THRESHOLD = 60000;
+        const card = document.getElementById('device-status-card');
+        if (!card) return;
+        const isOnline = Date.now() - data.lastSeen < ONLINE_THRESHOLD;
+        card.className = 'device-status-card ' + (isOnline ? 'online' : 'offline');
+        document.getElementById('device-status-text').textContent = isOnline ? '온라인' : '오프라인';
+        document.getElementById('device-last-seen').textContent = `업데이트: ${formatLastSeen(data.lastSeen)}`;
+        lucide.createIcons();
+    });
+}, 60000);
+
+// 장치 설정 모달 열기
+function openDeviceSettingsModal() {
+    const modal = document.getElementById('device-settings-modal');
+    deviceSettingsRef.once('value').then((snap) => {
+        const s = snap.val() || {};
+        const threshold = s.BINARY_THRESHOLD ?? 127;
+        const minArea = s.MIN_AREA ?? 500;
+        const maxArea = s.MAX_AREA ?? 10000;
+        const interval = s.CAPTURE_INTERVAL ?? 1.0;
+        const powerSave = s.POWER_SAVE_MODE ?? false;
+
+        document.getElementById('input-threshold').value = threshold;
+        document.getElementById('display-threshold').textContent = threshold;
+        document.getElementById('input-min-area').value = minArea;
+        document.getElementById('display-min-area').textContent = minArea;
+        document.getElementById('input-max-area').value = maxArea;
+        document.getElementById('display-max-area').textContent = maxArea;
+        document.getElementById('input-interval').value = interval;
+        document.getElementById('display-interval').textContent = parseFloat(interval).toFixed(1);
+        document.getElementById('input-power-save').checked = powerSave;
+    });
+    modal.style.display = 'flex';
+}
+
+function closeDeviceSettingsModal() {
+    document.getElementById('device-settings-modal').style.display = 'none';
+}
+
+async function saveDeviceSettings() {
+    const settings = {
+        BINARY_THRESHOLD: parseInt(document.getElementById('input-threshold').value),
+        MIN_AREA: parseInt(document.getElementById('input-min-area').value),
+        MAX_AREA: parseInt(document.getElementById('input-max-area').value),
+        CAPTURE_INTERVAL: parseFloat(document.getElementById('input-interval').value),
+        POWER_SAVE_MODE: document.getElementById('input-power-save').checked,
+    };
+    try {
+        await deviceSettingsRef.set(settings);
+        showScanResult('장치 설정이 저장되었습니다. 최대 5분 내 적용됩니다.', 'info');
+        closeDeviceSettingsModal();
+    } catch (e) {
+        showScanResult('설정 저장 실패: ' + e.message, 'error');
+    }
+}
+
+// 슬라이더 값 실시간 표시
+[
+    ['threshold', false],
+    ['min-area', false],
+    ['max-area', false],
+    ['interval', true],
+].forEach(([name, isFloat]) => {
+    const input = document.getElementById(`input-${name}`);
+    const display = document.getElementById(`display-${name}`);
+    if (input && display) {
+        input.addEventListener('input', () => {
+            display.textContent = isFloat
+                ? parseFloat(input.value).toFixed(1)
+                : input.value;
+        });
+    }
+});
+
+// 장치 설정 버튼 이벤트
+document.getElementById('btn-device-settings').addEventListener('click', openDeviceSettingsModal);
+document.getElementById('btn-close-device-settings').addEventListener('click', closeDeviceSettingsModal);
+document.getElementById('btn-save-device-settings').addEventListener('click', saveDeviceSettings);
+document.getElementById('btn-cancel-device-settings').addEventListener('click', closeDeviceSettingsModal);
+document.getElementById('device-settings-modal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('device-settings-modal')) {
+        closeDeviceSettingsModal();
     }
 });
 
