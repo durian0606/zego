@@ -3478,11 +3478,14 @@ function closeProductionStartModal() {
 async function startProduction() {
     if (!_selectedProductForProduction) return;
     try {
+        // 1) 어떤 제품인지 Firebase에 기록
         await activeProductionRef.set({
             product: _selectedProductForProduction,
             startedAt: Date.now()
         });
-        // RPi에 즉시 신호 전송 (poll 대기 없이 3초 내 응답)
+        // 2) launcher.py가 main.py를 자동 시작하도록 devicePower = "on"
+        await database.ref('devicePower').set('on');
+        // 3) 이미 main.py가 켜져 있을 경우 즉시 activeProduct 재조회
         await database.ref('deviceCommands').set({
             action: 'start_production',
             timestamp: Date.now(),
@@ -3497,17 +3500,14 @@ async function startProduction() {
 }
 
 async function stopProduction() {
-    const confirmed = confirm('생산을 종료하시겠습니까?\n라즈베리 파이 자동 카운팅이 중지됩니다.');
+    const confirmed = confirm('생산을 종료하시겠습니까?\n라즈베리 파이가 자동으로 종료됩니다.');
     if (!confirmed) return;
     try {
+        // 1) 생산 제품 정보 제거
         await activeProductionRef.remove();
-        // RPi에 즉시 종료 신호 전송
-        await database.ref('deviceCommands').set({
-            action: 'stop_production',
-            timestamp: Date.now(),
-            processed: false
-        });
-        showScanResult('생산이 종료되었습니다.', 'info');
+        // 2) launcher.py가 main.py를 자동 종료하도록 devicePower = "off"
+        await database.ref('devicePower').set('off');
+        showScanResult('생산이 종료되었습니다. 라즈베리 파이가 종료됩니다.', 'info');
         closeProductionStartModal();
     } catch (e) {
         console.error('생산 종료 오류:', e);
