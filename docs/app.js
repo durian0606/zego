@@ -5184,31 +5184,45 @@ function updateCameraPreview() {
 
     section.style.display = 'block';
 
+    const openBtn = document.getElementById('btn-open-stream');
+    if (openBtn) openBtn.href = CAMERA_STREAM_URL;
+
+    const isHttps = location.protocol === 'https:';
     const img = document.getElementById('camera-stream-img');
     const offlineMsg = document.getElementById('camera-offline-msg');
     const urlText = document.getElementById('camera-stream-url-text');
-    const openBtn = document.getElementById('btn-open-stream');
 
-    if (openBtn) openBtn.href = CAMERA_STREAM_URL;
-    if (urlText) urlText.textContent = CAMERA_STREAM_URL;
-
-    if (img && img.src !== CAMERA_STREAM_URL) {
-        img.style.display = 'none';
+    if (isHttps) {
+        // HTTPS 페이지에서 HTTP 스트림은 Mixed Content로 차단됨 → 팝업으로 안내
+        if (img) img.style.display = 'none';
         if (offlineMsg) offlineMsg.style.display = 'flex';
-
-        img.onerror = () => {
+        if (urlText) urlText.textContent = '(HTTPS 보안 정책으로 직접 표시 불가 — 팝업 버튼 사용)';
+    } else {
+        // HTTP 접속 시 직접 임베드 시도
+        if (urlText) urlText.textContent = CAMERA_STREAM_URL;
+        if (img && img.src !== CAMERA_STREAM_URL) {
             img.style.display = 'none';
             if (offlineMsg) offlineMsg.style.display = 'flex';
-        };
-        img.onload = () => {
-            img.style.display = 'block';
-            if (offlineMsg) offlineMsg.style.display = 'none';
-        };
-        img.src = CAMERA_STREAM_URL;
+            img.onerror = () => {
+                img.style.display = 'none';
+                if (offlineMsg) offlineMsg.style.display = 'flex';
+            };
+            img.onload = () => {
+                img.style.display = 'block';
+                if (offlineMsg) offlineMsg.style.display = 'none';
+            };
+            img.src = CAMERA_STREAM_URL;
+        }
     }
 
     lucide.createIcons();
 }
+
+// 카메라 팝업 버튼
+document.getElementById('btn-popup-stream').addEventListener('click', () => {
+    window.open(CAMERA_STREAM_URL, 'camera_stream',
+        'width=960,height=720,menubar=no,toolbar=no,location=no,status=no');
+});
 
 // 카메라 패널 접기/펼치기
 document.getElementById('btn-toggle-camera').addEventListener('click', () => {
