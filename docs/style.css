@@ -3406,6 +3406,21 @@ tr.editing-row td {
     gap: 5px;
 }
 
+.device-active-product {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    margin-left: auto;
+    padding: 0 var(--spacing-md);
+    border-left: 1px solid var(--color-border);
+}
+
+.device-active-product strong {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #10b981;
+}
+
 #device-count-number {
     font-size: 1.75rem;
     font-weight: 700;

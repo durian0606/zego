@@ -3528,19 +3528,36 @@ document.getElementById('production-start-modal').addEventListener('click', (e) 
     }
 });
 
-// 생산 시작 버튼 상태: activeProduction 실시간 반영
+// 생산 시작 버튼 상태 + 장치 카드 생산중 제품명: activeProduction 실시간 반영
 activeProductionRef.on('value', (snap) => {
     const current = snap.val();
     const btn = document.getElementById('btn-start-production');
-    if (!btn) return;
+    const activeProductEl = document.getElementById('device-active-product');
+    const activeProductName = document.getElementById('device-active-product-name');
+
     if (current && current.product) {
-        btn.innerHTML = `<i data-lucide="activity" style="width:16px;height:16px;vertical-align:middle;margin-right:5px;"></i>생산 중: ${escapeHtml(current.product)}`;
-        btn.style.background = '#10b981';
-        btn.style.color = '#fff';
+        // 버튼: 생산 중 표시
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="activity" style="width:16px;height:16px;vertical-align:middle;margin-right:5px;"></i>생산 중: ${escapeHtml(current.product)}`;
+            btn.style.background = '#10b981';
+            btn.style.color = '#fff';
+        }
+        // 장치 카드: 생산중 제품명 표시
+        if (activeProductEl && activeProductName) {
+            activeProductName.textContent = current.product;
+            activeProductEl.style.display = 'flex';
+        }
     } else {
-        btn.innerHTML = `<i data-lucide="play-circle" style="width:16px;height:16px;vertical-align:middle;margin-right:5px;"></i>생산 시작`;
-        btn.style.background = '';
-        btn.style.color = '';
+        // 버튼: 생산 시작으로 복원
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="play-circle" style="width:16px;height:16px;vertical-align:middle;margin-right:5px;"></i>생산 시작`;
+            btn.style.background = '';
+            btn.style.color = '';
+        }
+        // 장치 카드: 제품명 숨김
+        if (activeProductEl) {
+            activeProductEl.style.display = 'none';
+        }
     }
     lucide.createIcons();
 });
