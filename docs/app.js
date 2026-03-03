@@ -5255,7 +5255,13 @@ async function saveDeviceSettings() {
     };
     try {
         await deviceSettingsRef.set(settings);
-        showScanResult('장치 설정이 저장되었습니다. 최대 5분 내 적용됩니다.', 'info');
+        // 즉시 적용 명령 전송 → RPi가 3초 내 감지하여 바로 적용
+        await database.ref('deviceCommands').set({
+            action: 'refresh_settings',
+            timestamp: Date.now(),
+            processed: false
+        });
+        showScanResult('장치 설정이 저장되었습니다. 곧 적용됩니다.', 'info');
         closeDeviceSettingsModal();
     } catch (e) {
         showScanResult('설정 저장 실패: ' + e.message, 'error');
