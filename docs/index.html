@@ -132,6 +132,14 @@
                         <span class="device-count-label">생산중</span>
                         <strong id="device-active-product-name"></strong>
                     </div>
+                    <!-- 팬 완료 알림 (edge_device가 panConfirm 기록 시 표시) -->
+                    <div id="pan-confirm-area" class="pan-confirm-area" style="display:none;">
+                        <div class="pan-confirm-content">
+                            <span class="pan-confirm-icon">&#127834;</span>
+                            <span class="pan-confirm-text">팬 완료! <strong id="pan-confirm-count">0</strong>개 금일생산에 반영됨</span>
+                        </div>
+                        <button id="btn-pan-confirm" class="btn-pan-confirm">확인</button>
+                    </div>
                     <button id="btn-device-settings" class="btn-device-settings" title="감지 파라미터 설정">
                         <i data-lucide="sliders" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
                         설정

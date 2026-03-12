@@ -1,0 +1,15 @@
+# 누룽지 생산량 카운팅 시스템 - 엣지 디바이스 의존성
+# 라즈베리 파이에서 설치
+
+# 카메라 제어 (Raspberry Pi Camera 전용)
+picamera2>=0.3.12
+
+# 이미지 처리
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# MQTT 통신
+paho-mqtt>=1.6.1
+
+# 선택사항: 고정확도 AI 감지 (Phase 3)
+# tflite-runtime>=2.14.0

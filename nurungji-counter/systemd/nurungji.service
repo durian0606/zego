@@ -1,0 +1,16 @@
+[Unit]
+Description=누룽지 생산량 카운팅 서비스
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/zego/nurungji-counter/edge_device
+ExecStart=/usr/bin/python3 /home/pi/zego/nurungji-counter/edge_device/main.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

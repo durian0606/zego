@@ -1,0 +1,14 @@
+[Unit]
+Description=Nurungji Counter Launcher
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/zego/nurungji-counter/edge_device/launcher.py
+WorkingDirectory=/home/pi/zego/nurungji-counter/edge_device
+User=pi
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

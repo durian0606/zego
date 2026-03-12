@@ -3470,6 +3470,52 @@ tr.editing-row td {
     background: var(--color-bg);
 }
 
+/* 팬 완료 알림 */
+.pan-confirm-area {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin: 4px 0;
+}
+
+.pan-confirm-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #92400e;
+}
+
+.pan-confirm-icon {
+    font-size: 1rem;
+}
+
+.pan-confirm-text strong {
+    font-weight: 700;
+}
+
+.btn-pan-confirm {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-pan-confirm:hover {
+    background: #059669;
+}
+
 /* 카메라 프리뷰 패널 */
 .camera-preview-section {
     padding: 0 var(--spacing-lg) var(--spacing-sm);

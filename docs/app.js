@@ -5276,8 +5276,24 @@ edgeDeviceRef.on('value', (snap) => {
             }
         }
 
+        // 팬 완료 알림 (panConfirm) 표시
+        const panConfirm = data.panConfirm;
+        const panArea = document.getElementById('pan-confirm-area');
+        const panCountEl = document.getElementById('pan-confirm-count');
+        if (panArea && panConfirm && panConfirm.confirmed === false) {
+            if (panCountEl) panCountEl.textContent = panConfirm.count ?? 0;
+            panArea.style.display = 'flex';
+        } else if (panArea) {
+            panArea.style.display = 'none';
+        }
+
     }
     lucide.createIcons();
+});
+
+// 팬 완료 알림 "확인" 버튼: confirmed = true 로 업데이트
+document.getElementById('btn-pan-confirm')?.addEventListener('click', () => {
+    edgeDeviceRef.child('panConfirm').update({ confirmed: true });
 });
 
 // 1분마다 "방금 전" → "N분 전" 갱신
