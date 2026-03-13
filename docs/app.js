@@ -439,12 +439,15 @@ function initInventoryDragAndDrop() {
 // 연결 상태 모니터링
 const connectedRef = database.ref('.info/connected');
 connectedRef.on('value', (snapshot) => {
+    const offlineBanner = document.getElementById('offline-banner');
     if (snapshot.val() === true) {
         connectionStatus.textContent = '연결됨';
         connectionStatus.className = 'status-badge connected';
+        if (offlineBanner) offlineBanner.style.display = 'none';
     } else {
         connectionStatus.textContent = '연결 끊김';
         connectionStatus.className = 'status-badge disconnected';
+        if (offlineBanner) offlineBanner.style.display = 'block';
     }
 });
 
@@ -1672,6 +1675,22 @@ function showScanResult(message, type) {
     // 스캔 인디케이터 잠시 숨김
     scanIndicator.style.display = 'none';
 
+    // 스캔 이력 패널 업데이트
+    const scanHistPanel = document.getElementById('scan-history-panel');
+    const scanHistList = document.getElementById('scan-history-list');
+    const scanHistCount = document.getElementById('scan-history-count');
+    if (scanHistPanel && scanHistList) {
+        const li = document.createElement('li');
+        li.className = type === 'success' ? 'success' : 'error';
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+        li.innerHTML = `<span>${escapeHtml(message.substring(0, 30))}</span><span class="scan-history-time">${timeStr}</span>`;
+        scanHistList.insertBefore(li, scanHistList.firstChild);
+        while (scanHistList.children.length > 5) scanHistList.removeChild(scanHistList.lastChild);
+        scanHistPanel.style.display = 'flex';
+        if (scanHistCount) scanHistCount.textContent = scanHistList.children.length;
+    }
+
     setTimeout(() => {
         scanResult.style.display = 'none';
         scanResult.textContent = '';
@@ -1837,7 +1856,7 @@ const settingsSection = document.getElementById('settings-section');
 btnSettings.addEventListener('click', () => {
     if (settingsSection.style.display === 'none') {
         settingsSection.style.display = 'block';
-        settingsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         scanIndicator.style.display = 'none';
         renderLucideIcons();
     } else {
@@ -1882,7 +1901,7 @@ btnToggleRegister.addEventListener('click', () => {
         `;
 
         productRegisterSection.style.display = 'block';
-        productRegisterSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        productRegisterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         scanIndicator.style.display = 'none';
 
         // 초기 입력 필드에 이벤트 리스너 추가
@@ -1919,7 +1938,7 @@ const barcodeMgmtSection = document.getElementById('barcode-management-section')
 btnToggleBarcodeMgmt.addEventListener('click', () => {
     if (barcodeMgmtSection.style.display === 'none') {
         barcodeMgmtSection.style.display = 'block';
-        barcodeMgmtSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        barcodeMgmtSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         scanIndicator.style.display = 'none';
         renderLucideIcons();
     } else {

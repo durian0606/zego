@@ -1087,6 +1087,57 @@ tbody tr:hover {
 }
 
 /* ============================================
+   재고 현황 테이블 - 컬럼 그룹 배경색
+   ============================================ */
+/* 생산 그룹 (생산밥솥, 금일생산) - 연한 파란색 */
+.inventory-section th:nth-child(3),
+.inventory-section td:nth-child(3),
+.inventory-section th:nth-child(4),
+.inventory-section td:nth-child(4) {
+    background-color: #f0f9ff;
+}
+
+/* 출고 그룹 (출고예정, 기출고) - 연한 노란색 */
+.inventory-section th:nth-child(6),
+.inventory-section td:nth-child(6),
+.inventory-section th:nth-child(7),
+.inventory-section td:nth-child(7) {
+    background-color: #fffbeb;
+}
+
+/* 목표 그룹 (생산목표, 상태) - 연한 초록색 */
+.inventory-section th:nth-child(8),
+.inventory-section td:nth-child(8),
+.inventory-section th:nth-child(9),
+.inventory-section td:nth-child(9) {
+    background-color: #f0fdf4;
+}
+
+/* 그룹 경계선 - 왼쪽 */
+.inventory-section th:nth-child(3),
+.inventory-section td:nth-child(3),
+.inventory-section th:nth-child(6),
+.inventory-section td:nth-child(6),
+.inventory-section th:nth-child(8),
+.inventory-section td:nth-child(8) {
+    border-left: 2px solid #e5e7eb;
+}
+
+/* 색상 행 hover 시 그룹 배경 유지 */
+.inventory-section tr:hover td:nth-child(3),
+.inventory-section tr:hover td:nth-child(4) {
+    background-color: #e0f2fe;
+}
+.inventory-section tr:hover td:nth-child(6),
+.inventory-section tr:hover td:nth-child(7) {
+    background-color: #fef3c7;
+}
+.inventory-section tr:hover td:nth-child(8),
+.inventory-section tr:hover td:nth-child(9) {
+    background-color: #dcfce7;
+}
+
+/* ============================================
    재고 현황 테이블 - 크게
    ============================================ */
 .inventory-section th {
@@ -1828,7 +1879,7 @@ tbody tr:hover {
     }
 
     .inventory-section .stock-number {
-        font-size: 1rem !important;
+        font-size: 1.4rem !important;
     }
 
     .inventory-section .product-name {
@@ -1855,14 +1906,8 @@ tbody tr:hover {
     .inventory-section table td:nth-child(5),
     .inventory-section table th:nth-child(6),
     .inventory-section table td:nth-child(6) {
-        min-width: 50px;
-        padding-right: 8px;
-    }
-
-    /* 금일출고 컬럼 숨김 (768px 이하) */
-    .inventory-section table th:nth-child(5),
-    .inventory-section table td:nth-child(5) {
-        display: none;
+        min-width: 45px;
+        padding-right: 6px;
     }
 
     .inventory-section table th:nth-child(7),
@@ -2195,7 +2240,7 @@ tbody tr:hover {
     }
 
     .inventory-section .stock-number {
-        font-size: 1rem !important;
+        font-size: 1.4rem !important;
     }
 
     /* 전일 생산현황 - 400px */
@@ -2344,7 +2389,7 @@ tbody tr:hover {
     }
 
     .inventory-section .stock-number {
-        font-size: 0.8rem !important;
+        font-size: 1.4rem !important;
     }
 
     .inventory-section .product-name {
@@ -2376,8 +2421,10 @@ tbody tr:hover {
 
     .inventory-section .btn-edit,
     .inventory-section .btn-delete {
-        padding: 2px 4px;
-        font-size: 0.55rem;
+        padding: 6px 8px;
+        font-size: 0.7rem;
+        min-width: 36px;
+        min-height: 36px;
     }
 
     /* 전일 생산현황 - 320px */
@@ -3113,6 +3160,8 @@ tr.row-locked td:first-child::before {
     cursor: pointer;
     padding: 4px;
     border-radius: var(--radius-sm);
+    min-width: 36px;
+    min-height: 36px;
 }
 .btn-mapping-delete:hover {
     background: #fee2e2;
@@ -3147,6 +3196,8 @@ tr.row-locked td:first-child::before {
     padding: 4px;
     border-radius: var(--radius-sm);
     vertical-align: middle;
+    min-width: 36px;
+    min-height: 36px;
 }
 .mapping-actions-cell button:hover {
     background: #f3f4f6;
@@ -3748,5 +3799,72 @@ tr.editing-row td {
     }
     .btn-device-settings {
         margin-left: 0;
+    }
+}
+
+/* ============================================
+   스캔 이력 패널
+   ============================================ */
+.scan-history-panel {
+    position: fixed;
+    bottom: 70px;
+    right: 16px;
+    width: 280px;
+    max-height: 200px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 900;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.scan-history-header {
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+.scan-history-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+.scan-history-list li {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.scan-history-list li.success { border-left: 3px solid #22c55e; }
+.scan-history-list li.error { border-left: 3px solid #ef4444; }
+.scan-history-time { color: #9ca3af; font-size: 0.75rem; }
+
+/* ============================================
+   오프라인 배너
+   ============================================ */
+.offline-banner {
+    background: #fef2f2;
+    color: #991b1b;
+    text-align: center;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-bottom: 1px solid #fecaca;
+}
+
+@media (max-width: 768px) {
+    .scan-history-panel {
+        right: 8px;
+        left: 8px;
+        width: auto;
+        bottom: 60px;
     }
 }
