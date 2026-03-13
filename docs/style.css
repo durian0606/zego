@@ -1650,57 +1650,43 @@ tbody tr:hover {
    ============================================ */
 .inline-edit-container {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .inline-edit-input {
     width: 80px !important;
-    padding: 6px 10px !important;
+    padding: 5px 10px !important;
     font-size: inherit !important;
+    font-weight: 700;
     text-align: center;
-    border: 2px solid var(--color-primary) !important;
-    border-radius: var(--radius-sm);
-    background: white;
+    border: none !important;
+    border-bottom: 2px solid var(--color-primary) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .inline-edit-input:focus {
     outline: none;
 }
 
-.inline-edit-btn {
-    width: var(--touch-target);
-    height: var(--touch-target);
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
+.inline-edit-hint {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.inline-edit-reset-link {
+    color: var(--color-primary);
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1em;
-    font-weight: 700;
-    transition: background-color 0.2s;
-    min-width: var(--touch-target);
-    min-height: var(--touch-target);
+    text-decoration: underline;
 }
 
-.inline-edit-btn-save {
-    background: var(--color-success);
-    color: white;
-}
-
-.inline-edit-btn-save:hover {
-    background: var(--color-success-hover);
-}
-
-.inline-edit-btn-cancel {
-    background: var(--color-danger);
-    color: white;
-}
-
-.inline-edit-btn-cancel:hover {
-    background: var(--color-danger-hover);
+.inline-edit-reset-link:hover {
+    color: var(--color-primary-dark, #1d4ed8);
 }
 
 /* ============================================
@@ -2144,13 +2130,6 @@ tbody tr:hover {
         width: 60px !important;
     }
 
-    .inline-edit-btn {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
-    }
-
     /* 드래그 핸들 (카드 형태 테이블용) */
     .history-section .drag-handle,
     .barcode-management-section .drag-handle {
@@ -2474,13 +2453,6 @@ tbody tr:hover {
     .inline-edit-container input {
         font-size: 0.9rem;
         padding: 4px 6px;
-    }
-
-    .inline-edit-btn {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
     }
 }
 

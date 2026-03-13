@@ -121,6 +121,7 @@ const AppState = {
     isEditingProduction: false,  // 생산현황 편집 중
     isEditingPlannedShipment: false,  // 출고예정 편집 중
     isEditingTodayProduction: false, // 금일생산 편집 중
+    isEditingRiceCooker: false,      // 생산밥솥 편집 중
     editingProduct: null,  // 수정 중인 제품명 (null이면 신규 등록 모드)
     currentWorkingProduct: null,  // 현재 작업 중인 제품 (강조 표시용)
     selectedProductIndex: 0,  // 키보드 단축키용 선택된 제품 인덱스
@@ -816,7 +817,7 @@ function updateInventoryTable() {
                     <i data-lucide="grip-vertical" style="width: 18px; height: 18px; opacity: 0.5;"></i>
                 </td>
                 <td><strong>${escapedName}</strong></td>
-                <td class="stock-number rice-cooker-count" data-product="${escapedName}"><strong>${product.riceCookerCount || 0}</strong></td>
+                <td class="stock-number editable-stock rice-cooker-count" data-product="${escapedName}" data-ricecount="${product.riceCookerCount || 0}" onclick="editRiceCookerCount(this)" title="클릭하여 수정">${product.riceCookerCount || 0} <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number editable-stock" data-product="${escapedName}" data-production="${todayProduction}" onclick="editTodayProduction(this)" title="클릭하여 수정">${todayProduction} <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number editable-stock" data-product="${escapedName}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number choolgo-shipment-cell editable-stock" data-product="${escapedName}" data-planned="${shipmentQty}" onclick="editPlannedShipment(this)" title="클릭하여 수정">
@@ -912,29 +913,14 @@ function createInlineNumberEditor(element, { stateFlag, currentValue, onSave, on
     input.min = '0';
     input.className = 'inline-edit-input';
 
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
-    saveBtn.innerHTML = '&#10003;';
-    saveBtn.title = '저장 (Enter)';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
-    cancelBtn.innerHTML = '&#10005;';
-    cancelBtn.title = '취소 (ESC)';
+    const hint = document.createElement('div');
+    hint.className = 'inline-edit-hint';
+    hint.innerHTML = onReset
+        ? '↵ 저장 &nbsp;·&nbsp; esc 취소 &nbsp;·&nbsp; <span class="inline-edit-reset-link">자동</span>'
+        : '↵ 저장 &nbsp;·&nbsp; esc 취소';
 
     container.appendChild(input);
-    container.appendChild(saveBtn);
-
-    if (onReset) {
-        const resetBtn = document.createElement('button');
-        resetBtn.className = 'inline-edit-btn inline-edit-btn-reset';
-        resetBtn.innerHTML = '&#8635;';
-        resetBtn.title = '자동값으로 복원';
-        resetBtn.addEventListener('click', (e) => { e.stopPropagation(); handleReset(); });
-        container.appendChild(resetBtn);
-    }
-
-    container.appendChild(cancelBtn);
+    container.appendChild(hint);
 
     element.innerHTML = '';
     element.appendChild(container);
@@ -999,17 +985,20 @@ function createInlineNumberEditor(element, { stateFlag, currentValue, onSave, on
         isSaving = false;
     };
 
-    saveBtn.addEventListener('click', (e) => { e.stopPropagation(); saveValue(); });
-    cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); cancelEdit(); });
+    if (onReset) {
+        const resetLink = hint.querySelector('.inline-edit-reset-link');
+        if (resetLink) resetLink.addEventListener('mousedown', (e) => { e.preventDefault(); handleReset(); });
+    }
 
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); saveValue(); }
         else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelEdit(); }
     });
 
+    // blur 시 저장 (자동 완료)
     input.addEventListener('blur', () => {
         setTimeout(() => {
-            if (AppState[stateFlag] && !isSaving && element.contains(container)) cancelEdit();
+            if (AppState[stateFlag] && !isSaving && element.contains(container)) saveValue();
         }, 150);
     });
 }
@@ -1109,6 +1098,24 @@ function editTodayProduction(element) {
             element.innerHTML = `${newValue} <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
             element.setAttribute('data-production', newValue);
             showScanResult(`금일생산이 ${currentValue}개에서 ${newValue}개로 수정되었습니다.`, 'success');
+            highlightProductRow(productName);
+        }
+    });
+}
+
+// 생산밥솥 수정 함수
+function editRiceCookerCount(element) {
+    const productName = element.getAttribute('data-product');
+    const currentValue = parseInt(element.getAttribute('data-ricecount')) || 0;
+
+    createInlineNumberEditor(element, {
+        stateFlag: 'isEditingRiceCooker',
+        currentValue,
+        onSave: async (newValue) => {
+            await productsRef.child(productName).update({ riceCookerCount: newValue, updatedAt: Date.now() });
+            element.innerHTML = `${newValue} <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
+            element.setAttribute('data-ricecount', newValue);
+            showScanResult(`생산밥솥이 ${currentValue}개에서 ${newValue}개로 수정되었습니다.`, 'success');
             highlightProductRow(productName);
         }
     });
@@ -2795,7 +2802,7 @@ function shouldAutoFocusBarcode() {
     if (shippingPage && shippingPage.style.display !== 'none') return false;
     if (productRegisterSection.style.display !== 'none') return false;
     if (settingsSection.style.display !== 'none') return false;
-    if (AppState.isEditingMinStock || AppState.isEditingCurrentStock || AppState.isEditingProduction || AppState.isEditingPlannedShipment || AppState.isEditingTodayProduction) return false;
+    if (AppState.isEditingMinStock || AppState.isEditingCurrentStock || AppState.isEditingProduction || AppState.isEditingPlannedShipment || AppState.isEditingTodayProduction || AppState.isEditingRiceCooker) return false;
     return true;
 }
 
