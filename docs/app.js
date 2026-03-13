@@ -884,37 +884,35 @@ function showChannelDetail(event) {
     setTimeout(() => document.addEventListener('click', closeHandler), 0);
 }
 
-// 목표 재고 수정 함수
-function editMinStock(element) {
-    // 이미 편집 중인 경우 무시
+/**
+ * 인라인 숫자 편집기 공통 헬퍼
+ * @param {HTMLElement} element - 클릭된 셀 요소
+ * @param {object} opts
+ * @param {string} opts.stateFlag     - AppState의 편집 플래그 키 (e.g. 'isEditingMinStock')
+ * @param {number} opts.currentValue  - 현재 값
+ * @param {Function} opts.onSave      - async (newValue) => void — Firebase 저장 + element.innerHTML 업데이트
+ * @param {Function} [opts.onReset]   - async () => void — 복원 버튼 (없으면 버튼 미표시)
+ */
+function createInlineNumberEditor(element, { stateFlag, currentValue, onSave, onReset }) {
     if (element.querySelector('input')) return;
 
-    // data 속성에서 제품명과 현재값 가져오기
-    const productName = element.getAttribute('data-product');
-    const currentValue = parseInt(element.getAttribute('data-minstock')) || 0;
-
-
-    AppState.isEditingMinStock = true; // 편집 시작
+    AppState[stateFlag] = true;
     const originalContent = element.innerHTML;
 
-    // 인라인 편집 컨테이너 생성
     const container = document.createElement('div');
     container.className = 'inline-edit-container';
 
-    // input 필드 생성
     const input = document.createElement('input');
     input.type = 'number';
     input.value = currentValue;
     input.min = '0';
     input.className = 'inline-edit-input';
 
-    // 저장 버튼
     const saveBtn = document.createElement('button');
     saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
     saveBtn.innerHTML = '&#10003;';
     saveBtn.title = '저장 (Enter)';
 
-    // 취소 버튼
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
     cancelBtn.innerHTML = '&#10005;';
@@ -922,463 +920,155 @@ function editMinStock(element) {
 
     container.appendChild(input);
     container.appendChild(saveBtn);
+
+    if (onReset) {
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'inline-edit-btn inline-edit-btn-reset';
+        resetBtn.innerHTML = '&#8635;';
+        resetBtn.title = '자동값으로 복원';
+        resetBtn.addEventListener('click', (e) => { e.stopPropagation(); handleReset(); });
+        container.appendChild(resetBtn);
+    }
+
     container.appendChild(cancelBtn);
 
-    // 전체 내용 교체
     element.innerHTML = '';
     element.appendChild(container);
 
-    // 포커스 및 전체 선택
-    setTimeout(() => {
-        input.focus();
-        input.select();
-    }, 0);
+    setTimeout(() => { input.focus(); input.select(); }, 0);
 
-    // 저장 중 플래그
     let isSaving = false;
 
-    // 취소 함수
-    const cancelEdit = () => {
-        if (isSaving) return;
-        element.innerHTML = originalContent;
-        AppState.isEditingMinStock = false;
+    const done = () => {
+        AppState[stateFlag] = false;
+        renderLucideIcons();
         barcodeInput.focus();
     };
 
-    // 저장 함수
+    const cancelEdit = () => {
+        if (isSaving) return;
+        element.innerHTML = originalContent;
+        done();
+    };
+
     const saveValue = async () => {
         if (isSaving) return;
         isSaving = true;
 
-        const newValue = input.value.trim();
+        const raw = input.value.trim();
+        if (!raw) { isSaving = false; cancelEdit(); return; }
 
-        if (newValue === '') {
-            isSaving = false;
-            cancelEdit();
-            return;
-        }
-
-        const minStock = parseInt(newValue);
-        if (isNaN(minStock) || minStock < 0) {
+        const parsed = parseInt(raw);
+        if (isNaN(parsed) || parsed < 0) {
             showScanResult('올바른 숫자를 입력해주세요.', 'error');
             isSaving = false;
             cancelEdit();
             return;
         }
 
-        // 값이 변경되지 않았으면 그냥 취소
-        if (minStock === currentValue) {
-            isSaving = false;
-            cancelEdit();
-            return;
-        }
+        if (parsed === currentValue) { isSaving = false; cancelEdit(); return; }
 
         try {
-            // Firebase에 업데이트
-            await productsRef.child(productName).update({
-                minStock: minStock,
-                updatedAt: Date.now()
-            });
-
-            // 즉시 화면 업데이트 (Firebase 리스너 전에)
-            element.innerHTML = `<span class="min-stock-value">${minStock}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
-
-            renderLucideIcons();
-
-            AppState.isEditingMinStock = false;
-            showScanResult(`목표 재고가 ${minStock}개로 변경되었습니다.`, 'success');
-            barcodeInput.focus();
-        } catch (error) {
-            console.error('목표 재고 업데이트 오류:', error);
-            showScanResult('목표 재고 업데이트 중 오류가 발생했습니다.', 'error');
+            await onSave(parsed);
+            done();
+        } catch (err) {
+            console.error(`[${stateFlag}] 저장 오류:`, err);
+            showScanResult('업데이트 중 오류가 발생했습니다.', 'error');
             element.innerHTML = originalContent;
-            AppState.isEditingMinStock = false;
+            done();
         }
         isSaving = false;
     };
 
-    // 버튼 이벤트
-    saveBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        saveValue();
-    });
-
-    cancelBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        cancelEdit();
-    });
-
-    // 엔터 키: 저장, ESC: 취소
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation();
-            saveValue();
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            e.stopPropagation();
-            cancelEdit();
+    const handleReset = async () => {
+        if (isSaving) return;
+        isSaving = true;
+        try {
+            await onReset();
+            done();
+        } catch (err) {
+            console.error(`[${stateFlag}] 복원 오류:`, err);
+            showScanResult('복원 중 오류가 발생했습니다.', 'error');
+            element.innerHTML = originalContent;
+            done();
         }
+        isSaving = false;
+    };
+
+    saveBtn.addEventListener('click', (e) => { e.stopPropagation(); saveValue(); });
+    cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); cancelEdit(); });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); saveValue(); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelEdit(); }
     });
 
-    // 포커스 잃을 때: 저장 중이 아니면 취소 (버튼 클릭 허용을 위해 딜레이)
     input.addEventListener('blur', () => {
         setTimeout(() => {
-            if (AppState.isEditingMinStock && !isSaving && element.contains(container)) {
-                cancelEdit();
-            }
+            if (AppState[stateFlag] && !isSaving && element.contains(container)) cancelEdit();
         }, 150);
+    });
+}
+
+// 목표 재고 수정 함수
+function editMinStock(element) {
+    const productName = element.getAttribute('data-product');
+    const currentValue = parseInt(element.getAttribute('data-minstock')) || 0;
+
+    createInlineNumberEditor(element, {
+        stateFlag: 'isEditingMinStock',
+        currentValue,
+        onSave: async (newValue) => {
+            await productsRef.child(productName).update({ minStock: newValue, updatedAt: Date.now() });
+            element.innerHTML = `<span class="min-stock-value">${newValue}</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
+            showScanResult(`목표 재고가 ${newValue}개로 변경되었습니다.`, 'success');
+        }
     });
 }
 
 // 현재 재고 수정 함수
 function editCurrentStock(element) {
-    // 이미 편집 중인 경우 무시
-    if (element.querySelector('input')) return;
-
-    // data 속성에서 제품명과 현재값 가져오기
     const productName = element.getAttribute('data-product');
     const currentValue = parseInt(element.getAttribute('data-stock')) || 0;
 
-
-    AppState.isEditingCurrentStock = true; // 편집 시작
-    const originalContent = element.innerHTML;
-
-    // 인라인 편집 컨테이너 생성
-    const container = document.createElement('div');
-    container.className = 'inline-edit-container';
-
-    // input 필드 생성
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.value = currentValue;
-    input.min = '0';
-    input.className = 'inline-edit-input';
-
-    // 저장 버튼
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
-    saveBtn.innerHTML = '&#10003;';
-    saveBtn.title = '저장 (Enter)';
-
-    // 취소 버튼
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
-    cancelBtn.innerHTML = '&#10005;';
-    cancelBtn.title = '취소 (ESC)';
-
-    container.appendChild(input);
-    container.appendChild(saveBtn);
-    container.appendChild(cancelBtn);
-
-    // 전체 내용 교체
-    element.innerHTML = '';
-    element.appendChild(container);
-
-    // 포커스 및 전체 선택
-    setTimeout(() => {
-        input.focus();
-        input.select();
-    }, 0);
-
-    // 저장 중 플래그
-    let isSaving = false;
-
-    // 취소 함수
-    const cancelEdit = () => {
-        if (isSaving) return;
-        element.innerHTML = originalContent;
-        AppState.isEditingCurrentStock = false;
-        barcodeInput.focus();
-    };
-
-    // 저장 함수
-    const saveValue = async () => {
-        if (isSaving) return;
-        isSaving = true;
-
-        const newValue = input.value.trim();
-
-        if (newValue === '') {
-            isSaving = false;
-            cancelEdit();
-            return;
-        }
-
-        const newStock = parseInt(newValue);
-        if (isNaN(newStock) || newStock < 0) {
-            showScanResult('올바른 숫자를 입력해주세요.', 'error');
-            isSaving = false;
-            cancelEdit();
-            return;
-        }
-
-        // 값이 변경되지 않았으면 그냥 취소
-        if (newStock === currentValue) {
-            isSaving = false;
-            cancelEdit();
-            return;
-        }
-
-        try {
-            // Firebase에 업데이트
-            await productsRef.child(productName).update({
-                currentStock: newStock,
-                updatedAt: Date.now()
-            });
-
-            // 히스토리에 수동 조정 기록
+    createInlineNumberEditor(element, {
+        stateFlag: 'isEditingCurrentStock',
+        currentValue,
+        onSave: async (newValue) => {
+            await productsRef.child(productName).update({ currentStock: newValue, updatedAt: Date.now() });
             await historyRef.push({
-                productName: productName,
-                barcode: 'MANUAL',
-                type: 'ADJUST',
-                quantity: newStock - currentValue,
-                beforeStock: currentValue,
-                afterStock: newStock,
-                timestamp: Date.now()
+                productName, barcode: 'MANUAL', type: 'ADJUST',
+                quantity: newValue - currentValue, beforeStock: currentValue,
+                afterStock: newValue, timestamp: Date.now()
             });
-
-            // 즉시 화면 업데이트 (Firebase 리스너 전에)
-            element.innerHTML = `<strong>${newStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
-
-            renderLucideIcons();
-
-            AppState.isEditingCurrentStock = false;
-            showScanResult(`현재 재고가 ${currentValue}개에서 ${newStock}개로 수동 조정되었습니다.`, 'success');
+            element.innerHTML = `<strong>${newValue}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
+            showScanResult(`현재 재고가 ${currentValue}개에서 ${newValue}개로 수동 조정되었습니다.`, 'success');
             highlightProductRow(productName);
-            barcodeInput.focus();
-        } catch (error) {
-            console.error('현재 재고 업데이트 오류:', error);
-            showScanResult('현재 재고 업데이트 중 오류가 발생했습니다.', 'error');
-            element.innerHTML = originalContent;
-            AppState.isEditingCurrentStock = false;
         }
-        isSaving = false;
-    };
-
-    // 버튼 이벤트
-    saveBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        saveValue();
-    });
-
-    cancelBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        cancelEdit();
-    });
-
-    // 엔터 키: 저장, ESC: 취소
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation();
-            saveValue();
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            e.stopPropagation();
-            cancelEdit();
-        }
-    });
-
-    // 포커스 잃을 때: 저장 중이 아니면 취소 (버튼 클릭 허용을 위해 딜레이)
-    input.addEventListener('blur', () => {
-        setTimeout(() => {
-            if (AppState.isEditingCurrentStock && !isSaving && element.contains(container)) {
-                cancelEdit();
-            }
-        }, 150);
     });
 }
 
 // 출고예정 수정 함수
 function editPlannedShipment(element) {
-    // 이미 편집 중인 경우 무시
-    if (element.querySelector('input')) return;
-
-    // data 속성에서 제품명과 현재값 가져오기
     const productName = element.getAttribute('data-product');
     const currentValue = parseInt(element.getAttribute('data-planned')) || 0;
 
-    AppState.isEditingPlannedShipment = true; // 편집 시작
-    const originalContent = element.innerHTML;
-
-    // 인라인 편집 컨테이너 생성
-    const container = document.createElement('div');
-    container.className = 'inline-edit-container';
-
-    // input 필드 생성
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.value = currentValue;
-    input.min = '0';
-    input.className = 'inline-edit-input';
-
-    // 저장 버튼
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'inline-edit-btn inline-edit-btn-save';
-    saveBtn.innerHTML = '&#10003;';
-    saveBtn.title = '저장 (Enter)';
-
-    // 취소 버튼
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'inline-edit-btn inline-edit-btn-cancel';
-    cancelBtn.innerHTML = '&#10005;';
-    cancelBtn.title = '취소 (ESC)';
-
-    // 자동값 복원 버튼 (수동값 삭제)
-    const resetBtn = document.createElement('button');
-    resetBtn.className = 'inline-edit-btn inline-edit-btn-reset';
-    resetBtn.innerHTML = '&#8635;';
-    resetBtn.title = '자동값으로 복원';
-
-    container.appendChild(input);
-    container.appendChild(saveBtn);
-    container.appendChild(resetBtn);
-    container.appendChild(cancelBtn);
-
-    // 전체 내용 교체
-    element.innerHTML = '';
-    element.appendChild(container);
-
-    // 포커스 및 전체 선택
-    setTimeout(() => {
-        input.focus();
-        input.select();
-    }, 0);
-
-    // 저장 중 플래그
-    let isSaving = false;
-
-    // 취소 함수
-    const cancelEdit = () => {
-        if (isSaving) return;
-        element.innerHTML = originalContent;
-        AppState.isEditingPlannedShipment = false;
-        renderLucideIcons();
-        barcodeInput.focus();
-    };
-
-    // 저장 함수
-    const saveValue = async () => {
-        if (isSaving) return;
-        isSaving = true;
-
-        const newValue = input.value.trim();
-
-        if (newValue === '') {
-            isSaving = false;
-            cancelEdit();
-            return;
-        }
-
-        const newPlanned = parseInt(newValue);
-        if (isNaN(newPlanned) || newPlanned < 0) {
-            showScanResult('올바른 숫자를 입력해주세요.', 'error');
-            isSaving = false;
-            cancelEdit();
-            return;
-        }
-
-        // 값이 변경되지 않았으면 그냥 취소
-        if (newPlanned === currentValue) {
-            isSaving = false;
-            cancelEdit();
-            return;
-        }
-
-        try {
-            // Firebase에 업데이트
-            await productsRef.child(productName).update({
-                plannedShipment: newPlanned,
-                updatedAt: Date.now()
-            });
-
-            // 즉시 화면 업데이트
-            element.innerHTML = `<strong>${newPlanned > 0 ? newPlanned : '-'}</strong> <span style="font-size: 0.75em; opacity: 0.7;"> (수동)</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
-
-            renderLucideIcons();
-
-            AppState.isEditingPlannedShipment = false;
-            showScanResult(`출고예정이 ${currentValue}개에서 ${newPlanned}개로 수정되었습니다.`, 'success');
+    createInlineNumberEditor(element, {
+        stateFlag: 'isEditingPlannedShipment',
+        currentValue,
+        onSave: async (newValue) => {
+            await productsRef.child(productName).update({ plannedShipment: newValue, updatedAt: Date.now() });
+            element.innerHTML = `<strong>${newValue > 0 ? newValue : '-'}</strong> <span style="font-size: 0.75em; opacity: 0.7;"> (수동)</span> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
+            showScanResult(`출고예정이 ${currentValue}개에서 ${newValue}개로 수정되었습니다.`, 'success');
             highlightProductRow(productName);
-            barcodeInput.focus();
-        } catch (error) {
-            console.error('출고예정 업데이트 오류:', error);
-            showScanResult('출고예정 업데이트 중 오류가 발생했습니다.', 'error');
-            element.innerHTML = originalContent;
-            AppState.isEditingPlannedShipment = false;
-        }
-        isSaving = false;
-    };
-
-    // 자동값 복원 함수
-    const resetToAuto = async () => {
-        if (isSaving) return;
-        isSaving = true;
-
-        try {
-            // Firebase에서 plannedShipment 필드 삭제
-            await productsRef.child(productName).update({
-                plannedShipment: null,
-                updatedAt: Date.now()
-            });
-
-            // 즉시 화면 업데이트 (자동값 표시)
-            const choolgoProducts = AppState.choolgoSummary.products || {};
-            const autoValue = choolgoProducts[productName] || 0;
+        },
+        onReset: async () => {
+            await productsRef.child(productName).update({ plannedShipment: null, updatedAt: Date.now() });
+            const autoValue = (AppState.choolgoSummary.products || {})[productName] || 0;
             element.innerHTML = `<strong>${autoValue > 0 ? autoValue : '-'}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
-
-            renderLucideIcons();
-
-            AppState.isEditingPlannedShipment = false;
             showScanResult('출고예정이 자동값으로 복원되었습니다.', 'success');
             highlightProductRow(productName);
-            barcodeInput.focus();
-        } catch (error) {
-            console.error('출고예정 복원 오류:', error);
-            showScanResult('출고예정 복원 중 오류가 발생했습니다.', 'error');
-            element.innerHTML = originalContent;
-            AppState.isEditingPlannedShipment = false;
         }
-        isSaving = false;
-    };
-
-    // 버튼 이벤트
-    saveBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        saveValue();
-    });
-
-    resetBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        resetToAuto();
-    });
-
-    cancelBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        cancelEdit();
-    });
-
-    // 엔터 키: 저장, ESC: 취소
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation();
-            saveValue();
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            e.stopPropagation();
-            cancelEdit();
-        }
-    });
-
-    // 포커스 잃을 때: 저장 중이 아니면 취소 (버튼 클릭 허용을 위해 딜레이)
-    input.addEventListener('blur', () => {
-        setTimeout(() => {
-            if (AppState.isEditingPlannedShipment && !isSaving && element.contains(container)) {
-                cancelEdit();
-            }
-        }, 150);
     });
 }
 
@@ -1791,34 +1481,13 @@ async function changeProductColor(productName) {
     colors.forEach((color, index) => {
         const selected = index === currentColorIndex ? 'border: 3px solid #000;' : '';
         html += `
-            <div onclick="selectColor(${index})" style="cursor: pointer; padding: 15px; background: ${color.bg}; border-radius: 8px; text-align: center; font-weight: 600; ${selected}" title="${color.name}">
+            <div onclick="this.closest('.color-picker-dialog').dispatchEvent(new CustomEvent('colorSelect', {bubbles:false, detail: ${index}}))" style="cursor: pointer; padding: 15px; background: ${color.bg}; border-radius: 8px; text-align: center; font-weight: 600; ${selected}" title="${color.name}">
                 ${color.name}
             </div>
         `;
     });
 
     html += `</div>`;
-
-    // 색상 선택 함수를 전역으로 등록
-    window.selectColor = async (colorIndex) => {
-        try {
-            await productsRef.child(productName).update({
-                colorIndex: colorIndex,
-                updatedAt: Date.now()
-            });
-
-            showScanResult(`"${productName}" 색상이 변경되었습니다.`, 'success');
-
-            // 다이얼로그와 오버레이 닫기
-            const overlay = document.querySelector('.color-picker-overlay');
-            const dialog = document.querySelector('.color-picker-dialog');
-            if (overlay) overlay.remove();
-            if (dialog) dialog.remove();
-        } catch (error) {
-            console.error('색상 변경 오류:', error);
-            showScanResult('색상 변경 중 오류가 발생했습니다.', 'error');
-        }
-    };
 
     // 다이얼로그 생성
     const dialog = document.createElement('div');
@@ -1833,6 +1502,24 @@ async function changeProductColor(productName) {
             <button onclick="document.querySelector('.color-picker-overlay').remove(); this.closest('.color-picker-dialog').remove();" style="padding: 8px 16px; background: #e0e0e0; border: none; border-radius: 6px; cursor: pointer; font-size: 1em;">취소</button>
         </div>
     `;
+
+    // 색상 선택 이벤트 (전역 window.selectColor 없이 dialog 스코프에서 처리)
+    dialog.addEventListener('colorSelect', async (e) => {
+        const colorIndex = e.detail;
+        try {
+            await productsRef.child(productName).update({
+                colorIndex: colorIndex,
+                updatedAt: Date.now()
+            });
+            showScanResult(`"${productName}" 색상이 변경되었습니다.`, 'success');
+            const overlay = document.querySelector('.color-picker-overlay');
+            if (overlay) overlay.remove();
+            dialog.remove();
+        } catch (error) {
+            console.error('색상 변경 오류:', error);
+            showScanResult('색상 변경 중 오류가 발생했습니다.', 'error');
+        }
+    });
 
     // 오버레이 생성
     const overlay = document.createElement('div');
@@ -3635,25 +3322,7 @@ const FKEY_MAPPINGS = {
 function getSortedProductList() {
     const products = filterValidProducts(AppState.productsData);
     if (products.length === 0) return [];
-
-    return products.sort((a, b) => {
-        const orderA = a.sortOrder;
-        const orderB = b.sortOrder;
-        if (orderA !== undefined && orderA !== null &&
-            orderB !== undefined && orderB !== null) {
-            return orderA - orderB;
-        }
-        if (orderA !== undefined && orderA !== null) return -1;
-        if (orderB !== undefined && orderB !== null) return 1;
-        const minStockA = a.minStock || 0;
-        const minStockB = b.minStock || 0;
-        if (minStockA === 0 && minStockB !== 0) return 1;
-        if (minStockA !== 0 && minStockB === 0) return -1;
-        if (minStockA === 0 && minStockB === 0) return 0;
-        const shortageA = minStockA - (a.currentStock || 0);
-        const shortageB = minStockB - (b.currentStock || 0);
-        return shortageB - shortageA;
-    });
+    return getSortedProducts(products);
 }
 
 // 현재 선택된 제품 가져오기
