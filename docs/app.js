@@ -120,6 +120,7 @@ const AppState = {
     isEditingCurrentStock: false,
     isEditingProduction: false,  // 생산현황 편집 중
     isEditingPlannedShipment: false,  // 출고예정 편집 중
+    isEditingTodayProduction: false, // 금일생산 편집 중
     editingProduct: null,  // 수정 중인 제품명 (null이면 신규 등록 모드)
     currentWorkingProduct: null,  // 현재 작업 중인 제품 (강조 표시용)
     selectedProductIndex: 0,  // 키보드 단축키용 선택된 제품 인덱스
@@ -816,7 +817,7 @@ function updateInventoryTable() {
                 </td>
                 <td><strong>${escapedName}</strong></td>
                 <td class="stock-number rice-cooker-count" data-product="${escapedName}"><strong>${product.riceCookerCount || 0}</strong></td>
-                <td class="stock-number">${todayProduction}</td>
+                <td class="stock-number editable-stock" data-product="${escapedName}" data-production="${todayProduction}" onclick="editTodayProduction(this)" title="클릭하여 수정">${todayProduction} <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number editable-stock" data-product="${escapedName}" data-stock="${product.currentStock}" onclick="editCurrentStock(this)" title="클릭하여 수정"><strong>${product.currentStock}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i></td>
                 <td class="stock-number choolgo-shipment-cell editable-stock" data-product="${escapedName}" data-planned="${shipmentQty}" onclick="editPlannedShipment(this)" title="클릭하여 수정">
                     <strong>${shipmentQty > 0 ? shipmentQty : '-'}</strong>
@@ -1070,6 +1071,44 @@ function editPlannedShipment(element) {
             const autoValue = (AppState.choolgoSummary.products || {})[productName] || 0;
             element.innerHTML = `<strong>${autoValue > 0 ? autoValue : '-'}</strong> <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
             showScanResult('출고예정이 자동값으로 복원되었습니다.', 'success');
+            highlightProductRow(productName);
+        }
+    });
+}
+
+// 금일생산 수정 함수
+function editTodayProduction(element) {
+    const productName = element.getAttribute('data-product');
+    const currentValue = parseInt(element.getAttribute('data-production')) || 0;
+
+    createInlineNumberEditor(element, {
+        stateFlag: 'isEditingTodayProduction',
+        currentValue,
+        onSave: async (newValue) => {
+            const diff = newValue - currentValue;
+            await productsRef.child(productName).transaction((current) => {
+                if (!current) return current;
+                return {
+                    ...current,
+                    todayProduction: newValue,
+                    currentStock: (current.currentStock || 0) + diff,
+                    updatedAt: Date.now()
+                };
+            });
+            if (diff !== 0) {
+                await historyRef.push({
+                    productName,
+                    barcode: 'MANUAL',
+                    type: 'ADJUST',
+                    quantity: diff,
+                    beforeStock: (AppState.productsData[productName]?.currentStock || 0),
+                    afterStock: (AppState.productsData[productName]?.currentStock || 0) + diff,
+                    timestamp: Date.now()
+                });
+            }
+            element.innerHTML = `${newValue} <i data-lucide="edit-2" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; opacity: 0.6;"></i>`;
+            element.setAttribute('data-production', newValue);
+            showScanResult(`금일생산이 ${currentValue}개에서 ${newValue}개로 수정되었습니다.`, 'success');
             highlightProductRow(productName);
         }
     });
@@ -2756,7 +2795,7 @@ function shouldAutoFocusBarcode() {
     if (shippingPage && shippingPage.style.display !== 'none') return false;
     if (productRegisterSection.style.display !== 'none') return false;
     if (settingsSection.style.display !== 'none') return false;
-    if (AppState.isEditingMinStock || AppState.isEditingCurrentStock || AppState.isEditingProduction || AppState.isEditingPlannedShipment) return false;
+    if (AppState.isEditingMinStock || AppState.isEditingCurrentStock || AppState.isEditingProduction || AppState.isEditingPlannedShipment || AppState.isEditingTodayProduction) return false;
     return true;
 }
 
