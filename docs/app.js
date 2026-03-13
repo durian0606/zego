@@ -74,12 +74,15 @@ const AudioFeedback = {
     }
 };
 
-// undefined 항목 삭제 (일회성)
-productsRef.child('undefined').remove().then(() => {
-    console.log('undefined 항목 삭제 완료');
-}).catch((error) => {
-    console.log('undefined 항목 삭제 시도:', error.message);
-});
+// undefined 항목 삭제 (일회성 — 이미 처리된 경우 스킵)
+if (!localStorage.getItem('undefinedCleanupDone')) {
+    productsRef.child('undefined').remove().then(() => {
+        console.log('undefined 항목 삭제 완료');
+        localStorage.setItem('undefinedCleanupDone', '1');
+    }).catch((error) => {
+        console.log('undefined 항목 삭제 시도:', error.message);
+    });
+}
 
 // DOM 요소
 const barcodeInput = document.getElementById('barcode-input');
@@ -516,13 +519,19 @@ dailyClosingsRef.orderByKey().limitToLast(7).on('value', (snapshot) => {
 });
 
 // 오늘 출고 예정 요약 실시간 감지 (choolgo-watcher)
-const choolgoTodayKey = formatDateKey(new Date());
-const choolgoSummaryRef = database.ref(`choolgoLogs/${choolgoTodayKey}/summary`);
-choolgoSummaryRef.on('value', (snapshot) => {
-    AppState.choolgoSummary = snapshot.val() || { channels: {}, products: {} };
-    scheduleInventoryUpdate();
-    scheduleDashboardUpdate();
-});
+// 자정에 날짜가 바뀌면 리스너도 새 날짜로 교체됨 (scheduleMidnightTasks에서 호출)
+let _choolgoSummaryRef = null;
+function setupChoolgoSummaryListener() {
+    const todayKey = formatDateKey(new Date());
+    if (_choolgoSummaryRef) _choolgoSummaryRef.off('value');
+    _choolgoSummaryRef = database.ref(`choolgoLogs/${todayKey}/summary`);
+    _choolgoSummaryRef.on('value', (snapshot) => {
+        AppState.choolgoSummary = snapshot.val() || { channels: {}, products: {} };
+        scheduleInventoryUpdate();
+        scheduleDashboardUpdate();
+    });
+}
+setupChoolgoSummaryListener();
 
 // 어제 기출고 요약 (어제 처리된 주문 = 오늘 기준 이미 나간 물량)
 const yesterday = new Date();
@@ -2113,7 +2122,7 @@ async function updateStock(barcodeInfo) {
 }
 
 // 바코드 입력 처리 (엔터키)
-barcodeInput.addEventListener('keypress', async (e) => {
+barcodeInput.addEventListener('keydown', async (e) => {
     if (e.key === 'Enter') {
         const barcode = barcodeInput.value.trim();
         barcodeInput.value = '';
@@ -3041,7 +3050,7 @@ function shouldAutoFocusBarcode() {
     if (shippingPage && shippingPage.style.display !== 'none') return false;
     if (productRegisterSection.style.display !== 'none') return false;
     if (settingsSection.style.display !== 'none') return false;
-    if (AppState.isEditingMinStock || AppState.isEditingCurrentStock || AppState.isEditingProduction) return false;
+    if (AppState.isEditingMinStock || AppState.isEditingCurrentStock || AppState.isEditingProduction || AppState.isEditingPlannedShipment) return false;
     return true;
 }
 
@@ -3162,6 +3171,9 @@ function scheduleMidnightTasks() {
 
         // 2. 오늘 생산현황 리셋 (마감 완료 후 실행)
         await resetTodayProduction(true);
+
+        // 3. choolgoSummary 리스너 새 날짜로 갱신
+        setupChoolgoSummaryListener();
 
         // 다음 자정 타이머 재설정
         scheduleMidnightTasks();

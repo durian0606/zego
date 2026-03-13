@@ -354,7 +354,11 @@ function startWatcher() {
         try {
             while (queue.length > 0) {
                 const filePath = queue.shift();
-                await processFile(filePath);
+                try {
+                    await processFile(filePath);
+                } catch (err) {
+                    console.error('[processQueue 파일 오류]', filePath, err.message);
+                }
             }
         } catch (err) {
             console.error('[processQueue 오류]', err.message);

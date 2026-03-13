@@ -15,6 +15,8 @@ let imapClient = null;
 let isConnected = false;
 let reconnectTimeout = null;
 let currentConfig = null;
+let _pollIntervalId = null;
+let _cleanupIntervalId = null;
 
 /**
  * IMAP 연결 시작 (Firebase 우선, .env fallback)
@@ -84,15 +86,17 @@ async function startEmailWatcher() {
       // 메일함 열기
       openInbox(mailbox);
 
-      // 주기적으로 새 메일 확인
-      setInterval(() => {
+      // 주기적으로 새 메일 확인 (이전 interval 정리 후 등록)
+      if (_pollIntervalId) clearInterval(_pollIntervalId);
+      _pollIntervalId = setInterval(() => {
         if (isConnected) {
           checkNewMail(markSeen);
         }
       }, pollInterval);
 
-      // 임시 디렉토리 정리 (1시간마다)
-      setInterval(cleanupTempDir, 60 * 60 * 1000);
+      // 임시 디렉토리 정리 (1시간마다, 이전 interval 정리 후 등록)
+      if (_cleanupIntervalId) clearInterval(_cleanupIntervalId);
+      _cleanupIntervalId = setInterval(cleanupTempDir, 60 * 60 * 1000);
     });
 
     // 연결 종료
@@ -220,9 +224,9 @@ function scheduleReconnect() {
  * IMAP 연결 종료
  */
 function stopEmailWatcher() {
-  if (reconnectTimeout) {
-    clearTimeout(reconnectTimeout);
-  }
+  if (reconnectTimeout) clearTimeout(reconnectTimeout);
+  if (_pollIntervalId) { clearInterval(_pollIntervalId); _pollIntervalId = null; }
+  if (_cleanupIntervalId) { clearInterval(_cleanupIntervalId); _cleanupIntervalId = null; }
 
   if (imapClient && isConnected) {
     console.log('[이메일] IMAP 연결 종료 중...');
