@@ -36,6 +36,10 @@
         ".write": true,
         ".validate": "!newData.exists() || newData.hasChildren(['pattern', 'shortName'])"
       }
+    },
+    "emailSettings": {
+      ".read": false,
+      ".write": false
     }
   }
 }
